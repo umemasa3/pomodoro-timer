@@ -52,4 +52,26 @@
   .card:hover {
     @apply shadow-xl transform translate-y-[-2px];
   }
+
+  .toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full;
+    @apply bg-gray-200 dark:bg-gray-700;
+    @apply transition-colors duration-200 ease-in-out;
+    @apply focus:outline-none focus:ring-2 focus:ring-pomodoro-500 focus:ring-offset-2;
+    @apply cursor-pointer;
+  }
+
+  .toggle:checked {
+    @apply bg-pomodoro-500;
+  }
+
+  .toggle::before {
+    @apply absolute left-1 top-1 h-4 w-4 rounded-full bg-white;
+    @apply transition-transform duration-200 ease-in-out;
+    content: '';
+  }
+
+  .toggle:checked::before {
+    @apply translate-x-5;
+  }
 }
