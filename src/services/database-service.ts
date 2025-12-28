@@ -77,7 +77,7 @@ export class DatabaseService {
   }
 
   // タスク関連操作
-  static async createTask(taskData: CreateTaskRequest): Promise<Task> {
+  async createTask(taskData: CreateTaskRequest): Promise<Task> {
     const {
       data: { user },
     } = await supabase.auth.getUser();

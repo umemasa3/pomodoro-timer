@@ -8,6 +8,9 @@ import { TimerControls } from './timer-controls';
 import { SessionInfo } from './session-info';
 import { BreakSuggestion } from './break-suggestion';
 import { SessionCompleteNotification } from './session-complete-notification';
+import { TaskSelectionDialog } from './task-selection-dialog';
+import { TaskCompletionDialog } from './task-completion-dialog';
+import { CurrentTaskDisplay } from './current-task-display';
 import { SettingsModal } from '../settings/settings-modal';
 
 export const TimerComponent: React.FC = () => {
@@ -19,6 +22,8 @@ export const TimerComponent: React.FC = () => {
     showBreakSuggestion,
     suggestedBreakType,
     showCompletionNotification,
+    showTaskSelection,
+    showTaskCompletionDialog,
     startTimer,
     pauseTimer,
     resetTimer,
@@ -27,6 +32,8 @@ export const TimerComponent: React.FC = () => {
     switchToPomodoro,
     setShowBreakSuggestion,
     setShowCompletionNotification,
+    setShowTaskSelection,
+    setShowTaskCompletionDialog,
   } = useTimerStore();
 
   const { user } = useAuthStore();
@@ -103,6 +110,13 @@ export const TimerComponent: React.FC = () => {
           />
         </div>
 
+        {/* 現在のタスク表示 */}
+        {sessionType === 'pomodoro' && (
+          <div className="mb-6">
+            <CurrentTaskDisplay />
+          </div>
+        )}
+
         {/* タイマー制御ボタン */}
         <TimerControls
           isRunning={isRunning}
@@ -117,6 +131,18 @@ export const TimerComponent: React.FC = () => {
           sessionType={sessionType}
         />
       </motion.div>
+
+      {/* タスク選択ダイアログ */}
+      <TaskSelectionDialog
+        isOpen={showTaskSelection}
+        onClose={() => setShowTaskSelection(false)}
+      />
+
+      {/* タスク完了確認ダイアログ */}
+      <TaskCompletionDialog
+        isOpen={showTaskCompletionDialog}
+        onClose={() => setShowTaskCompletionDialog(false)}
+      />
 
       {/* 休憩提案モーダル */}
       <BreakSuggestion
