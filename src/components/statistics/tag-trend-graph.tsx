@@ -78,7 +78,38 @@ export const TagTrendGraph: React.FC = () => {
           タグ別時間推移
         </h3>
         <div className="text-red-600 dark:text-red-400">
-          {error || 'データを取得できませんでした'}
+          タグ推移データの取得に失敗しました
+        </div>
+      </div>
+    );
+  }
+
+  // データが空の場合の処理を追加
+  if (trendData.trendData.length === 0 || trendData.tagList.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            タグ別時間推移
+          </h3>
+          <select
+            value={selectedPeriod}
+            onChange={e => setSelectedPeriod(Number(e.target.value))}
+            className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+          >
+            <option value={7}>過去7日</option>
+            <option value={14}>過去14日</option>
+            <option value={30}>過去30日</option>
+            <option value={90}>過去90日</option>
+          </select>
+        </div>
+        <div className="text-center py-12">
+          <div className="text-gray-500 dark:text-gray-400 mb-2">
+            表示するデータがありません
+          </div>
+          <div className="text-sm text-gray-400 dark:text-gray-500">
+            タスクにタグを設定して作業を開始してください
+          </div>
         </div>
       </div>
     );
@@ -101,7 +132,7 @@ export const TagTrendGraph: React.FC = () => {
     // 最大値を計算
     const maxValue = Math.max(
       ...trendData.trendData.flatMap(d =>
-        Object.values(d.tagData).filter(v => v > 0)
+        d.tagData ? Object.values(d.tagData).filter(v => v > 0) : []
       ),
       1
     );
@@ -132,11 +163,13 @@ export const TagTrendGraph: React.FC = () => {
     // 座標変換関数
     const getX = (date: string): number => {
       const dateTime = new Date(date).getTime();
+      if (isNaN(dateTime) || dateRange === 0) return padding;
       const ratio = (dateTime - minDate.getTime()) / dateRange;
       return padding + ratio * graphWidth;
     };
 
     const getY = (value: number): number => {
+      if (isNaN(value) || maxValue === 0) return height - padding;
       const ratio = value / maxValue;
       return height - padding - ratio * graphHeight;
     };
@@ -146,7 +179,13 @@ export const TagTrendGraph: React.FC = () => {
 
     return (
       <div className="w-full overflow-x-auto">
-        <svg width={width} height={height} className="border rounded">
+        <svg 
+          width={width} 
+          height={height} 
+          className="border rounded"
+          role="img"
+          aria-label="タグ別時間推移グラフ"
+        >
           {/* グリッド線 */}
           <defs>
             <pattern
@@ -229,7 +268,7 @@ export const TagTrendGraph: React.FC = () => {
                 x: getX(d.date),
                 y: getY((d.tagData[tagName] || 0) / 60), // 分を時間に変換
               }))
-              .filter(p => !isNaN(p.x) && !isNaN(p.y));
+              .filter(p => !isNaN(p.x) && !isNaN(p.y) && isFinite(p.x) && isFinite(p.y));
 
             if (points.length < 2) return null;
 

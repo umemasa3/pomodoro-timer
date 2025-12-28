@@ -6,12 +6,22 @@ import { DatabaseService } from '../../services/database-service';
 // DatabaseServiceのモック
 vi.mock('../../services/database-service', () => ({
   DatabaseService: {
-    getStatistics: vi.fn(),
+    getWorkTimeGraphData: vi.fn(),
     getTagStatistics: vi.fn(),
     getGoalProgress: vi.fn(),
     getComparisonData: vi.fn(),
     getTagTrendData: vi.fn(),
     exportStatisticsToCSV: vi.fn(),
+    getSessionCompletionRate: vi.fn(),
+    getWorkStreakData: vi.fn(),
+    getTaskTypeBreakdown: vi.fn(),
+    getSessions: vi.fn(),
+    getTasks: vi.fn(),
+    getCompletedTasksCount: vi.fn(),
+    getDailySessionStats: vi.fn(),
+    getMostProductiveTagTimeSlots: vi.fn(),
+    getWorkDistributionByTimeAndDay: vi.fn(),
+    getTaskCategoryTimeDistribution: vi.fn(),
   },
 }));
 
@@ -237,16 +247,8 @@ describe('StatisticsPage', () => {
 
   it('統計データが空の場合でも正常に表示される', async () => {
     // 空のデータを返すモック
-    vi.mocked(DatabaseService.getStatistics).mockResolvedValue({
-      totalSessions: 0,
-      completedSessions: 0,
-      totalWorkTime: 0,
-      averageSessionLength: 0,
-      completionRate: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-    });
-
+    vi.mocked(DatabaseService.getSessions).mockResolvedValue([]);
+    vi.mocked(DatabaseService.getTasks).mockResolvedValue([]);
     vi.mocked(DatabaseService.getTagStatistics).mockResolvedValue([]);
     vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue({
       weeklyGoal: {
@@ -278,7 +280,7 @@ describe('StatisticsPage', () => {
 
   it('エラー境界が正しく動作する', () => {
     // エラーを投げるコンポーネントのモック
-    vi.mocked(DatabaseService.getStatistics).mockRejectedValue(
+    vi.mocked(DatabaseService.getSessions).mockRejectedValue(
       new Error('Database error')
     );
 

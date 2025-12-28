@@ -131,7 +131,7 @@ export const ComparisonAnalysis: React.FC = () => {
               clipRule="evenodd"
             />
           </svg>
-          変化なし
+          ±0%
         </span>
       );
     }

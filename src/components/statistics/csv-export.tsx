@@ -128,6 +128,7 @@ export const CSVExport: React.FC = () => {
         <button
           onClick={handleExport}
           disabled={isExporting}
+          type="button"
           className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white transition-colors ${
             isExporting
               ? 'bg-gray-400 cursor-not-allowed'
