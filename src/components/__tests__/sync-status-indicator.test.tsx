@@ -9,25 +9,16 @@ vi.mock('../../stores/timer-store', () => ({
 }));
 
 // RealtimeSyncServiceのモック
+const mockSyncService = {
+  onSyncStatusChange: vi.fn(),
+  getConflictQueue: vi.fn(() => []),
+  getConnectedDevices: vi.fn(() => Promise.resolve([])),
+  resolveConflictManually: vi.fn(() => Promise.resolve()),
+};
+
 vi.mock('../../services/realtime-sync-service', () => ({
   RealtimeSyncService: {
-    getInstance: vi.fn(() => ({
-      onSyncStatusChange: vi.fn(callback => {
-        // 初期ステータスを送信
-        callback({
-          isOnline: true,
-          isSyncing: false,
-          pendingChanges: 0,
-          conflicts: 0,
-          lastSyncTime: new Date().toISOString(),
-          connectedDevices: 1,
-        });
-        return vi.fn(); // unsubscribe function
-      }),
-      getConflictQueue: vi.fn(() => []),
-      getConnectedDevices: vi.fn(() => Promise.resolve([])),
-      resolveConflictManually: vi.fn(() => Promise.resolve()),
-    })),
+    getInstance: vi.fn(() => mockSyncService),
   },
 }));
 
@@ -41,6 +32,23 @@ describe('SyncStatusIndicator', () => {
 
   beforeEach(() => {
     vi.mocked(useTimerStore).mockReturnValue(mockTimerStore);
+
+    // モックサービスをリセット
+    mockSyncService.onSyncStatusChange.mockImplementation(callback => {
+      // デフォルトの正常状態を送信
+      callback({
+        isOnline: true,
+        isSyncing: false,
+        pendingChanges: 0,
+        conflicts: 0,
+        lastSyncTime: new Date().toISOString(),
+        connectedDevices: 1,
+      });
+      return vi.fn(); // unsubscribe function
+    });
+    mockSyncService.getConflictQueue.mockReturnValue([]);
+    mockSyncService.getConnectedDevices.mockResolvedValue([]);
+    mockSyncService.resolveConflictManually.mockResolvedValue();
   });
 
   afterEach(() => {
@@ -105,6 +113,12 @@ describe('SyncStatusIndicator', () => {
 
   describe('詳細表示', () => {
     it('詳細ボタンをクリックすると詳細情報が表示される', async () => {
+      // オフライン状態にして詳細ボタンが表示されるようにする
+      vi.mocked(useTimerStore).mockReturnValue({
+        ...mockTimerStore,
+        isOnline: false,
+      });
+
       render(<SyncStatusIndicator />);
 
       const detailButton = screen.getByText('詳細');
@@ -119,6 +133,12 @@ describe('SyncStatusIndicator', () => {
     });
 
     it('詳細表示で閉じるボタンが機能する', async () => {
+      // オフライン状態にして詳細ボタンが表示されるようにする
+      vi.mocked(useTimerStore).mockReturnValue({
+        ...mockTimerStore,
+        isOnline: false,
+      });
+
       render(<SyncStatusIndicator />);
 
       // 詳細を開く
@@ -180,7 +200,7 @@ describe('SyncStatusIndicator', () => {
   });
 
   describe('競合解決', () => {
-    it('競合がある場合に解決ボタンが表示される', () => {
+    it('競合がある場合に解決ボタンが表示される', async () => {
       // 競合がある状態をモック
       const mockConflicts = [
         {
@@ -193,32 +213,29 @@ describe('SyncStatusIndicator', () => {
         },
       ];
 
-      // RealtimeSyncServiceのモックを更新
-      vi.doMock('../../services/realtime-sync-service', () => ({
-        RealtimeSyncService: {
-          getInstance: vi.fn(() => ({
-            onSyncStatusChange: vi.fn(callback => {
-              callback({
-                isOnline: true,
-                isSyncing: false,
-                pendingChanges: 0,
-                conflicts: 1,
-                lastSyncTime: new Date().toISOString(),
-                connectedDevices: 1,
-              });
-              return vi.fn();
-            }),
-            getConflictQueue: vi.fn(() => mockConflicts),
-            getConnectedDevices: vi.fn(() => Promise.resolve([])),
-            resolveConflictManually: vi.fn(() => Promise.resolve()),
-          })),
-        },
-      }));
+      // モックサービスを更新して競合を返すように設定
+      mockSyncService.getConflictQueue.mockReturnValue(mockConflicts);
+      mockSyncService.onSyncStatusChange.mockImplementation(callback => {
+        // 競合がある状態のステータスを送信
+        callback({
+          isOnline: true,
+          isSyncing: false,
+          pendingChanges: 0,
+          conflicts: 1,
+          lastSyncTime: new Date().toISOString(),
+          connectedDevices: 1,
+        });
+        return vi.fn(); // unsubscribe function
+      });
 
+      // コンポーネントをレンダリング
       render(<SyncStatusIndicator />);
 
-      expect(screen.getByText('1件の競合')).toBeInTheDocument();
-      expect(screen.getByText('解決')).toBeInTheDocument();
+      // 競合状態が反映されるまで待機
+      await waitFor(() => {
+        expect(screen.getByText('1件の競合')).toBeInTheDocument();
+        expect(screen.getByText('解決')).toBeInTheDocument();
+      });
     });
   });
 
