@@ -93,6 +93,63 @@ pnpm format:check
 
 # プレビュー（ビルド後）
 pnpm preview
+
+# タスク管理
+pnpm task:status    # タスク進捗確認
+pnpm task:start     # タスク開始（ブランチ作成）
+pnpm task:finish    # タスク完了（プルリクエスト作成）
+```
+
+## Git ワークフロー（GitHub Flow）
+
+### タスク開始時の手順
+
+```bash
+# タスク開始（機能ブランチ作成）
+pnpm task:start "タスク番号" "タスク名"
+
+# 例
+pnpm task:start "2.1" "Supabaseデータベーススキーマの実装"
+```
+
+### タスク完了時の手順
+
+```bash
+# タスク進捗の確認
+pnpm task:status
+
+# タスク完了（コミット・プッシュ・プルリクエスト作成）
+pnpm task:finish "タスク番号" "タスク名" "詳細説明"
+
+# 例
+pnpm task:finish "2.1" "Supabaseデータベーススキーマの実装" "- テーブル作成とRLS設定完了"
+```
+
+### 手動でのGit操作（GitHub Flow）
+
+```bash
+# 1. タスク開始
+git checkout main
+git pull origin main
+git checkout -b feature/task-X.X-description
+
+# 2. 実装・コミット（複数回可能）
+git add .
+git commit -m "feat: [タスク番号] 変更内容
+
+- 実装内容の詳細
+- テスト結果"
+
+# 3. プッシュ
+git push origin feature/task-X.X-description
+
+# 4. プルリクエスト作成
+gh pr create --title "[タスク番号] タスク名" --body "実装内容"
+
+# 5. マージ後のクリーンアップ
+git checkout main
+git pull origin main
+git branch -d feature/task-X.X-description
 ```
 
 ## プロジェクト構造
