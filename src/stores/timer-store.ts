@@ -4,6 +4,7 @@ import type { TimerState, Task, Session } from '../types';
 import { useAuthStore } from './auth-store';
 import { NotificationService } from '../services/notification-service';
 import { DatabaseService } from '../services/database-service';
+import { RealtimeSyncService } from '../services/realtime-sync-service';
 
 interface TimerStore extends TimerState {
   // セッション・タスク連携
@@ -12,6 +13,11 @@ interface TimerStore extends TimerState {
   showTaskSelection: boolean;
   showTaskCompletionDialog: boolean;
 
+  // リアルタイム同期
+  isOnline: boolean;
+  pendingChangesCount: number;
+  syncStatus: 'idle' | 'syncing' | 'error';
+
   // タスク管理
   setCurrentTask: (task: Task | null) => void;
   setShowTaskSelection: (show: boolean) => void;
@@ -19,6 +25,12 @@ interface TimerStore extends TimerState {
   completeTaskInSession: (
     status: 'completed' | 'continued' | 'paused'
   ) => Promise<void>;
+
+  // リアルタイム同期
+  initializeRealtimeSync: () => void;
+  cleanupRealtimeSync: () => void;
+  forcSync: () => Promise<void>;
+  updateSyncStatus: (status: 'idle' | 'syncing' | 'error') => void;
 
   // タイマー制御
   startTimer: () => Promise<void>;
@@ -65,10 +77,80 @@ export const useTimerStore = create<TimerStore>()(
       showTaskSelection: false,
       showTaskCompletionDialog: false,
 
+      // リアルタイム同期
+      isOnline: navigator.onLine,
+      pendingChangesCount: 0,
+      syncStatus: 'idle',
+
       // 通知・UI状態
       showBreakSuggestion: false,
       suggestedBreakType: 'short',
       showCompletionNotification: false,
+
+      // リアルタイム同期
+      initializeRealtimeSync: () => {
+        const realtimeService = RealtimeSyncService.getInstance();
+
+        // ネットワーク状態の監視
+        const updateNetworkStatus = () => {
+          set({
+            isOnline: realtimeService.isNetworkOnline(),
+            pendingChangesCount: realtimeService.getPendingChangesCount(),
+          });
+        };
+
+        // 初期状態を設定
+        updateNetworkStatus();
+
+        // ネットワーク状態の変更を監視
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
+
+        // タスクのリアルタイム同期を開始
+        realtimeService.subscribeToTasks(payload => {
+          console.log('タスクのリアルタイム更新:', payload);
+          // 必要に応じて状態を更新
+          updateNetworkStatus();
+        });
+
+        // セッションのリアルタイム同期を開始
+        realtimeService.subscribeToSessions(payload => {
+          console.log('セッションのリアルタイム更新:', payload);
+          // 必要に応じて状態を更新
+          updateNetworkStatus();
+        });
+
+        console.log('リアルタイム同期が初期化されました');
+      },
+
+      cleanupRealtimeSync: () => {
+        const realtimeService = RealtimeSyncService.getInstance();
+        realtimeService.cleanup();
+        console.log('リアルタイム同期がクリーンアップされました');
+      },
+
+      forcSync: async () => {
+        const realtimeService = RealtimeSyncService.getInstance();
+
+        set({ syncStatus: 'syncing' });
+
+        try {
+          await realtimeService.forcSync();
+          set({
+            syncStatus: 'idle',
+            pendingChangesCount: realtimeService.getPendingChangesCount(),
+          });
+          console.log('手動同期が完了しました');
+        } catch (error) {
+          set({ syncStatus: 'error' });
+          console.error('手動同期でエラーが発生しました:', error);
+          throw error;
+        }
+      },
+
+      updateSyncStatus: (status: 'idle' | 'syncing' | 'error') => {
+        set({ syncStatus: status });
+      },
 
       // セッション・タスク連携
       setCurrentTask: (task: Task | null) => {

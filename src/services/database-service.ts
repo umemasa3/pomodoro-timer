@@ -7,6 +7,7 @@ import type {
   CreateTaskRequest,
   UpdateTaskRequest,
 } from '../types';
+import { RealtimeSyncService } from './realtime-sync-service';
 
 /**
  * データベース操作を統一するサービスクラス
@@ -88,6 +89,27 @@ export class DatabaseService {
 
   // タスク関連操作
   static async createTask(taskData: CreateTaskRequest): Promise<Task> {
+    const realtimeService = RealtimeSyncService.getInstance();
+
+    // オフライン時はローカルで作成
+    if (!realtimeService.isNetworkOnline()) {
+      const {
+        data: { user },
+      } = await DatabaseService.getSupabaseClient().auth.getUser();
+
+      if (!user) {
+        throw new Error('認証が必要です');
+      }
+
+      return realtimeService.createTaskOffline({
+        user_id: user.id,
+        title: taskData.title,
+        description: taskData.description,
+        estimated_pomodoros: taskData.estimated_pomodoros || 1,
+        priority: taskData.priority || 'medium',
+      });
+    }
+
     const client = DatabaseService.getSupabaseClient();
 
     const {
@@ -126,6 +148,26 @@ export class DatabaseService {
     priority?: Task['priority'];
     limit?: number;
   }): Promise<Task[]> {
+    const realtimeService = RealtimeSyncService.getInstance();
+
+    // オフライン時はキャッシュから取得
+    if (!realtimeService.isNetworkOnline()) {
+      let tasks = realtimeService.getTasksFromCache();
+
+      // フィルタリングを適用
+      if (filters?.status) {
+        tasks = tasks.filter(task => task.status === filters.status);
+      }
+      if (filters?.priority) {
+        tasks = tasks.filter(task => task.priority === filters.priority);
+      }
+      if (filters?.limit) {
+        tasks = tasks.slice(0, filters.limit);
+      }
+
+      return tasks;
+    }
+
     const client = DatabaseService.getSupabaseClient();
 
     let query = client
@@ -151,7 +193,17 @@ export class DatabaseService {
       throw new Error(`タスク取得エラー: ${error.message}`);
     }
 
-    return data || [];
+    // オンライン時はキャッシュも更新
+    const tasks = data || [];
+    tasks.forEach(task => {
+      realtimeService.updateLocalTaskCache({
+        eventType: 'INSERT',
+        new: task,
+        old: {} as Task,
+      });
+    });
+
+    return tasks;
   }
 
   static async getTaskById(id: string): Promise<Task | null> {
@@ -177,6 +229,13 @@ export class DatabaseService {
     id: string,
     updates: UpdateTaskRequest
   ): Promise<Task> {
+    const realtimeService = RealtimeSyncService.getInstance();
+
+    // オフライン時はローカルで更新
+    if (!realtimeService.isNetworkOnline()) {
+      return realtimeService.updateTaskOffline(id, updates);
+    }
+
     const client = DatabaseService.getSupabaseClient();
 
     const updateData: any = {
@@ -371,6 +430,13 @@ export class DatabaseService {
     completed: boolean;
     started_at: string;
   }): Promise<Session> {
+    const realtimeService = RealtimeSyncService.getInstance();
+
+    // オフライン時はローカルで作成
+    if (!realtimeService.isNetworkOnline()) {
+      return realtimeService.createSessionOffline(sessionData);
+    }
+
     const client = DatabaseService.getSupabaseClient();
 
     const { data, error } = await (client as any)

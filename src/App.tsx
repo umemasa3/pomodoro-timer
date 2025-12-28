@@ -3,7 +3,9 @@ import { AuthGuard } from './components/auth';
 import { AuthPage } from './pages/auth-page';
 import { StatisticsPage } from './pages/statistics-page';
 import { TimerComponent } from './components/timer';
+import { SyncStatusIndicator } from './components/sync-status-indicator';
 import { useAuthStore } from './stores/auth-store';
+import { useTimerStore } from './stores/timer-store';
 import './index.css';
 
 type PageType = 'timer' | 'statistics';
@@ -11,12 +13,27 @@ type PageType = 'timer' | 'statistics';
 function App() {
   const { isAuthenticated, user, signOut, isLoading, initializeAuth } =
     useAuthStore();
+  const { initializeRealtimeSync, cleanupRealtimeSync } = useTimerStore();
   const [currentPage, setCurrentPage] = useState<PageType>('timer');
 
   // アプリ起動時に認証状態を初期化
   useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  // 認証完了後にリアルタイム同期を初期化
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      console.log('リアルタイム同期を初期化中...');
+      initializeRealtimeSync();
+
+      // クリーンアップ関数
+      return () => {
+        console.log('リアルタイム同期をクリーンアップ中...');
+        cleanupRealtimeSync();
+      };
+    }
+  }, [isAuthenticated, user, initializeRealtimeSync, cleanupRealtimeSync]);
 
   // ローディング中の表示
   if (isLoading) {
@@ -77,6 +94,9 @@ function App() {
   return (
     <AuthGuard fallback={<AuthPage onAuthSuccess={() => {}} />}>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        {/* 同期状態インジケーター */}
+        <SyncStatusIndicator />
+
         {/* ナビゲーションヘッダー */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="container mx-auto px-4">
