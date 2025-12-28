@@ -1,12 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { TimerState } from '../types';
+import type { TimerState, Task, Session } from '../types';
 import { useAuthStore } from './auth-store';
 import { NotificationService } from '../services/notification-service';
+import { DatabaseService } from '../services/database-service';
 
 interface TimerStore extends TimerState {
+  // セッション・タスク連携
+  currentTask: Task | null;
+  currentSession: Session | null;
+  showTaskSelection: boolean;
+  showTaskCompletionDialog: boolean;
+
+  // タスク管理
+  setCurrentTask: (task: Task | null) => void;
+  setShowTaskSelection: (show: boolean) => void;
+  setShowTaskCompletionDialog: (show: boolean) => void;
+  completeTaskInSession: (
+    status: 'completed' | 'continued' | 'paused'
+  ) => Promise<void>;
+
   // タイマー制御
-  startTimer: () => void;
+  startTimer: () => Promise<void>;
   pauseTimer: () => void;
   resetTimer: () => void;
 
@@ -44,16 +59,129 @@ export const useTimerStore = create<TimerStore>()(
       completedSessions: 0,
       intervalId: null,
 
+      // セッション・タスク連携
+      currentTask: null,
+      currentSession: null,
+      showTaskSelection: false,
+      showTaskCompletionDialog: false,
+
       // 通知・UI状態
       showBreakSuggestion: false,
       suggestedBreakType: 'short',
       showCompletionNotification: false,
 
+      // セッション・タスク連携
+      setCurrentTask: (task: Task | null) => {
+        set({ currentTask: task });
+      },
+
+      setShowTaskSelection: (show: boolean) => {
+        set({ showTaskSelection: show });
+      },
+
+      setShowTaskCompletionDialog: (show: boolean) => {
+        set({ showTaskCompletionDialog: show });
+      },
+
+      completeTaskInSession: async (
+        status: 'completed' | 'continued' | 'paused'
+      ) => {
+        const { currentTask, currentSession } = get();
+        const { user } = useAuthStore.getState();
+
+        if (!currentTask || !currentSession || !user) return;
+
+        try {
+          const databaseService = DatabaseService.getInstance();
+
+          // セッション記録を更新
+          await databaseService.updateSession(currentSession.id, {
+            task_completion_status: status,
+            completed_at: new Date().toISOString(),
+            completed: true,
+          });
+
+          // タスクの状態を更新
+          if (status === 'completed') {
+            await databaseService.updateTask(currentTask.id, {
+              status: 'completed',
+              completed_at: new Date().toISOString(),
+            });
+          } else if (status === 'paused') {
+            await databaseService.updateTask(currentTask.id, {
+              status: 'paused',
+            });
+          } else if (status === 'continued') {
+            await databaseService.updateTask(currentTask.id, {
+              status: 'in_progress',
+            });
+          }
+
+          // ポモドーロセッションの場合、完了ポモドーロ数を増加
+          if (currentSession.type === 'pomodoro') {
+            await databaseService.updateTask(currentTask.id, {
+              completed_pomodoros: currentTask.completed_pomodoros + 1,
+            });
+          }
+
+          set({
+            showTaskCompletionDialog: false,
+            currentSession: null,
+          });
+
+          // タスクが完了した場合、現在のタスクをクリア
+          if (status === 'completed') {
+            set({ currentTask: null });
+          }
+        } catch (error) {
+          console.error('セッション完了処理でエラーが発生しました:', error);
+        }
+      },
+
       // タイマー制御
-      startTimer: () => {
-        const { isRunning, intervalId } = get();
+      startTimer: async () => {
+        const { isRunning, intervalId, sessionType, currentTask } = get();
+        const { user } = useAuthStore.getState();
 
         if (isRunning) return; // 既に動作中の場合は何もしない
+
+        // ポモドーロセッションでタスクが選択されていない場合、タスク選択を促す
+        if (sessionType === 'pomodoro' && !currentTask) {
+          set({ showTaskSelection: true });
+          return;
+        }
+
+        // セッション記録を作成
+        if (user && sessionType === 'pomodoro') {
+          const databaseService = DatabaseService.getInstance();
+          const plannedDuration = user.settings.pomodoro_minutes;
+
+          // タスクが選択されている場合、タスクのステータスを「進行中」に更新
+          if (currentTask && currentTask.status === 'pending') {
+            try {
+              await databaseService.updateTask(currentTask.id, {
+                status: 'in_progress',
+              });
+            } catch (error) {
+              console.error('タスクステータス更新エラー:', error);
+            }
+          }
+
+          try {
+            const session = await databaseService.createSession({
+              user_id: user.id,
+              task_id: currentTask?.id,
+              type: sessionType,
+              planned_duration: plannedDuration,
+              actual_duration: 0,
+              completed: false,
+              started_at: new Date().toISOString(),
+            });
+            set({ currentSession: session });
+          } catch (error) {
+            console.error('セッション作成でエラーが発生しました:', error);
+          }
+        }
 
         // 既存のインターバルをクリア
         if (intervalId) {
@@ -117,7 +245,13 @@ export const useTimerStore = create<TimerStore>()(
       },
 
       completeSession: async () => {
-        const { intervalId, sessionType, completedSessions } = get();
+        const {
+          intervalId,
+          sessionType,
+          completedSessions,
+          currentTask,
+          currentSession,
+        } = get();
         const { user } = useAuthStore.getState();
 
         if (intervalId) {
@@ -133,13 +267,31 @@ export const useTimerStore = create<TimerStore>()(
         // 通知サービスを取得
         const notificationService = NotificationService.getInstance();
 
-        // ポモドーロセッションの場合、完了数を増加
+        // ポモドーロセッションの場合
         if (sessionType === 'pomodoro') {
           const newCompletedSessions = completedSessions + 1;
           set({ completedSessions: newCompletedSessions });
 
-          // セッション記録をデータベースに保存（将来実装）
-          // TODO: セッション記録の保存機能を実装
+          // セッション記録を更新（実際の時間を記録）
+          if (currentSession && user) {
+            try {
+              const databaseService = DatabaseService.getInstance();
+              const actualDuration = user.settings.pomodoro_minutes; // 完了した場合は予定時間と同じ
+
+              await databaseService.updateSession(currentSession.id, {
+                actual_duration: actualDuration,
+                completed: true,
+                completed_at: new Date().toISOString(),
+              });
+            } catch (error) {
+              console.error('セッション更新でエラーが発生しました:', error);
+            }
+          }
+
+          // タスクが選択されている場合、完了確認ダイアログを表示
+          if (currentTask) {
+            set({ showTaskCompletionDialog: true });
+          }
 
           // 休憩の提案
           const sessionsUntilLongBreak =
@@ -264,6 +416,7 @@ export const useTimerStore = create<TimerStore>()(
         completedSessions: state.completedSessions,
         sessionType: state.sessionType,
         currentTime: state.currentTime,
+        currentTask: state.currentTask,
       }),
     }
   )

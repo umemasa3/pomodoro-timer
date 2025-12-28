@@ -83,8 +83,10 @@ export interface UpdateTaskRequest {
   title?: string;
   description?: string;
   estimated_pomodoros?: number;
+  completed_pomodoros?: number;
   status?: 'pending' | 'in_progress' | 'paused' | 'completed';
   priority?: 'low' | 'medium' | 'high';
+  completed_at?: string;
 }
 
 // 統計関連の型
