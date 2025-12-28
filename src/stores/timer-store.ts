@@ -89,41 +89,44 @@ export const useTimerStore = create<TimerStore>()(
         const { currentTask, currentSession } = get();
         const { user } = useAuthStore.getState();
 
-        if (!currentTask || !currentSession || !user) return;
+        if (!currentTask || !currentSession || !user) {
+          throw new Error('セッション情報が不完全です');
+        }
 
         try {
           const databaseService = DatabaseService.getInstance();
 
-          // セッション記録を更新
-          await databaseService.updateSession(currentSession.id, {
+          // セッション記録を更新（詳細な履歴情報を含む）
+          const sessionUpdate = {
             task_completion_status: status,
             completed_at: new Date().toISOString(),
             completed: true,
-          });
+            actual_duration: user.settings.pomodoro_minutes, // 実際の作業時間
+          };
+
+          await databaseService.updateSession(currentSession.id, sessionUpdate);
 
           // タスクの状態を更新
+          const taskUpdates: Partial<Task> = {};
+
           if (status === 'completed') {
-            await databaseService.updateTask(currentTask.id, {
-              status: 'completed',
-              completed_at: new Date().toISOString(),
-            });
+            taskUpdates.status = 'completed';
+            taskUpdates.completed_at = new Date().toISOString();
           } else if (status === 'paused') {
-            await databaseService.updateTask(currentTask.id, {
-              status: 'paused',
-            });
+            taskUpdates.status = 'paused';
           } else if (status === 'continued') {
-            await databaseService.updateTask(currentTask.id, {
-              status: 'in_progress',
-            });
+            taskUpdates.status = 'in_progress';
           }
 
           // ポモドーロセッションの場合、完了ポモドーロ数を増加
           if (currentSession.type === 'pomodoro') {
-            await databaseService.updateTask(currentTask.id, {
-              completed_pomodoros: currentTask.completed_pomodoros + 1,
-            });
+            taskUpdates.completed_pomodoros =
+              currentTask.completed_pomodoros + 1;
           }
 
+          await databaseService.updateTask(currentTask.id, taskUpdates);
+
+          // 状態をクリア
           set({
             showTaskCompletionDialog: false,
             currentSession: null,
@@ -133,8 +136,24 @@ export const useTimerStore = create<TimerStore>()(
           if (status === 'completed') {
             set({ currentTask: null });
           }
+
+          // 成功ログ
+          console.log(`タスク完了処理成功: ${status}`, {
+            taskId: currentTask.id,
+            sessionId: currentSession.id,
+            completedPomodoros: taskUpdates.completed_pomodoros,
+          });
         } catch (error) {
           console.error('セッション完了処理でエラーが発生しました:', error);
+
+          // エラーの詳細をユーザーに分かりやすく伝える
+          if (error instanceof Error) {
+            throw new Error(`タスクの完了処理に失敗しました: ${error.message}`);
+          } else {
+            throw new Error(
+              'タスクの完了処理中に予期しないエラーが発生しました'
+            );
+          }
         }
       },
 
