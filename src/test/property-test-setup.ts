@@ -78,8 +78,9 @@ export const generators = {
       user_id: fc.uuid(),
       name: fc.string({ minLength: 1, maxLength: 50 }),
       color: fc
-        .hexaString({ minLength: 6, maxLength: 6 })
-        .map(hex => `#${hex}`),
+        .string({ minLength: 6, maxLength: 6 })
+        .filter(str => /^[0-9A-Fa-f]{6}$/.test(str))
+        .map((hex: string) => `#${hex}`),
       usage_count: fc.integer({ min: 0, max: 1000 }),
       created_at: fc
         .date({
