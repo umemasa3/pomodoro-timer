@@ -1,11 +1,11 @@
 {
-  "numTotalTestSuites": 10,
-  "numPassedTestSuites": 10,
-  "numFailedTestSuites": 0,
+  "numTotalTestSuites": 14,
+  "numPassedTestSuites": 8,
+  "numFailedTestSuites": 6,
   "numPendingTestSuites": 0,
-  "numTotalTests": 21,
-  "numPassedTests": 21,
-  "numFailedTests": 0,
+  "numTotalTests": 31,
+  "numPassedTests": 25,
+  "numFailedTests": 6,
   "numPendingTests": 0,
   "numTodoTests": 0,
   "snapshot": {
@@ -24,8 +24,8 @@
     "updated": 0,
     "didUpdate": false
   },
-  "startTime": 1766893551337,
-  "success": true,
+  "startTime": 1766907319359,
+  "success": false,
   "testResults": [
     {
       "assertionResults": [
@@ -37,7 +37,7 @@
           "fullName": "認証機能のプロパティテスト プロパティ 4: データ変更の自動保存 プロパティ 4: ユーザー登録時のプロファイル自動作成（サンプル）",
           "status": "passed",
           "title": "プロパティ 4: ユーザー登録時のプロファイル自動作成（サンプル）",
-          "duration": 8.382165999999984,
+          "duration": 7.715208999999959,
           "failureMessages": [],
           "meta": {}
         },
@@ -49,7 +49,7 @@
           "fullName": "認証機能のプロパティテスト プロパティ 4: データ変更の自動保存 プロパティ 4: ユーザー設定の自動保存と整合性（サンプル）",
           "status": "passed",
           "title": "プロパティ 4: ユーザー設定の自動保存と整合性（サンプル）",
-          "duration": 1.0398329999999305,
+          "duration": 1.2733340000000908,
           "failureMessages": [],
           "meta": {}
         },
@@ -61,7 +61,7 @@
           "fullName": "認証機能のプロパティテスト プロパティ 4: データ変更の自動保存 プロパティ 4: 認証状態の一貫性（サンプル）",
           "status": "passed",
           "title": "プロパティ 4: 認証状態の一貫性（サンプル）",
-          "duration": 0.33554100000003473,
+          "duration": 0.8979170000000067,
           "failureMessages": [],
           "meta": {}
         },
@@ -73,7 +73,7 @@
           "fullName": "認証機能のプロパティテスト 認証エラーハンドリングのプロパティテスト（サンプル） プロパティ: 無効なメールアドレスでの登録エラー（サンプル）",
           "status": "passed",
           "title": "プロパティ: 無効なメールアドレスでの登録エラー（サンプル）",
-          "duration": 0.5107920000000377,
+          "duration": 0.5639999999999645,
           "failureMessages": [],
           "meta": {}
         },
@@ -85,7 +85,7 @@
           "fullName": "認証機能のプロパティテスト 認証エラーハンドリングのプロパティテスト（サンプル） プロパティ: 弱いパスワードでの登録エラー（サンプル）",
           "status": "passed",
           "title": "プロパティ: 弱いパスワードでの登録エラー（サンプル）",
-          "duration": 1.1656249999999773,
+          "duration": 1.2114589999999907,
           "failureMessages": [],
           "meta": {}
         },
@@ -97,13 +97,13 @@
           "fullName": "認証機能のプロパティテスト データベース操作の自動保存プロパティ（サンプル） プロパティ 4: タスク作成時の自動保存（サンプル）",
           "status": "passed",
           "title": "プロパティ 4: タスク作成時の自動保存（サンプル）",
-          "duration": 0.7650830000000042,
+          "duration": 0.8654579999999896,
           "failureMessages": [],
           "meta": {}
         }
       ],
-      "startTime": 1766893551863,
-      "endTime": 1766893551874.7651,
+      "startTime": 1766907320071,
+      "endTime": 1766907320083.8655,
       "status": "passed",
       "message": "",
       "name": "/Users/masa/git/pomodoro-timer/src/test/auth.property.test.ts"
@@ -115,7 +115,7 @@
           "fullName": "プロパティテスト環境の動作確認 fast-checkライブラリが正常に動作する",
           "status": "passed",
           "title": "fast-checkライブラリが正常に動作する",
-          "duration": 1.4481250000000045,
+          "duration": 1.6523750000000064,
           "failureMessages": [],
           "meta": {}
         },
@@ -124,7 +124,7 @@
           "fullName": "プロパティテスト環境の動作確認 カスタムアービトラリが正常に動作する",
           "status": "passed",
           "title": "カスタムアービトラリが正常に動作する",
-          "duration": 1.2579999999999814,
+          "duration": 1.2442079999999578,
           "failureMessages": [],
           "meta": {}
         },
@@ -133,7 +133,7 @@
           "fullName": "プロパティテスト環境の動作確認 タスクアービトラリが一貫性のあるデータを生成する",
           "status": "passed",
           "title": "タスクアービトラリが一貫性のあるデータを生成する",
-          "duration": 4.063583999999992,
+          "duration": 4.244500000000016,
           "failureMessages": [],
           "meta": {}
         },
@@ -142,7 +142,7 @@
           "fullName": "プロパティテスト環境の動作確認 時間ヘルパー関数が正常に動作する",
           "status": "passed",
           "title": "時間ヘルパー関数が正常に動作する",
-          "duration": 0.4928750000000264,
+          "duration": 0.5577500000000555,
           "failureMessages": [],
           "meta": {}
         },
@@ -151,7 +151,7 @@
           "fullName": "プロパティテスト環境の動作確認 バリデーションヘルパーが正常に動作する",
           "status": "passed",
           "title": "バリデーションヘルパーが正常に動作する",
-          "duration": 0.5031669999999622,
+          "duration": 0.8566660000000184,
           "failureMessages": [],
           "meta": {}
         },
@@ -160,7 +160,7 @@
           "fullName": "プロパティテスト環境の動作確認 一貫性チェックヘルパーが正常に動作する",
           "status": "passed",
           "title": "一貫性チェックヘルパーが正常に動作する",
-          "duration": 0.32770800000002964,
+          "duration": 1.0167920000000095,
           "failureMessages": [],
           "meta": {}
         },
@@ -169,7 +169,7 @@
           "fullName": "プロパティテスト環境の動作確認 createPropertyTestヘルパー関数が正常に動作する",
           "status": "passed",
           "title": "createPropertyTestヘルパー関数が正常に動作する",
-          "duration": 0.6567909999999983,
+          "duration": 0.7200829999999314,
           "failureMessages": [],
           "meta": {}
         },
@@ -178,7 +178,7 @@
           "fullName": "設計文書プロパティのサンプル実装 プロパティ 1: タイマー開始の一貫性（サンプル）",
           "status": "passed",
           "title": "プロパティ 1: タイマー開始の一貫性（サンプル）",
-          "duration": 0.3530839999999671,
+          "duration": 0.3219169999999849,
           "failureMessages": [],
           "meta": {}
         },
@@ -187,7 +187,7 @@
           "fullName": "設計文書プロパティのサンプル実装 プロパティ 2: セッション完了カウンターの増分（サンプル）",
           "status": "passed",
           "title": "プロパティ 2: セッション完了カウンターの増分（サンプル）",
-          "duration": 0.162083999999993,
+          "duration": 0.19508400000006532,
           "failureMessages": [],
           "meta": {}
         },
@@ -196,7 +196,7 @@
           "fullName": "設計文書プロパティのサンプル実装 プロパティ 3: タスク状態更新の一貫性（サンプル）",
           "status": "passed",
           "title": "プロパティ 3: タスク状態更新の一貫性（サンプル）",
-          "duration": 2.7857499999999504,
+          "duration": 3.4247499999999036,
           "failureMessages": [],
           "meta": {}
         },
@@ -205,13 +205,13 @@
           "fullName": "設計文書プロパティのサンプル実装 プロパティ 4: データ変更の自動保存（サンプル）",
           "status": "passed",
           "title": "プロパティ 4: データ変更の自動保存（サンプル）",
-          "duration": 4.222874999999988,
+          "duration": 4.631333999999924,
           "failureMessages": [],
           "meta": {}
         }
       ],
-      "startTime": 1766893551839,
-      "endTime": 1766893551856.223,
+      "startTime": 1766907320070,
+      "endTime": 1766907320088.6313,
       "status": "passed",
       "message": "",
       "name": "/Users/masa/git/pomodoro-timer/src/test/sample.property.test.ts"
@@ -219,45 +219,165 @@
     {
       "assertionResults": [
         {
+          "ancestorTitles": ["セッション連携機能 - プロパティテスト"],
+          "fullName": "セッション連携機能 - プロパティテスト プロパティ 2: セッション完了カウンターの増分",
+          "status": "failed",
+          "title": "プロパティ 2: セッション完了カウンターの増分",
+          "duration": 9.152624999999944,
+          "failureMessages": [
+            "Error: Property failed after 1 tests\n{ seed: -357853556, path: \"0:0:0:0:0:1:0:0:0:0:0:0:0:0\", endOnFailure: true }\nCounterexample: [0,{\"id\":\"\",\"user_id\":\"test-user-id\",\"task_id\":undefined,\"type\":\"pomodoro\",\"planned_duration\":25,\"actual_duration\":25,\"completed\":false,\"started_at\":\"\"},{\"id\":\"\",\"user_id\":\"test-user-id\",\"title\":\" \",\"description\":undefined,\"estimated_pomodoros\":1,\"completed_pomodoros\":0,\"status\":\"pending\",\"priority\":\"low\",\"created_at\":\"\",\"updated_at\":\"\"}]\nShrunk 13 time(s)\n\nHint: Enable verbose mode in order to have the list of all failing values encountered during the run\n    at buildError (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:156:19)\n    at asyncThrowIfFailed (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:170:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"
+          ],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["セッション連携機能 - プロパティテスト"],
+          "fullName": "セッション連携機能 - プロパティテスト プロパティ 3: 休憩セッション完了時のカウンター不変性",
+          "status": "passed",
+          "title": "プロパティ 3: 休憩セッション完了時のカウンター不変性",
+          "duration": 2.318667000000005,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["セッション連携機能 - プロパティテスト"],
+          "fullName": "セッション連携機能 - プロパティテスト プロパティ 4: セッション完了時の状態遷移の一貫性",
+          "status": "passed",
+          "title": "プロパティ 4: セッション完了時の状態遷移の一貫性",
+          "duration": 9.741499999999974,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["セッション連携機能 - プロパティテスト"],
+          "fullName": "セッション連携機能 - プロパティテスト プロパティ 5: タスク完了確認ダイアログの表示条件",
+          "status": "passed",
+          "title": "プロパティ 5: タスク完了確認ダイアログの表示条件",
+          "duration": 4.338041999999973,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["セッション連携機能 - プロパティテスト"],
+          "fullName": "セッション連携機能 - プロパティテスト プロパティ 6: セッション記録の整合性",
+          "status": "passed",
+          "title": "プロパティ 6: セッション記録の整合性",
+          "duration": 6.6098329999999805,
+          "failureMessages": [],
+          "meta": {}
+        }
+      ],
+      "startTime": 1766907320111,
+      "endTime": 1766907320143.6099,
+      "status": "failed",
+      "message": "",
+      "name": "/Users/masa/git/pomodoro-timer/src/test/session-integration.property.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
+          "ancestorTitles": ["タスク時間見積もり機能 - プロパティテスト"],
+          "fullName": "タスク時間見積もり機能 - プロパティテスト プロパティ 1: 分割提案の一貫性",
+          "status": "passed",
+          "title": "プロパティ 1: 分割提案の一貫性",
+          "duration": 6.629249999999956,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["タスク時間見積もり機能 - プロパティテスト"],
+          "fullName": "タスク時間見積もり機能 - プロパティテスト プロパティ 2: サブタスクの1ポモドーロ制約",
+          "status": "passed",
+          "title": "プロパティ 2: サブタスクの1ポモドーロ制約",
+          "duration": 12.080375000000004,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["タスク時間見積もり機能 - プロパティテスト"],
+          "fullName": "タスク時間見積もり機能 - プロパティテスト プロパティ 3: 分割閾値の一貫性",
+          "status": "passed",
+          "title": "プロパティ 3: 分割閾値の一貫性",
+          "duration": 2.1929589999999735,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["タスク時間見積もり機能 - プロパティテスト"],
+          "fullName": "タスク時間見積もり機能 - プロパティテスト プロパティ 4: 分割タスクのタイトル生成",
+          "status": "passed",
+          "title": "プロパティ 4: 分割タスクのタイトル生成",
+          "duration": 5.038042000000019,
+          "failureMessages": [],
+          "meta": {}
+        },
+        {
+          "ancestorTitles": ["タスク時間見積もり機能 - プロパティテスト"],
+          "fullName": "タスク時間見積もり機能 - プロパティテスト プロパティ 5: 分割実行の冪等性",
+          "status": "failed",
+          "title": "プロパティ 5: 分割実行の冪等性",
+          "duration": 5.926666999999952,
+          "failureMessages": [
+            "Error: Property failed after 1 tests\n{ seed: -715183514, path: \"0:0:0:0:0:0:0:0:0:0:0:0:0\", endOnFailure: true }\nCounterexample: [{\"id\":\"\",\"user_id\":\"\",\"title\":\" \",\"description\":undefined,\"estimated_pomodoros\":2,\"completed_pomodoros\":0,\"status\":\"pending\",\"priority\":\"low\",\"created_at\":\"\",\"updated_at\":\"\"},[{\"title\":\" \",\"estimated_pomodoros\":1}]]\nShrunk 12 time(s)\n\nHint: Enable verbose mode in order to have the list of all failing values encountered during the run\n    at buildError (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:156:19)\n    at asyncThrowIfFailed (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:170:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"
+          ],
+          "meta": {}
+        }
+      ],
+      "startTime": 1766907320100,
+      "endTime": 1766907320131.9268,
+      "status": "failed",
+      "message": "",
+      "name": "/Users/masa/git/pomodoro-timer/src/test/task-estimation.property.test.ts"
+    },
+    {
+      "assertionResults": [
+        {
           "ancestorTitles": ["タイマー機能のプロパティテスト"],
           "fullName": "タイマー機能のプロパティテスト プロパティ 1: タイマー開始の一貫性",
-          "status": "passed",
+          "status": "failed",
           "title": "プロパティ 1: タイマー開始の一貫性",
-          "duration": 3.172374999999988,
-          "failureMessages": [],
+          "duration": 5.971208000000047,
+          "failureMessages": [
+            "Error: Property failed after 1 tests\n{ seed: -1172458137, path: \"0:0:0:0:0:0:0:0:0:0\", endOnFailure: true }\nCounterexample: [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\nShrunk 9 time(s)\n\nEncountered failures were:\n- [{__proto__:null,\"pomodoro_minutes\":19,\"short_break_minutes\":10,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":10,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\n- [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\n    at buildError (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:156:19)\n    at throwIfFailed (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:165:11)\n    at reportRunDetails (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:178:16)\n    at Proxy.assert (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/Runner.js:61:9)\n    at /Users/masa/git/pomodoro-timer/src/test/timer.property.test.ts:31:8\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:145:11\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:915:26\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1243:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1209:10)"
+          ],
           "meta": {}
         },
         {
           "ancestorTitles": ["タイマー機能のプロパティテスト"],
           "fullName": "タイマー機能のプロパティテスト プロパティ 1-補足: タイマー開始時の状態遷移の一貫性",
-          "status": "passed",
+          "status": "failed",
           "title": "プロパティ 1-補足: タイマー開始時の状態遷移の一貫性",
-          "duration": 1.3452499999999645,
-          "failureMessages": [],
+          "duration": 1.5772080000000415,
+          "failureMessages": [
+            "Error: Property failed after 1 tests\n{ seed: -1172458137, path: \"0:0:0:0:0:0:0:0:0:0\", endOnFailure: true }\nCounterexample: [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}},\"pomodoro\"]\nShrunk 9 time(s)\n\nEncountered failures were:\n- [{__proto__:null,\"pomodoro_minutes\":19,\"short_break_minutes\":10,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":10,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}},\"pomodoro\"]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}},\"pomodoro\"]\n- [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}},\"pomodoro\"]\n    at buildError (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:156:19)\n    at throwIfFailed (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:165:11)\n    at reportRunDetails (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:178:16)\n    at Proxy.assert (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/Runner.js:61:9)\n    at /Users/masa/git/pomodoro-timer/src/test/timer.property.test.ts:91:8\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:145:11\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:915:26\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1243:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1209:10)"
+          ],
           "meta": {}
         },
         {
           "ancestorTitles": ["タイマー機能のプロパティテスト"],
           "fullName": "タイマー機能のプロパティテスト プロパティ 1-エッジケース: 既に動作中のタイマーに対する開始操作",
-          "status": "passed",
+          "status": "failed",
           "title": "プロパティ 1-エッジケース: 既に動作中のタイマーに対する開始操作",
-          "duration": 0.7195839999999407,
-          "failureMessages": [],
+          "duration": 0.781084000000078,
+          "failureMessages": [
+            "Error: Property failed after 1 tests\n{ seed: -1172458137, path: \"0:0:0:0:0:0:0:0:0:0\", endOnFailure: true }\nCounterexample: [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\nShrunk 9 time(s)\n\nEncountered failures were:\n- [{__proto__:null,\"pomodoro_minutes\":19,\"short_break_minutes\":10,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":10,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":21,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":4,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":true,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"chime\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"auto\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\n- [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\n    at buildError (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:156:19)\n    at throwIfFailed (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:165:11)\n    at reportRunDetails (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:178:16)\n    at Proxy.assert (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/Runner.js:61:9)\n    at /Users/masa/git/pomodoro-timer/src/test/timer.property.test.ts:169:8\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:145:11\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:915:26\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1243:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1209:10)"
+          ],
           "meta": {}
         },
         {
           "ancestorTitles": ["タイマー機能のプロパティテスト"],
           "fullName": "タイマー機能のプロパティテスト プロパティ 1-境界値: 設定時間の境界値での動作確認",
-          "status": "passed",
+          "status": "failed",
           "title": "プロパティ 1-境界値: 設定時間の境界値での動作確認",
-          "duration": 0.5136670000000549,
-          "failureMessages": [],
+          "duration": 0.7081249999999955,
+          "failureMessages": [
+            "Error: Property failed after 1 tests\n{ seed: -1172458137, path: \"0:0:0:0:0:0:0:0:0\", endOnFailure: true }\nCounterexample: [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\nShrunk 8 time(s)\n\nEncountered failures were:\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":8,\"sound_enabled\":true,\"sound_type\":\"notification\",\"theme\":\"auto\",\"notifications\":{\"desktop\":true,\"sound\":true,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":true,\"sound_type\":\"notification\",\"theme\":\"auto\",\"notifications\":{\"desktop\":true,\"sound\":true,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"notification\",\"theme\":\"auto\",\"notifications\":{\"desktop\":true,\"sound\":true,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"auto\",\"notifications\":{\"desktop\":true,\"sound\":true,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":true,\"sound\":true,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":true,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":true}}]\n- [{__proto__:null,\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\n- [{\"pomodoro_minutes\":15,\"short_break_minutes\":3,\"long_break_minutes\":10,\"sessions_until_long_break\":2,\"sound_enabled\":false,\"sound_type\":\"bell\",\"theme\":\"light\",\"notifications\":{\"desktop\":false,\"sound\":false,\"vibration\":false}}]\n    at buildError (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:156:19)\n    at throwIfFailed (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:165:11)\n    at reportRunDetails (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/utils/RunDetailsFormatter.js:178:16)\n    at Proxy.assert (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/fast-check@4.5.2/node_modules/fast-check/lib/check/runner/Runner.js:61:9)\n    at /Users/masa/git/pomodoro-timer/src/test/timer.property.test.ts:218:8\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:145:11\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:915:26\n    at file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1243:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///Users/masa/git/pomodoro-timer/node_modules/.pnpm/@vitest+runner@4.0.16/node_modules/@vitest/runner/dist/index.js:1209:10)"
+          ],
           "meta": {}
         }
       ],
-      "startTime": 1766893551886,
-      "endTime": 1766893551891.5137,
-      "status": "passed",
+      "startTime": 1766907320129,
+      "endTime": 1766907320137.781,
+      "status": "failed",
       "message": "",
       "name": "/Users/masa/git/pomodoro-timer/src/test/timer.property.test.ts"
     }
