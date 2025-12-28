@@ -11,11 +11,15 @@ import {
   ProductivityAnalysis,
   WorkDistributionHeatmap,
   CategoryTimePieChart,
+  GoalProgress,
+  ComparisonAnalysis,
+  TagTrendGraph,
+  CSVExport,
 } from '../components/statistics';
 
 /**
  * 統計ページコンポーネント
- * 要件3.1-3.11: 基本統計機能と詳細分析機能の統合表示
+ * 要件3.1-3.21: 基本統計機能、詳細分析機能、タグ別統計・分析機能、目標設定・比較分析機能の統合表示
  */
 export const StatisticsPage: React.FC = () => {
   return (
@@ -35,6 +39,31 @@ export const StatisticsPage: React.FC = () => {
         <div className="space-y-8">
           {/* 基本統計概要（要件3.1-3.5） */}
           <StatisticsOverview />
+
+          {/* 目標設定・比較分析セクション（要件3.18-3.21） */}
+          <div className="space-y-6">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                目標設定・比較分析
+              </h2>
+
+              {/* 目標進捗と比較分析を並列配置 */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                <GoalProgress />
+                <ComparisonAnalysis />
+              </div>
+
+              {/* タグ別時間推移グラフを全幅で表示 */}
+              <div className="mb-6">
+                <TagTrendGraph />
+              </div>
+
+              {/* CSVエクスポート機能 */}
+              <div className="mb-6">
+                <CSVExport />
+              </div>
+            </div>
+          </div>
 
           {/* 詳細分析セクション（要件3.6-3.11） */}
           <div className="space-y-6">

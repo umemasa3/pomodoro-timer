@@ -1403,6 +1403,530 @@ export class DatabaseService {
       .subscribe();
   }
 
+  // 目標設定・比較分析機能用のメソッド（要件3.18-3.21対応）
+
+  /**
+   * 週間・月間目標に対する進捗率を取得（要件3.18）
+   */
+  static async getGoalProgress(): Promise<{
+    weeklyGoal: {
+      targetHours: number;
+      actualHours: number;
+      progressPercentage: number;
+      remainingHours: number;
+    };
+    monthlyGoal: {
+      targetHours: number;
+      actualHours: number;
+      progressPercentage: number;
+      remainingHours: number;
+    };
+  }> {
+    // デフォルト目標値（後で設定機能で変更可能にする）
+    const DEFAULT_WEEKLY_TARGET = 25; // 25時間/週
+    const DEFAULT_MONTHLY_TARGET = 100; // 100時間/月
+
+    // 今週の開始日と終了日を計算
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    // 今月の開始日と終了日を計算
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    endOfMonth.setHours(23, 59, 59, 999);
+
+    // 週間セッションデータを取得
+    const weeklySessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      completed: true,
+      startDate: startOfWeek.toISOString(),
+      endDate: endOfWeek.toISOString(),
+    });
+
+    // 月間セッションデータを取得
+    const monthlySessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      completed: true,
+      startDate: startOfMonth.toISOString(),
+      endDate: endOfMonth.toISOString(),
+    });
+
+    // 週間実績時間を計算（分単位から時間単位に変換）
+    const weeklyActualMinutes = weeklySessions.reduce(
+      (sum: number, session: any) => sum + (session.actual_duration || 0),
+      0
+    );
+    const weeklyActualHours =
+      Math.round((weeklyActualMinutes / 60) * 100) / 100;
+
+    // 月間実績時間を計算
+    const monthlyActualMinutes = monthlySessions.reduce(
+      (sum: number, session: any) => sum + (session.actual_duration || 0),
+      0
+    );
+    const monthlyActualHours =
+      Math.round((monthlyActualMinutes / 60) * 100) / 100;
+
+    // 進捗率を計算
+    const weeklyProgress = Math.min(
+      Math.round((weeklyActualHours / DEFAULT_WEEKLY_TARGET) * 100),
+      100
+    );
+    const monthlyProgress = Math.min(
+      Math.round((monthlyActualHours / DEFAULT_MONTHLY_TARGET) * 100),
+      100
+    );
+
+    return {
+      weeklyGoal: {
+        targetHours: DEFAULT_WEEKLY_TARGET,
+        actualHours: weeklyActualHours,
+        progressPercentage: weeklyProgress,
+        remainingHours: Math.max(DEFAULT_WEEKLY_TARGET - weeklyActualHours, 0),
+      },
+      monthlyGoal: {
+        targetHours: DEFAULT_MONTHLY_TARGET,
+        actualHours: monthlyActualHours,
+        progressPercentage: monthlyProgress,
+        remainingHours: Math.max(
+          DEFAULT_MONTHLY_TARGET - monthlyActualHours,
+          0
+        ),
+      },
+    };
+  }
+
+  /**
+   * 前週・前月との比較データを取得（要件3.19）
+   */
+  static async getComparisonData(): Promise<{
+    weeklyComparison: {
+      currentWeek: {
+        workHours: number;
+        sessionCount: number;
+        completedTasks: number;
+      };
+      previousWeek: {
+        workHours: number;
+        sessionCount: number;
+        completedTasks: number;
+      };
+      changes: {
+        workHoursChange: number; // パーセンテージ
+        sessionCountChange: number;
+        completedTasksChange: number;
+      };
+    };
+    monthlyComparison: {
+      currentMonth: {
+        workHours: number;
+        sessionCount: number;
+        completedTasks: number;
+      };
+      previousMonth: {
+        workHours: number;
+        sessionCount: number;
+        completedTasks: number;
+      };
+      changes: {
+        workHoursChange: number; // パーセンテージ
+        sessionCountChange: number;
+        completedTasksChange: number;
+      };
+    };
+  }> {
+    const now = new Date();
+
+    // 今週と前週の期間を計算
+    const startOfThisWeek = new Date(now);
+    startOfThisWeek.setDate(now.getDate() - now.getDay());
+    startOfThisWeek.setHours(0, 0, 0, 0);
+
+    const endOfThisWeek = new Date(startOfThisWeek);
+    endOfThisWeek.setDate(startOfThisWeek.getDate() + 6);
+    endOfThisWeek.setHours(23, 59, 59, 999);
+
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+
+    const endOfLastWeek = new Date(startOfThisWeek);
+    endOfLastWeek.setDate(startOfThisWeek.getDate() - 1);
+    endOfLastWeek.setHours(23, 59, 59, 999);
+
+    // 今月と前月の期間を計算
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfThisMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    endOfThisMonth.setHours(23, 59, 59, 999);
+
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    endOfLastMonth.setHours(23, 59, 59, 999);
+
+    // データを並行取得
+    const [
+      thisWeekSessions,
+      lastWeekSessions,
+      thisMonthSessions,
+      lastMonthSessions,
+      thisWeekTasks,
+      lastWeekTasks,
+      thisMonthTasks,
+      lastMonthTasks,
+    ] = await Promise.all([
+      DatabaseService.getSessions({
+        type: 'pomodoro',
+        completed: true,
+        startDate: startOfThisWeek.toISOString(),
+        endDate: endOfThisWeek.toISOString(),
+      }),
+      DatabaseService.getSessions({
+        type: 'pomodoro',
+        completed: true,
+        startDate: startOfLastWeek.toISOString(),
+        endDate: endOfLastWeek.toISOString(),
+      }),
+      DatabaseService.getSessions({
+        type: 'pomodoro',
+        completed: true,
+        startDate: startOfThisMonth.toISOString(),
+        endDate: endOfThisMonth.toISOString(),
+      }),
+      DatabaseService.getSessions({
+        type: 'pomodoro',
+        completed: true,
+        startDate: startOfLastMonth.toISOString(),
+        endDate: endOfLastMonth.toISOString(),
+      }),
+      DatabaseService.getTasks({ status: 'completed' }).then(tasks =>
+        tasks.filter(
+          task =>
+            task.completed_at &&
+            new Date(task.completed_at) >= startOfThisWeek &&
+            new Date(task.completed_at) <= endOfThisWeek
+        )
+      ),
+      DatabaseService.getTasks({ status: 'completed' }).then(tasks =>
+        tasks.filter(
+          task =>
+            task.completed_at &&
+            new Date(task.completed_at) >= startOfLastWeek &&
+            new Date(task.completed_at) <= endOfLastWeek
+        )
+      ),
+      DatabaseService.getTasks({ status: 'completed' }).then(tasks =>
+        tasks.filter(
+          task =>
+            task.completed_at &&
+            new Date(task.completed_at) >= startOfThisMonth &&
+            new Date(task.completed_at) <= endOfThisMonth
+        )
+      ),
+      DatabaseService.getTasks({ status: 'completed' }).then(tasks =>
+        tasks.filter(
+          task =>
+            task.completed_at &&
+            new Date(task.completed_at) >= startOfLastMonth &&
+            new Date(task.completed_at) <= endOfLastMonth
+        )
+      ),
+    ]);
+
+    // 週間データを計算
+    const thisWeekHours =
+      Math.round(
+        (thisWeekSessions.reduce(
+          (sum: number, s: any) => sum + (s.actual_duration || 0),
+          0
+        ) /
+          60) *
+          100
+      ) / 100;
+
+    const lastWeekHours =
+      Math.round(
+        (lastWeekSessions.reduce(
+          (sum: number, s: any) => sum + (s.actual_duration || 0),
+          0
+        ) /
+          60) *
+          100
+      ) / 100;
+
+    // 月間データを計算
+    const thisMonthHours =
+      Math.round(
+        (thisMonthSessions.reduce(
+          (sum: number, s: any) => sum + (s.actual_duration || 0),
+          0
+        ) /
+          60) *
+          100
+      ) / 100;
+
+    const lastMonthHours =
+      Math.round(
+        (lastMonthSessions.reduce(
+          (sum: number, s: any) => sum + (s.actual_duration || 0),
+          0
+        ) /
+          60) *
+          100
+      ) / 100;
+
+    // 変化率を計算
+    const calculateChange = (current: number, previous: number): number => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - previous) / previous) * 100);
+    };
+
+    return {
+      weeklyComparison: {
+        currentWeek: {
+          workHours: thisWeekHours,
+          sessionCount: thisWeekSessions.length,
+          completedTasks: thisWeekTasks.length,
+        },
+        previousWeek: {
+          workHours: lastWeekHours,
+          sessionCount: lastWeekSessions.length,
+          completedTasks: lastWeekTasks.length,
+        },
+        changes: {
+          workHoursChange: calculateChange(thisWeekHours, lastWeekHours),
+          sessionCountChange: calculateChange(
+            thisWeekSessions.length,
+            lastWeekSessions.length
+          ),
+          completedTasksChange: calculateChange(
+            thisWeekTasks.length,
+            lastWeekTasks.length
+          ),
+        },
+      },
+      monthlyComparison: {
+        currentMonth: {
+          workHours: thisMonthHours,
+          sessionCount: thisMonthSessions.length,
+          completedTasks: thisMonthTasks.length,
+        },
+        previousMonth: {
+          workHours: lastMonthHours,
+          sessionCount: lastMonthSessions.length,
+          completedTasks: lastMonthTasks.length,
+        },
+        changes: {
+          workHoursChange: calculateChange(thisMonthHours, lastMonthHours),
+          sessionCountChange: calculateChange(
+            thisMonthSessions.length,
+            lastMonthSessions.length
+          ),
+          completedTasksChange: calculateChange(
+            thisMonthTasks.length,
+            lastMonthTasks.length
+          ),
+        },
+      },
+    };
+  }
+
+  /**
+   * タグ別の時間推移グラフデータを取得（要件3.20）
+   */
+  static async getTagTrendData(days: number = 30): Promise<{
+    trendData: Array<{
+      date: string;
+      tagData: Record<string, number>; // タグ名 -> 作業時間（分）
+    }>;
+    tagList: Array<{
+      tagName: string;
+      tagColor: string;
+      totalHours: number;
+    }>;
+  }> {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - days);
+
+    // タグ付きタスクを取得
+    const tasksWithTags = await DatabaseService.getTasksWithTags();
+
+    // セッションデータを取得
+    const sessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      completed: true,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    });
+
+    // タスクIDとタグの関連を作成
+    const taskTagMap: Record<string, Tag[]> = {};
+    tasksWithTags.forEach(task => {
+      taskTagMap[task.id] = task.tags;
+    });
+
+    // 日付別・タグ別の作業時間を集計
+    const dateTagData: Record<string, Record<string, number>> = {};
+    const tagTotals: Record<string, { color: string; totalMinutes: number }> =
+      {};
+
+    // 指定期間の全日付を初期化
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      const dateKey = date.toISOString().split('T')[0];
+      dateTagData[dateKey] = {};
+    }
+
+    sessions.forEach((session: any) => {
+      if (!session.task_id || !taskTagMap[session.task_id]) return;
+
+      const sessionDate = new Date(session.completed_at || session.started_at);
+      const dateKey = sessionDate.toISOString().split('T')[0];
+      const workMinutes = Math.round((session.actual_duration || 0) / 60);
+
+      taskTagMap[session.task_id].forEach(tag => {
+        // 日付別データ
+        if (!dateTagData[dateKey]) {
+          dateTagData[dateKey] = {};
+        }
+        dateTagData[dateKey][tag.name] =
+          (dateTagData[dateKey][tag.name] || 0) + workMinutes;
+
+        // タグ別合計
+        if (!tagTotals[tag.name]) {
+          tagTotals[tag.name] = { color: tag.color, totalMinutes: 0 };
+        }
+        tagTotals[tag.name].totalMinutes += workMinutes;
+      });
+    });
+
+    // 結果を整形
+    const trendData = Object.entries(dateTagData).map(([date, tagData]) => ({
+      date,
+      tagData,
+    }));
+
+    const tagList = Object.entries(tagTotals).map(([tagName, data]) => ({
+      tagName,
+      tagColor: data.color,
+      totalHours: Math.round((data.totalMinutes / 60) * 100) / 100,
+    }));
+
+    return {
+      trendData: trendData.sort((a, b) => a.date.localeCompare(b.date)),
+      tagList: tagList.sort((a, b) => b.totalHours - a.totalHours),
+    };
+  }
+
+  /**
+   * 統計データをCSV形式でエクスポート（要件3.21）
+   */
+  static async exportStatisticsToCSV(): Promise<string> {
+    // 基本統計データを取得
+    const [sessions, tasks, tagStats, goalProgress, comparisonData] =
+      await Promise.all([
+        DatabaseService.getSessions({ completed: true }),
+        DatabaseService.getTasks(),
+        DatabaseService.getTagStatistics(),
+        DatabaseService.getGoalProgress(),
+        DatabaseService.getComparisonData(),
+      ]);
+
+    // CSVヘッダーとデータを構築
+    const csvData: string[] = [];
+
+    // セッション履歴
+    csvData.push('=== セッション履歴 ===');
+    csvData.push('日付,タイプ,計画時間(分),実際時間(分),完了状況,タスクID');
+    sessions.forEach((session: any) => {
+      const date = new Date(session.started_at).toLocaleDateString('ja-JP');
+      const plannedMinutes = Math.round((session.planned_duration || 0) / 60);
+      const actualMinutes = Math.round((session.actual_duration || 0) / 60);
+      const completed = session.completed ? '完了' : '未完了';
+      csvData.push(
+        `${date},${session.type},${plannedMinutes},${actualMinutes},${completed},${session.task_id || ''}`
+      );
+    });
+
+    csvData.push('');
+
+    // タスク履歴
+    csvData.push('=== タスク履歴 ===');
+    csvData.push(
+      'タスク名,優先度,状態,見積もりポモドーロ,完了ポモドーロ,作成日,完了日'
+    );
+    tasks.forEach(task => {
+      const createdDate = new Date(task.created_at).toLocaleDateString('ja-JP');
+      const completedDate = task.completed_at
+        ? new Date(task.completed_at).toLocaleDateString('ja-JP')
+        : '';
+      csvData.push(
+        `"${task.title}",${task.priority},${task.status},${task.estimated_pomodoros},${task.completed_pomodoros},${createdDate},${completedDate}`
+      );
+    });
+
+    csvData.push('');
+
+    // タグ別統計
+    csvData.push('=== タグ別統計 ===');
+    csvData.push(
+      'タグ名,完了タスク数,総作業時間(時間),セッション数,平均完了率(%)'
+    );
+    tagStats.forEach(stat => {
+      const workHours = Math.round((stat.totalWorkTime / 60) * 100) / 100;
+      csvData.push(
+        `"${stat.tagName}",${stat.completedTasks},${workHours},${stat.sessionCount},${stat.averageTaskCompletion}`
+      );
+    });
+
+    csvData.push('');
+
+    // 目標進捗
+    csvData.push('=== 目標進捗 ===');
+    csvData.push('期間,目標時間,実績時間,進捗率(%),残り時間');
+    csvData.push(
+      `週間,${goalProgress.weeklyGoal.targetHours},${goalProgress.weeklyGoal.actualHours},${goalProgress.weeklyGoal.progressPercentage},${goalProgress.weeklyGoal.remainingHours}`
+    );
+    csvData.push(
+      `月間,${goalProgress.monthlyGoal.targetHours},${goalProgress.monthlyGoal.actualHours},${goalProgress.monthlyGoal.progressPercentage},${goalProgress.monthlyGoal.remainingHours}`
+    );
+
+    csvData.push('');
+
+    // 比較データ
+    csvData.push('=== 週間比較 ===');
+    csvData.push('期間,作業時間,セッション数,完了タスク数');
+    csvData.push(
+      `今週,${comparisonData.weeklyComparison.currentWeek.workHours},${comparisonData.weeklyComparison.currentWeek.sessionCount},${comparisonData.weeklyComparison.currentWeek.completedTasks}`
+    );
+    csvData.push(
+      `前週,${comparisonData.weeklyComparison.previousWeek.workHours},${comparisonData.weeklyComparison.previousWeek.sessionCount},${comparisonData.weeklyComparison.previousWeek.completedTasks}`
+    );
+
+    csvData.push('');
+    csvData.push('=== 月間比較 ===');
+    csvData.push('期間,作業時間,セッション数,完了タスク数');
+    csvData.push(
+      `今月,${comparisonData.monthlyComparison.currentMonth.workHours},${comparisonData.monthlyComparison.currentMonth.sessionCount},${comparisonData.monthlyComparison.currentMonth.completedTasks}`
+    );
+    csvData.push(
+      `前月,${comparisonData.monthlyComparison.previousMonth.workHours},${comparisonData.monthlyComparison.previousMonth.sessionCount},${comparisonData.monthlyComparison.previousMonth.completedTasks}`
+    );
+
+    // エクスポート日時を追加
+    csvData.push('');
+    csvData.push(`=== エクスポート情報 ===`);
+    csvData.push(`エクスポート日時,${new Date().toLocaleString('ja-JP')}`);
+
+    return csvData.join('\n');
+  }
+
   // データベース接続テスト
   static async testConnection(): Promise<boolean> {
     try {
