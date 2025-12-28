@@ -71,7 +71,7 @@ export class RealtimeSyncService {
     this.deviceId = this.generateDeviceId();
     this.setupNetworkListeners();
     this.loadPendingChanges();
-    this.registerDevice();
+    this.registerDevice(); // 非同期だが、awaitしない（バックグラウンドで実行）
     this.setupHeartbeat();
   }
 
@@ -1161,7 +1161,7 @@ export class RealtimeSyncService {
    * ネットワーク状態を取得
    */
   isNetworkOnline(): boolean {
-    return this.isOnline;
+    return navigator.onLine && this.isOnline;
   }
 
   /**
@@ -1175,7 +1175,7 @@ export class RealtimeSyncService {
    * 手動で同期を実行
    */
   async forcSync(): Promise<void> {
-    if (!this.isOnline) {
+    if (!this.isNetworkOnline()) {
       throw new Error('ネットワークに接続されていません');
     }
     await this.syncPendingChanges();

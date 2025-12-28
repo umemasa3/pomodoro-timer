@@ -74,7 +74,10 @@ describe('マルチデバイス同期機能', () => {
       expect(deviceId).toMatch(/^device-\d+-[a-z0-9]+$/);
     });
 
-    it('デバイス情報がローカルストレージに保存される', () => {
+    it('デバイス情報がローカルストレージに保存される', async () => {
+      // デバイス登録の完了を少し待つ
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       const deviceInfo = localStorage.getItem('pomodoro-device-info');
       expect(deviceInfo).toBeTruthy();
 
@@ -302,6 +305,9 @@ describe('マルチデバイス同期機能', () => {
         writable: true,
         value: false,
       });
+
+      // RealtimeSyncServiceの内部状態も更新
+      (syncService as any).isOnline = false;
 
       await expect(syncService.forcSync()).rejects.toThrow(
         'ネットワークに接続されていません'
