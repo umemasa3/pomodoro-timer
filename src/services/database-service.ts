@@ -77,7 +77,7 @@ export class DatabaseService {
   }
 
   // タスク関連操作
-  async createTask(taskData: CreateTaskRequest): Promise<Task> {
+  static async createTask(taskData: CreateTaskRequest): Promise<Task> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -109,7 +109,7 @@ export class DatabaseService {
     return data;
   }
 
-  async getTasks(filters?: {
+  static async getTasks(filters?: {
     status?: Task['status'];
     priority?: Task['priority'];
     limit?: number;
@@ -214,7 +214,7 @@ export class DatabaseService {
     return data;
   }
 
-  async getTags(): Promise<Tag[]> {
+  static async getTags(): Promise<Tag[]> {
     const { data, error } = await supabase
       .from('tags')
       .select('*')
@@ -323,7 +323,7 @@ export class DatabaseService {
   }
 
   // セッション関連操作
-  async createSession(sessionData: {
+  static async createSession(sessionData: {
     user_id: string;
     task_id?: string;
     type: Session['type'];
@@ -345,7 +345,7 @@ export class DatabaseService {
     return data;
   }
 
-  async updateSession(
+  static async updateSession(
     id: string,
     updates: {
       actual_duration?: number;
@@ -458,7 +458,7 @@ export class DatabaseService {
       const createdSubtasks: Task[] = [];
 
       // 元のタスクを完了状態に変更
-      await this.updateTask(originalTask.id, {
+      await DatabaseService.updateTask(originalTask.id, {
         status: 'completed',
         completed_at: new Date().toISOString(),
       });
@@ -472,7 +472,7 @@ export class DatabaseService {
           priority: originalTask.priority,
         };
 
-        const createdSubtask = await this.createTask(createRequest);
+        const createdSubtask = await DatabaseService.createTask(createRequest);
         createdSubtasks.push(createdSubtask);
       }
 
@@ -480,7 +480,7 @@ export class DatabaseService {
     } catch (error) {
       // エラーが発生した場合、元のタスクの状態を元に戻す
       try {
-        await this.updateTask(originalTask.id, {
+        await DatabaseService.updateTask(originalTask.id, {
           status: originalTask.status,
           completed_at: originalTask.completed_at,
         });
@@ -519,6 +519,310 @@ export class DatabaseService {
           ? sessions.reduce((sum, s) => sum + (s.actual_duration || 0), 0) /
             sessions.length
           : 0,
+    };
+  }
+
+  // 統計機能用の追加メソッド
+  static async getCompletedTasksCount(dateRange?: {
+    start: string;
+    end: string;
+  }): Promise<number> {
+    let query = supabase
+      .from('tasks')
+      .select('id', { count: 'exact' })
+      .eq('status', 'completed');
+
+    if (dateRange) {
+      query = query
+        .gte('completed_at', dateRange.start)
+        .lte('completed_at', dateRange.end);
+    }
+
+    const { count, error } = await query;
+
+    if (error) {
+      throw new Error(`完了タスク数取得エラー: ${error.message}`);
+    }
+
+    return count || 0;
+  }
+
+  // 詳細分析機能用のメソッド（要件3.6-3.11対応）
+
+  /**
+   * 作業時間グラフ用のデータを取得（要件3.7）
+   */
+  static async getWorkTimeGraphData(days: number = 30): Promise<
+    Array<{
+      date: string;
+      workTime: number; // 分単位
+      sessionCount: number;
+    }>
+  > {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const sessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      completed: true,
+      startDate: startDate.toISOString(),
+    });
+
+    // 日付別にデータを集計
+    const dataByDate: Record<
+      string,
+      { workTime: number; sessionCount: number }
+    > = {};
+
+    // 指定された日数分の日付を初期化
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      dataByDate[dateKey] = { workTime: 0, sessionCount: 0 };
+    }
+
+    // セッションデータを集計
+    sessions.forEach(session => {
+      const sessionDate = new Date(session.completed_at || session.started_at);
+      const dateKey = sessionDate.toISOString().split('T')[0];
+
+      if (dataByDate[dateKey]) {
+        dataByDate[dateKey].workTime += Math.round(
+          (session.actual_duration || 0) / 60
+        ); // 秒を分に変換
+        dataByDate[dateKey].sessionCount += 1;
+      }
+    });
+
+    return Object.entries(dataByDate).map(([date, data]) => ({
+      date,
+      workTime: data.workTime,
+      sessionCount: data.sessionCount,
+    }));
+  }
+
+  /**
+   * タスク種類別内訳データを取得（要件3.8）
+   */
+  static async getTaskTypeBreakdown(): Promise<
+    Array<{
+      priority: string;
+      count: number;
+      completedCount: number;
+      totalWorkTime: number; // 分単位
+    }>
+  > {
+    const tasks = await DatabaseService.getTasks();
+
+    // 優先度別に集計
+    const breakdown: Record<
+      string,
+      {
+        count: number;
+        completedCount: number;
+        totalWorkTime: number;
+      }
+    > = {
+      high: { count: 0, completedCount: 0, totalWorkTime: 0 },
+      medium: { count: 0, completedCount: 0, totalWorkTime: 0 },
+      low: { count: 0, completedCount: 0, totalWorkTime: 0 },
+    };
+
+    // セッションデータも取得してタスクごとの作業時間を計算
+    const sessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      completed: true,
+    });
+
+    // タスクIDごとの作業時間を計算
+    const workTimeByTask: Record<string, number> = {};
+    sessions.forEach(session => {
+      if (session.task_id) {
+        workTimeByTask[session.task_id] =
+          (workTimeByTask[session.task_id] || 0) +
+          Math.round((session.actual_duration || 0) / 60);
+      }
+    });
+
+    tasks.forEach(task => {
+      const priority = task.priority || 'medium';
+      breakdown[priority].count += 1;
+
+      if (task.status === 'completed') {
+        breakdown[priority].completedCount += 1;
+      }
+
+      breakdown[priority].totalWorkTime += workTimeByTask[task.id] || 0;
+    });
+
+    return Object.entries(breakdown).map(([priority, data]) => ({
+      priority,
+      ...data,
+    }));
+  }
+
+  /**
+   * 連続作業日数と最長記録を取得（要件3.9）
+   */
+  static async getWorkStreakData(): Promise<{
+    currentStreak: number;
+    longestStreak: number;
+    streakHistory: Array<{ startDate: string; endDate: string; days: number }>;
+  }> {
+    const sessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      completed: true,
+    });
+
+    if (sessions.length === 0) {
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        streakHistory: [],
+      };
+    }
+
+    // 日付別にセッションがあるかを確認
+    const workDates = new Set<string>();
+    sessions.forEach(session => {
+      const date = new Date(session.completed_at || session.started_at);
+      workDates.add(date.toISOString().split('T')[0]);
+    });
+
+    const sortedDates = Array.from(workDates).sort();
+
+    // 連続作業日数を計算
+    const streaks: Array<{ startDate: string; endDate: string; days: number }> =
+      [];
+    let currentStreakStart = sortedDates[0];
+    let currentStreakEnd = sortedDates[0];
+
+    for (let i = 1; i < sortedDates.length; i++) {
+      const prevDate = new Date(sortedDates[i - 1]);
+      const currentDate = new Date(sortedDates[i]);
+      const dayDiff = Math.floor(
+        (currentDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (dayDiff === 1) {
+        // 連続している
+        currentStreakEnd = sortedDates[i];
+      } else {
+        // 連続が途切れた
+        const days =
+          Math.floor(
+            (new Date(currentStreakEnd).getTime() -
+              new Date(currentStreakStart).getTime()) /
+              (1000 * 60 * 60 * 24)
+          ) + 1;
+        streaks.push({
+          startDate: currentStreakStart,
+          endDate: currentStreakEnd,
+          days,
+        });
+        currentStreakStart = sortedDates[i];
+        currentStreakEnd = sortedDates[i];
+      }
+    }
+
+    // 最後のストリークを追加
+    const days =
+      Math.floor(
+        (new Date(currentStreakEnd).getTime() -
+          new Date(currentStreakStart).getTime()) /
+          (1000 * 60 * 60 * 24)
+      ) + 1;
+    streaks.push({
+      startDate: currentStreakStart,
+      endDate: currentStreakEnd,
+      days,
+    });
+
+    // 現在のストリークを計算
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    let currentStreak = 0;
+    if (workDates.has(today)) {
+      // 今日作業している場合
+      const lastStreak = streaks[streaks.length - 1];
+      if (lastStreak.endDate === today) {
+        currentStreak = lastStreak.days;
+      }
+    } else if (workDates.has(yesterdayStr)) {
+      // 昨日まで作業していた場合
+      const lastStreak = streaks[streaks.length - 1];
+      if (lastStreak.endDate === yesterdayStr) {
+        currentStreak = lastStreak.days;
+      }
+    }
+
+    const longestStreak = Math.max(...streaks.map(s => s.days), 0);
+
+    return {
+      currentStreak,
+      longestStreak,
+      streakHistory: streaks,
+    };
+  }
+
+  /**
+   * 平均セッション完了率を計算（要件3.10）
+   */
+  static async getSessionCompletionRate(days: number = 30): Promise<{
+    completionRate: number; // パーセンテージ
+    totalSessions: number;
+    completedSessions: number;
+    averageSessionLength: number; // 分単位
+    focusScore: number; // 集中度指標（0-100）
+  }> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const allSessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      startDate: startDate.toISOString(),
+    });
+
+    const completedSessions = allSessions.filter(s => s.completed);
+    const totalSessions = allSessions.length;
+    const completionRate =
+      totalSessions > 0 ? (completedSessions.length / totalSessions) * 100 : 0;
+
+    // 平均セッション長を計算
+    const totalDuration = completedSessions.reduce(
+      (sum, s) => sum + (s.actual_duration || 0),
+      0
+    );
+    const averageSessionLength =
+      completedSessions.length > 0
+        ? Math.round(totalDuration / completedSessions.length / 60)
+        : 0;
+
+    // 集中度指標を計算（計画時間に対する実際の完了率）
+    let focusScore = 0;
+    if (completedSessions.length > 0) {
+      const plannedVsActual = completedSessions.map(s => {
+        const planned = s.planned_duration || 1500; // デフォルト25分
+        const actual = s.actual_duration || 0;
+        return Math.min(actual / planned, 1); // 100%を上限とする
+      });
+      focusScore = Math.round(
+        (plannedVsActual.reduce((sum, ratio) => sum + ratio, 0) /
+          plannedVsActual.length) *
+          100
+      );
+    }
+
+    return {
+      completionRate: Math.round(completionRate * 100) / 100,
+      totalSessions,
+      completedSessions: completedSessions.length,
+      averageSessionLength,
+      focusScore,
     };
   }
 
