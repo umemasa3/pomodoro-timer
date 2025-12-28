@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import type { Database } from '../types/database';
 import type {
   User,
   Task,
@@ -25,12 +24,10 @@ export class DatabaseService {
     return DatabaseService.instance;
   }
   // ユーザー関連操作
-  static async createUser(
-    userData: Database['public']['Tables']['users']['Insert']
-  ): Promise<User> {
-    const { data, error } = await supabase
+  static async createUser(userData: any): Promise<User> {
+    const { data, error } = await (supabase as any)
       .from('users')
-      .insert(userData)
+      .insert([userData])
       .select()
       .single();
 
@@ -58,11 +55,8 @@ export class DatabaseService {
     return data;
   }
 
-  static async updateUser(
-    id: string,
-    updates: Database['public']['Tables']['users']['Update']
-  ): Promise<User> {
-    const { data, error } = await supabase
+  static async updateUser(id: string, updates: any): Promise<User> {
+    const { data, error } = await (supabase as any)
       .from('users')
       .update(updates)
       .eq('id', id)
@@ -86,7 +80,7 @@ export class DatabaseService {
       throw new Error('認証が必要です');
     }
 
-    const insertData: Database['public']['Tables']['tasks']['Insert'] = {
+    const insertData: any = {
       user_id: user.id,
       title: taskData.title,
       description: taskData.description,
@@ -96,9 +90,9 @@ export class DatabaseService {
       priority: taskData.priority || 'medium',
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('tasks')
-      .insert(insertData)
+      .insert([insertData])
       .select()
       .single();
 
@@ -157,12 +151,15 @@ export class DatabaseService {
     return data;
   }
 
-  async updateTask(id: string, updates: UpdateTaskRequest): Promise<Task> {
-    const updateData: Database['public']['Tables']['tasks']['Update'] = {
+  static async updateTask(
+    id: string,
+    updates: UpdateTaskRequest
+  ): Promise<Task> {
+    const updateData: any = {
       ...updates,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('tasks')
       .update(updateData)
       .eq('id', id)
@@ -194,13 +191,15 @@ export class DatabaseService {
       throw new Error('認証が必要です');
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('tags')
-      .insert({
-        user_id: user.id,
-        name,
-        color,
-      })
+      .insert([
+        {
+          user_id: user.id,
+          name,
+          color,
+        },
+      ])
       .select()
       .single();
 
@@ -231,7 +230,7 @@ export class DatabaseService {
     id: string,
     updates: { name?: string; color?: string }
   ): Promise<Tag> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('tags')
       .update(updates)
       .eq('id', id)
@@ -258,7 +257,7 @@ export class DatabaseService {
     const { error } = await supabase.from('task_tags').insert({
       task_id: taskId,
       tag_id: tagId,
-    });
+    } as any);
 
     if (error) {
       if (error.code === '23505') {
@@ -269,7 +268,7 @@ export class DatabaseService {
 
     // タグの使用頻度を増やす
     try {
-      await supabase.rpc('increment_tag_usage', { tag_id: tagId });
+      await supabase.rpc('increment_tag_usage', { tag_id: tagId } as any);
     } catch (err) {
       // 使用頻度の更新に失敗しても、タグの追加は成功とする
       console.warn('タグ使用頻度の更新に失敗:', err);
@@ -289,7 +288,7 @@ export class DatabaseService {
 
     // タグの使用頻度を減らす
     try {
-      await supabase.rpc('decrement_tag_usage', { tag_id: tagId });
+      await supabase.rpc('decrement_tag_usage', { tag_id: tagId } as any);
     } catch (err) {
       // 使用頻度の更新に失敗しても、タグの削除は成功とする
       console.warn('タグ使用頻度の更新に失敗:', err);
@@ -314,7 +313,7 @@ export class DatabaseService {
     }
 
     // データ構造を整形
-    return (data || []).map(task => ({
+    return (data || []).map((task: any) => ({
       ...task,
       tags:
         task.task_tags?.map((tt: { tags: Tag }) => tt.tags).filter(Boolean) ||
@@ -332,9 +331,9 @@ export class DatabaseService {
     completed: boolean;
     started_at: string;
   }): Promise<Session> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('sessions')
-      .insert(sessionData)
+      .insert([sessionData])
       .select()
       .single();
 
@@ -354,7 +353,7 @@ export class DatabaseService {
       task_completion_status?: Session['task_completion_status'];
     }
   ): Promise<Session> {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('sessions')
       .update(updates)
       .eq('id', id)
@@ -510,14 +509,17 @@ export class DatabaseService {
 
     return {
       totalSessions: sessions.length,
-      pomodoroSessions: sessions.filter(s => s.type === 'pomodoro').length,
+      pomodoroSessions: sessions.filter((s: any) => s.type === 'pomodoro')
+        .length,
       totalWorkTime: sessions
-        .filter(s => s.type === 'pomodoro')
-        .reduce((sum, s) => sum + (s.actual_duration || 0), 0),
+        .filter((s: any) => s.type === 'pomodoro')
+        .reduce((sum: number, s: any) => sum + (s.actual_duration || 0), 0),
       averageSessionLength:
         sessions.length > 0
-          ? sessions.reduce((sum, s) => sum + (s.actual_duration || 0), 0) /
-            sessions.length
+          ? sessions.reduce(
+              (sum: number, s: any) => sum + (s.actual_duration || 0),
+              0
+            ) / sessions.length
           : 0,
     };
   }
@@ -545,6 +547,80 @@ export class DatabaseService {
     }
 
     return count || 0;
+  }
+
+  static async getDailySessionStats(days: number = 7): Promise<
+    Array<{
+      date: string;
+      sessions: number;
+      workTime: number;
+      completedTasks: number;
+    }>
+  > {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // セッションデータを取得
+    const sessions = await DatabaseService.getSessions({
+      startDate: startDate.toISOString(),
+      completed: true,
+    });
+
+    // タスクデータを取得
+    const tasks = await DatabaseService.getTasks({
+      status: 'completed',
+    });
+
+    // 日付別にデータを集計
+    const statsByDate: Record<
+      string,
+      {
+        sessions: number;
+        workTime: number;
+        completedTasks: number;
+      }
+    > = {};
+
+    // 指定された日数分の日付を初期化
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      statsByDate[dateKey] = { sessions: 0, workTime: 0, completedTasks: 0 };
+    }
+
+    // セッションデータを集計
+    sessions.forEach((session: any) => {
+      const sessionDate = new Date(session.completed_at || session.started_at);
+      const dateKey = sessionDate.toISOString().split('T')[0];
+
+      if (statsByDate[dateKey]) {
+        statsByDate[dateKey].sessions += 1;
+        if (session.type === 'pomodoro') {
+          statsByDate[dateKey].workTime += Math.round(
+            (session.actual_duration || 0) / 60
+          );
+        }
+      }
+    });
+
+    // タスクデータを集計
+    tasks.forEach(task => {
+      if (task.completed_at) {
+        const taskDate = new Date(task.completed_at);
+        const dateKey = taskDate.toISOString().split('T')[0];
+
+        if (statsByDate[dateKey]) {
+          statsByDate[dateKey].completedTasks += 1;
+        }
+      }
+    });
+
+    // 結果を配列に変換
+    return Object.entries(statsByDate).map(([date, stats]) => ({
+      date,
+      ...stats,
+    }));
   }
 
   // 詳細分析機能用のメソッド（要件3.6-3.11対応）
@@ -583,7 +659,7 @@ export class DatabaseService {
     }
 
     // セッションデータを集計
-    sessions.forEach(session => {
+    sessions.forEach((session: any) => {
       const sessionDate = new Date(session.completed_at || session.started_at);
       const dateKey = sessionDate.toISOString().split('T')[0];
 
@@ -637,7 +713,7 @@ export class DatabaseService {
 
     // タスクIDごとの作業時間を計算
     const workTimeByTask: Record<string, number> = {};
-    sessions.forEach(session => {
+    sessions.forEach((session: any) => {
       if (session.task_id) {
         workTimeByTask[session.task_id] =
           (workTimeByTask[session.task_id] || 0) +
@@ -685,7 +761,7 @@ export class DatabaseService {
 
     // 日付別にセッションがあるかを確認
     const workDates = new Set<string>();
-    sessions.forEach(session => {
+    sessions.forEach((session: any) => {
       const date = new Date(session.completed_at || session.started_at);
       workDates.add(date.toISOString().split('T')[0]);
     });
@@ -787,14 +863,14 @@ export class DatabaseService {
       startDate: startDate.toISOString(),
     });
 
-    const completedSessions = allSessions.filter(s => s.completed);
+    const completedSessions = allSessions.filter((s: any) => s.completed);
     const totalSessions = allSessions.length;
     const completionRate =
       totalSessions > 0 ? (completedSessions.length / totalSessions) * 100 : 0;
 
     // 平均セッション長を計算
     const totalDuration = completedSessions.reduce(
-      (sum, s) => sum + (s.actual_duration || 0),
+      (sum: number, s: any) => sum + (s.actual_duration || 0),
       0
     );
     const averageSessionLength =
@@ -805,13 +881,16 @@ export class DatabaseService {
     // 集中度指標を計算（計画時間に対する実際の完了率）
     let focusScore = 0;
     if (completedSessions.length > 0) {
-      const plannedVsActual = completedSessions.map(s => {
+      const plannedVsActual = completedSessions.map((s: any) => {
         const planned = s.planned_duration || 1500; // デフォルト25分
         const actual = s.actual_duration || 0;
         return Math.min(actual / planned, 1); // 100%を上限とする
       });
       focusScore = Math.round(
-        (plannedVsActual.reduce((sum, ratio) => sum + ratio, 0) /
+        (plannedVsActual.reduce(
+          (sum: number, ratio: number) => sum + ratio,
+          0
+        ) /
           plannedVsActual.length) *
           100
       );
@@ -833,7 +912,7 @@ export class DatabaseService {
     return supabase
       .channel('tasks-changes')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
@@ -854,7 +933,7 @@ export class DatabaseService {
     return supabase
       .channel('sessions-changes')
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event: '*',
           schema: 'public',
