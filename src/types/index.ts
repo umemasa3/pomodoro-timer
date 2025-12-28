@@ -111,3 +111,35 @@ export interface TagStatistics {
   mostProductiveTag: string;
   timeByTag: Record<string, number>; // minutes
 }
+
+// マルチデバイス同期関連の型
+export interface DeviceInfo {
+  id: string;
+  name: string;
+  type: 'desktop' | 'mobile' | 'tablet';
+  lastSeen: string;
+  userAgent: string;
+}
+
+export interface ConflictInfo {
+  id: string;
+  type: 'task' | 'session' | 'tag';
+  localVersion: any;
+  remoteVersion: any;
+  conflictFields: string[];
+  timestamp: number;
+}
+
+export interface SyncStatus {
+  isOnline: boolean;
+  isSyncing: boolean;
+  pendingChanges: number;
+  conflicts: number;
+  lastSyncTime?: string;
+  connectedDevices: number;
+}
+
+export type ConflictResolutionStrategy =
+  | 'last-write-wins' // 最後の書き込みが勝利
+  | 'user-choice' // ユーザーが選択
+  | 'merge-changes'; // 変更をマージ

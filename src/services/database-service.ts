@@ -226,6 +226,48 @@ export class DatabaseService {
     return tasks;
   }
 
+  static async getTask(id: string): Promise<Task | null> {
+    return await DatabaseService.getTaskById(id);
+  }
+
+  static async getSession(id: string): Promise<Session | null> {
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await client
+      .from('sessions')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // セッションが見つからない
+      }
+      throw new Error(`セッション取得エラー: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async getTag(id: string): Promise<Tag | null> {
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await client
+      .from('tags')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null; // タグが見つからない
+      }
+      throw new Error(`タグ取得エラー: ${error.message}`);
+    }
+
+    return data;
+  }
+
   static async getTaskById(id: string): Promise<Task | null> {
     const client = DatabaseService.getSupabaseClient();
 

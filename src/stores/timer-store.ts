@@ -5,6 +5,12 @@ import { useAuthStore } from './auth-store';
 import { NotificationService } from '../services/notification-service';
 import { DatabaseService } from '../services/database-service';
 import { RealtimeSyncService } from '../services/realtime-sync-service';
+import type {
+  SyncStatus,
+  ConflictInfo,
+  DeviceInfo,
+  ConflictResolutionStrategy,
+} from '../services/realtime-sync-service';
 
 interface TimerStore extends TimerState {
   // セッション・タスク連携
@@ -17,6 +23,9 @@ interface TimerStore extends TimerState {
   isOnline: boolean;
   pendingChangesCount: number;
   syncStatus: 'idle' | 'syncing' | 'error';
+  detailedSyncStatus: SyncStatus | null;
+  conflicts: ConflictInfo[];
+  connectedDevices: DeviceInfo[];
 
   // タスク管理
   setCurrentTask: (task: Task | null) => void;
@@ -31,6 +40,20 @@ interface TimerStore extends TimerState {
   cleanupRealtimeSync: () => void;
   forcSync: () => Promise<void>;
   updateSyncStatus: (status: 'idle' | 'syncing' | 'error') => void;
+
+  // マルチデバイス同期
+  setConflictResolutionStrategy: (strategy: ConflictResolutionStrategy) => void;
+  getConflictResolutionStrategy: () => ConflictResolutionStrategy;
+  resolveConflict: (
+    conflictId: string,
+    resolution: 'local' | 'remote' | 'merge',
+    mergedData?: any
+  ) => Promise<void>;
+  getConnectedDevices: () => Promise<DeviceInfo[]>;
+  forceSyncWithDevice: (deviceId: string) => Promise<void>;
+  updateDetailedSyncStatus: (status: SyncStatus) => void;
+  updateConflicts: (conflicts: ConflictInfo[]) => void;
+  updateConnectedDevices: (devices: DeviceInfo[]) => void;
 
   // タイマー制御
   startTimer: () => Promise<void>;
@@ -81,6 +104,9 @@ export const useTimerStore = create<TimerStore>()(
       isOnline: navigator.onLine,
       pendingChangesCount: 0,
       syncStatus: 'idle',
+      detailedSyncStatus: null,
+      conflicts: [],
+      connectedDevices: [],
 
       // 通知・UI状態
       showBreakSuggestion: false,
@@ -90,6 +116,16 @@ export const useTimerStore = create<TimerStore>()(
       // リアルタイム同期
       initializeRealtimeSync: () => {
         const realtimeService = RealtimeSyncService.getInstance();
+
+        // 詳細な同期ステータスを監視
+        realtimeService.onSyncStatusChange(status => {
+          set({
+            detailedSyncStatus: status,
+            isOnline: status.isOnline,
+            pendingChangesCount: status.pendingChanges,
+            conflicts: realtimeService.getConflictQueue(),
+          });
+        });
 
         // ネットワーク状態の監視
         const updateNetworkStatus = () => {
@@ -150,6 +186,80 @@ export const useTimerStore = create<TimerStore>()(
 
       updateSyncStatus: (status: 'idle' | 'syncing' | 'error') => {
         set({ syncStatus: status });
+      },
+
+      // マルチデバイス同期
+      setConflictResolutionStrategy: (strategy: ConflictResolutionStrategy) => {
+        const realtimeService = RealtimeSyncService.getInstance();
+        realtimeService.setConflictResolutionStrategy(strategy);
+      },
+
+      getConflictResolutionStrategy: () => {
+        const realtimeService = RealtimeSyncService.getInstance();
+        return realtimeService.getConflictResolutionStrategy();
+      },
+
+      resolveConflict: async (
+        conflictId: string,
+        resolution: 'local' | 'remote' | 'merge',
+        mergedData?: any
+      ) => {
+        const realtimeService = RealtimeSyncService.getInstance();
+
+        try {
+          await realtimeService.resolveConflictManually(
+            conflictId,
+            resolution,
+            mergedData
+          );
+
+          // 競合リストを更新
+          set({
+            conflicts: realtimeService.getConflictQueue(),
+          });
+        } catch (error) {
+          console.error('競合解決エラー:', error);
+          throw error;
+        }
+      },
+
+      getConnectedDevices: async () => {
+        const realtimeService = RealtimeSyncService.getInstance();
+
+        try {
+          const devices = await realtimeService.getConnectedDevices();
+          set({ connectedDevices: devices });
+          return devices;
+        } catch (error) {
+          console.error('デバイス一覧取得エラー:', error);
+          return [];
+        }
+      },
+
+      forceSyncWithDevice: async (deviceId: string) => {
+        const realtimeService = RealtimeSyncService.getInstance();
+
+        try {
+          set({ syncStatus: 'syncing' });
+          await realtimeService.forceSyncWithDevice(deviceId);
+          set({ syncStatus: 'idle' });
+        } catch (error) {
+          console.error('デバイス同期エラー:', error);
+          set({ syncStatus: 'error' });
+          throw error;
+        }
+      },
+
+      updateDetailedSyncStatus: (status: SyncStatus) => {
+        set({ detailedSyncStatus: status });
+      },
+
+      updateConflicts: (conflicts: ConflictInfo[]) => {
+        set({ conflicts });
+      },
+
+      updateConnectedDevices: (devices: DeviceInfo[]) => {
+        set({ connectedDevices: devices });
       },
 
       // セッション・タスク連携
