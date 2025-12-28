@@ -16,11 +16,12 @@ export class SoundGenerator {
    */
   private initializeAudioContext(): void {
     try {
-      this.audioContext = new (
+      // WebKit系ブラウザ対応のためのキャスト
+      const AudioContextClass =
         window.AudioContext ||
-        (window as Window & { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext
-      )();
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
+      this.audioContext = new AudioContextClass();
     } catch (error) {
       console.warn('AudioContextの初期化に失敗しました:', error);
     }

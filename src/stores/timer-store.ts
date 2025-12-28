@@ -94,8 +94,6 @@ export const useTimerStore = create<TimerStore>()(
         }
 
         try {
-          const databaseService = DatabaseService.getInstance();
-
           // セッション記録を更新（詳細な履歴情報を含む）
           const sessionUpdate = {
             task_completion_status: status,
@@ -104,7 +102,7 @@ export const useTimerStore = create<TimerStore>()(
             actual_duration: user.settings.pomodoro_minutes, // 実際の作業時間
           };
 
-          await databaseService.updateSession(currentSession.id, sessionUpdate);
+          await DatabaseService.updateSession(currentSession.id, sessionUpdate);
 
           // タスクの状態を更新
           const taskUpdates: Partial<Task> = {};
@@ -124,7 +122,7 @@ export const useTimerStore = create<TimerStore>()(
               currentTask.completed_pomodoros + 1;
           }
 
-          await databaseService.updateTask(currentTask.id, taskUpdates);
+          await DatabaseService.updateTask(currentTask.id, taskUpdates);
 
           // 状態をクリア
           set({
@@ -172,13 +170,12 @@ export const useTimerStore = create<TimerStore>()(
 
         // セッション記録を作成
         if (user && sessionType === 'pomodoro') {
-          const databaseService = DatabaseService.getInstance();
           const plannedDuration = user.settings.pomodoro_minutes;
 
           // タスクが選択されている場合、タスクのステータスを「進行中」に更新
           if (currentTask && currentTask.status === 'pending') {
             try {
-              await databaseService.updateTask(currentTask.id, {
+              await DatabaseService.updateTask(currentTask.id, {
                 status: 'in_progress',
               });
             } catch (error) {
@@ -187,7 +184,7 @@ export const useTimerStore = create<TimerStore>()(
           }
 
           try {
-            const session = await databaseService.createSession({
+            const session = await DatabaseService.createSession({
               user_id: user.id,
               task_id: currentTask?.id,
               type: sessionType,
@@ -294,10 +291,9 @@ export const useTimerStore = create<TimerStore>()(
           // セッション記録を更新（実際の時間を記録）
           if (currentSession && user) {
             try {
-              const databaseService = DatabaseService.getInstance();
               const actualDuration = user.settings.pomodoro_minutes; // 完了した場合は予定時間と同じ
 
-              await databaseService.updateSession(currentSession.id, {
+              await DatabaseService.updateSession(currentSession.id, {
                 actual_duration: actualDuration,
                 completed: true,
                 completed_at: new Date().toISOString(),

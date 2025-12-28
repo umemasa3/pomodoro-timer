@@ -41,6 +41,8 @@ interface AuthState {
   initializeAuth: () => Promise<void>;
 }
 
+type UserMetadata = Record<string, unknown>;
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -91,17 +93,16 @@ export const useAuthStore = create<AuthState>()(
               data: { user: authUser },
             } = await auth.getCurrentUser();
             if (authUser) {
+              const metadata = authUser.user_metadata as UserMetadata;
               const userProfile: User = {
                 id: authUser.id,
                 email: authUser.email!,
                 display_name:
                   userData?.display_name ||
-                  authUser.user_metadata?.display_name,
-                avatar_url: authUser.user_metadata?.avatar_url,
+                  (metadata?.display_name as string | undefined),
+                avatar_url: metadata?.avatar_url as string | undefined,
                 timezone:
-                  userData?.timezone ||
-                  authUser.user_metadata?.timezone ||
-                  'UTC',
+                  userData?.timezone || (metadata?.timezone as string) || 'UTC',
                 settings: {
                   pomodoro_minutes: 25,
                   short_break_minutes: 5,
@@ -161,13 +162,14 @@ export const useAuthStore = create<AuthState>()(
               data: { user: authUser },
             } = await auth.getCurrentUser();
             if (authUser) {
+              const metadata = authUser.user_metadata as UserMetadata;
               const userProfile: User = {
                 id: authUser.id,
                 email: authUser.email!,
-                display_name: authUser.user_metadata?.display_name,
-                avatar_url: authUser.user_metadata?.avatar_url,
-                timezone: authUser.user_metadata?.timezone || 'UTC',
-                settings: authUser.user_metadata?.settings || {
+                display_name: metadata?.display_name as string | undefined,
+                avatar_url: metadata?.avatar_url as string | undefined,
+                timezone: (metadata?.timezone as string) || 'UTC',
+                settings: (metadata?.settings as User['settings']) || {
                   pomodoro_minutes: 25,
                   short_break_minutes: 5,
                   long_break_minutes: 15,
@@ -284,7 +286,7 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: {
               ...user,
-              ...profileData,
+              ...(profileData as Partial<User>),
               updated_at: new Date().toISOString(),
             },
           });
@@ -351,6 +353,40 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
 
         try {
+          // デモモードの場合は自動的にデモユーザーでログイン
+          if (import.meta.env.VITE_DEMO_MODE === 'true') {
+            const demoUser: User = {
+              id: 'demo-user-id',
+              email: 'demo@example.com',
+              display_name: 'デモユーザー',
+              avatar_url: undefined,
+              timezone: 'Asia/Tokyo',
+              settings: {
+                pomodoro_minutes: 25,
+                short_break_minutes: 5,
+                long_break_minutes: 15,
+                sessions_until_long_break: 4,
+                sound_enabled: true,
+                sound_type: 'bell',
+                theme: 'auto',
+                notifications: {
+                  desktop: true,
+                  sound: true,
+                  vibration: false,
+                },
+              },
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            set({
+              user: demoUser,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            return;
+          }
+
           // 現在のセッションを確認
           const {
             data: { session },
@@ -358,13 +394,14 @@ export const useAuthStore = create<AuthState>()(
 
           if (session?.user) {
             const authUser = session.user;
+            const metadata = authUser.user_metadata as UserMetadata;
             const userProfile: User = {
               id: authUser.id,
               email: authUser.email!,
-              display_name: authUser.user_metadata?.display_name,
-              avatar_url: authUser.user_metadata?.avatar_url,
-              timezone: authUser.user_metadata?.timezone || 'UTC',
-              settings: authUser.user_metadata?.settings || {
+              display_name: metadata?.display_name as string | undefined,
+              avatar_url: metadata?.avatar_url as string | undefined,
+              timezone: (metadata?.timezone as string) || 'UTC',
+              settings: (metadata?.settings as User['settings']) || {
                 pomodoro_minutes: 25,
                 short_break_minutes: 5,
                 long_break_minutes: 15,
@@ -397,15 +434,27 @@ export const useAuthStore = create<AuthState>()(
 
           // 認証状態変更の監視を開始
           auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-              const authUser = session.user;
+            if (
+              event === 'SIGNED_IN' &&
+              session &&
+              typeof session === 'object' &&
+              'user' in session &&
+              session.user
+            ) {
+              const authUser = session.user as {
+                id: string;
+                email: string;
+                created_at: string;
+                user_metadata: Record<string, unknown>;
+              };
+              const metadata = authUser.user_metadata;
               const userProfile: User = {
                 id: authUser.id,
                 email: authUser.email!,
-                display_name: authUser.user_metadata?.display_name,
-                avatar_url: authUser.user_metadata?.avatar_url,
-                timezone: authUser.user_metadata?.timezone || 'UTC',
-                settings: authUser.user_metadata?.settings || {
+                display_name: metadata?.display_name as string | undefined,
+                avatar_url: metadata?.avatar_url as string | undefined,
+                timezone: (metadata?.timezone as string) || 'UTC',
+                settings: (metadata?.settings as User['settings']) || {
                   pomodoro_minutes: 25,
                   short_break_minutes: 5,
                   long_break_minutes: 15,

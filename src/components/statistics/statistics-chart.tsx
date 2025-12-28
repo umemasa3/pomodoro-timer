@@ -23,7 +23,16 @@ export const StatisticsChart: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const dailyStats = await DatabaseService.getDailySessionStats(7);
+        const workTimeData = await DatabaseService.getWorkTimeGraphData(7);
+
+        // DailyStats形式に変換
+        const dailyStats: DailyStats[] = workTimeData.map(item => ({
+          date: item.date,
+          sessions: item.sessionCount,
+          workTime: item.workTime,
+          completedTasks: 0, // 完了タスク数は別途取得が必要
+        }));
+
         setData(dailyStats);
       } catch (err) {
         setError(

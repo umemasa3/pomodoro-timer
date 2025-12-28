@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthGuard } from './components/auth';
 import { AuthPage } from './pages/auth-page';
 import { StatisticsPage } from './pages/statistics-page';
@@ -9,8 +9,28 @@ import './index.css';
 type PageType = 'timer' | 'statistics';
 
 function App() {
-  const { isAuthenticated, user, signOut, isLoading } = useAuthStore();
+  const { isAuthenticated, user, signOut, isLoading, initializeAuth } =
+    useAuthStore();
   const [currentPage, setCurrentPage] = useState<PageType>('timer');
+
+  // アプリ起動時に認証状態を初期化
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  // ローディング中の表示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">
+            認証状態を確認中...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // 認証されていない場合は認証ページを表示
   if (!isAuthenticated && !isLoading) {

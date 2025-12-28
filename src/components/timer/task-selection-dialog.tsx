@@ -32,15 +32,14 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
   const loadTasks = async () => {
     setLoading(true);
     try {
-      const databaseService = DatabaseService.getInstance();
       // 未完了のタスクのみを取得
-      const allTasks = await databaseService.getTasks({
+      const allTasks = await DatabaseService.getTasks({
         limit: 20,
       });
 
       // 完了していないタスクをフィルタリング
       const incompleteTasks = allTasks.filter(
-        task => task.status !== 'completed'
+        (task: Task) => task.status !== 'completed'
       );
       setTasks(incompleteTasks);
 
