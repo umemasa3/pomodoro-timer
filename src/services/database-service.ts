@@ -14,6 +14,16 @@ import type {
  * Supabaseとの連携を抽象化し、将来のAWS移行に備える
  */
 export class DatabaseService {
+  private static instance: DatabaseService;
+
+  private constructor() {}
+
+  static getInstance(): DatabaseService {
+    if (!DatabaseService.instance) {
+      DatabaseService.instance = new DatabaseService();
+    }
+    return DatabaseService.instance;
+  }
   // ユーザー関連操作
   static async createUser(
     userData: Database['public']['Tables']['users']['Insert']
@@ -81,6 +91,8 @@ export class DatabaseService {
       title: taskData.title,
       description: taskData.description,
       estimated_pomodoros: taskData.estimated_pomodoros || 1,
+      completed_pomodoros: 0,
+      status: 'pending',
       priority: taskData.priority || 'medium',
     };
 
@@ -97,7 +109,7 @@ export class DatabaseService {
     return data;
   }
 
-  static async getTasks(filters?: {
+  async getTasks(filters?: {
     status?: Task['status'];
     priority?: Task['priority'];
     limit?: number;
@@ -145,10 +157,7 @@ export class DatabaseService {
     return data;
   }
 
-  static async updateTask(
-    id: string,
-    updates: UpdateTaskRequest
-  ): Promise<Task> {
+  async updateTask(id: string, updates: UpdateTaskRequest): Promise<Task> {
     const updateData: Database['public']['Tables']['tasks']['Update'] = {
       ...updates,
     };
@@ -205,7 +214,7 @@ export class DatabaseService {
     return data;
   }
 
-  static async getTags(): Promise<Tag[]> {
+  async getTags(): Promise<Tag[]> {
     const { data, error } = await supabase
       .from('tags')
       .select('*')
@@ -257,6 +266,14 @@ export class DatabaseService {
       }
       throw new Error(`タグ追加エラー: ${error.message}`);
     }
+
+    // タグの使用頻度を増やす
+    try {
+      await supabase.rpc('increment_tag_usage', { tag_id: tagId });
+    } catch (err) {
+      // 使用頻度の更新に失敗しても、タグの追加は成功とする
+      console.warn('タグ使用頻度の更新に失敗:', err);
+    }
   }
 
   static async removeTagFromTask(taskId: string, tagId: string): Promise<void> {
@@ -268,6 +285,14 @@ export class DatabaseService {
 
     if (error) {
       throw new Error(`タグ削除エラー: ${error.message}`);
+    }
+
+    // タグの使用頻度を減らす
+    try {
+      await supabase.rpc('decrement_tag_usage', { tag_id: tagId });
+    } catch (err) {
+      // 使用頻度の更新に失敗しても、タグの削除は成功とする
+      console.warn('タグ使用頻度の更新に失敗:', err);
     }
   }
 
@@ -298,25 +323,18 @@ export class DatabaseService {
   }
 
   // セッション関連操作
-  static async createSession(sessionData: {
+  async createSession(sessionData: {
+    user_id: string;
     task_id?: string;
     type: Session['type'];
     planned_duration: number;
+    actual_duration: number;
+    completed: boolean;
+    started_at: string;
   }): Promise<Session> {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      throw new Error('認証が必要です');
-    }
-
     const { data, error } = await supabase
       .from('sessions')
-      .insert({
-        user_id: user.id,
-        ...sessionData,
-      })
+      .insert(sessionData)
       .select()
       .single();
 
@@ -327,11 +345,12 @@ export class DatabaseService {
     return data;
   }
 
-  static async updateSession(
+  async updateSession(
     id: string,
     updates: {
       actual_duration?: number;
       completed?: boolean;
+      completed_at?: string;
       task_completion_status?: Session['task_completion_status'];
     }
   ): Promise<Session> {
@@ -390,7 +409,88 @@ export class DatabaseService {
     return data || [];
   }
 
-  // 統計関連操作
+  // タスク分割関連操作
+  static async suggestTaskSplit(
+    task: Task
+  ): Promise<Array<{ title: string; estimated_pomodoros: number }>> {
+    const estimatedPomodoros = task.estimated_pomodoros;
+
+    if (estimatedPomodoros <= 1) {
+      return [];
+    }
+
+    // 基本的な分割提案を生成
+    const suggestions = [];
+
+    // 1ポモドーロずつに分割する提案
+    for (let i = 1; i <= estimatedPomodoros; i++) {
+      suggestions.push({
+        title: `${task.title} - パート${i}`,
+        estimated_pomodoros: 1,
+      });
+    }
+
+    return suggestions;
+  }
+
+  static async splitTask(
+    originalTask: Task,
+    subtasks: Array<{ title: string; estimated_pomodoros: number }>
+  ): Promise<Task[]> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error('認証が必要です');
+    }
+
+    // 各サブタスクが1ポモドーロ以内かチェック
+    const invalidSubtasks = subtasks.filter(st => st.estimated_pomodoros > 1);
+    if (invalidSubtasks.length > 0) {
+      throw new Error(
+        '各サブタスクは1ポモドーロ以内で完了可能である必要があります'
+      );
+    }
+
+    try {
+      // トランザクション的な処理のため、エラーが発生した場合は全てロールバック
+      const createdSubtasks: Task[] = [];
+
+      // 元のタスクを完了状態に変更
+      await this.updateTask(originalTask.id, {
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      });
+
+      // サブタスクを作成
+      for (const subtaskData of subtasks) {
+        const createRequest: CreateTaskRequest = {
+          title: subtaskData.title.trim(),
+          description: `元のタスク「${originalTask.title}」から分割されたサブタスク`,
+          estimated_pomodoros: subtaskData.estimated_pomodoros,
+          priority: originalTask.priority,
+        };
+
+        const createdSubtask = await this.createTask(createRequest);
+        createdSubtasks.push(createdSubtask);
+      }
+
+      return createdSubtasks;
+    } catch (error) {
+      // エラーが発生した場合、元のタスクの状態を元に戻す
+      try {
+        await this.updateTask(originalTask.id, {
+          status: originalTask.status,
+          completed_at: originalTask.completed_at,
+        });
+      } catch (rollbackError) {
+        console.error('ロールバックに失敗:', rollbackError);
+      }
+
+      throw error;
+    }
+  }
   static async getSessionStats(dateRange?: { start: string; end: string }) {
     let query = supabase.from('sessions').select('*').eq('completed', true);
 
