@@ -33,6 +33,9 @@ importers:
       '@eslint/js':
         specifier: ^9.39.1
         version: 9.39.2
+      '@fast-check/vitest':
+        specifier: ^0.2.4
+        version: 0.2.4(vitest@4.0.16(@types/node@24.10.4)(jiti@1.21.7)(jsdom@27.4.0)(yaml@2.8.2))
       '@tailwindcss/forms':
         specifier: ^0.5.11
         version: 0.5.11(tailwindcss@3.4.19(yaml@2.8.2))
@@ -451,6 +454,11 @@ packages:
     peerDependenciesMeta:
       '@exodus/crypto':
         optional: true
+
+  '@fast-check/vitest@0.2.4':
+    resolution: {integrity: sha512-Ilcr+JAIPhb1s6FRm4qoglQYSGXXrS+zAupZeNuWAA3qHVGDA1d1Gb84Hb/+otL3GzVZjFJESg5/1SfIvrgssA==}
+    peerDependencies:
+      vitest: ^1 || ^2 || ^3 || ^4
 
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
@@ -2448,6 +2456,11 @@ snapshots:
       levn: 0.4.1
 
   '@exodus/bytes@1.6.0': {}
+
+  '@fast-check/vitest@0.2.4(vitest@4.0.16(@types/node@24.10.4)(jiti@1.21.7)(jsdom@27.4.0)(yaml@2.8.2))':
+    dependencies:
+      fast-check: 4.5.2
+      vitest: 4.0.16(@types/node@24.10.4)(jiti@1.21.7)(jsdom@27.4.0)(yaml@2.8.2)
 
   '@floating-ui/core@1.7.3':
     dependencies:
