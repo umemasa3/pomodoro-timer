@@ -9,3 +9,7 @@ export { TagStatistics } from './tag-statistics';
 export { ProductivityAnalysis } from './productivity-analysis';
 export { WorkDistributionHeatmap } from './work-distribution-heatmap';
 export { CategoryTimePieChart } from './category-time-pie-chart';
+export { GoalProgress } from './goal-progress';
+export { ComparisonAnalysis } from './comparison-analysis';
+export { TagTrendGraph } from './tag-trend-graph';
+export { CSVExport } from './csv-export';
