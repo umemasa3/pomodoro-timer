@@ -5,3 +5,7 @@ export { WorkTimeGraph } from './work-time-graph';
 export { TaskTypeBreakdown } from './task-type-breakdown';
 export { WorkStreak } from './work-streak';
 export { SessionCompletionRate } from './session-completion-rate';
+export { TagStatistics } from './tag-statistics';
+export { ProductivityAnalysis } from './productivity-analysis';
+export { WorkDistributionHeatmap } from './work-distribution-heatmap';
+export { CategoryTimePieChart } from './category-time-pie-chart';

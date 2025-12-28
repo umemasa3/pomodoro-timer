@@ -23,9 +23,21 @@ export class DatabaseService {
     }
     return DatabaseService.instance;
   }
+
+  // Supabaseクライアントを安全に取得するヘルパー
+  private static getSupabaseClient() {
+    if (!supabase) {
+      throw new Error(
+        'Supabaseが初期化されていません（デモモードまたは設定エラー）'
+      );
+    }
+    return supabase;
+  }
   // ユーザー関連操作
   static async createUser(userData: any): Promise<User> {
-    const { data, error } = await (supabase as any)
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await (client as any)
       .from('users')
       .insert([userData])
       .select()
@@ -39,7 +51,9 @@ export class DatabaseService {
   }
 
   static async getUserById(id: string): Promise<User | null> {
-    const { data, error } = await supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await client
       .from('users')
       .select('*')
       .eq('id', id)
@@ -56,7 +70,9 @@ export class DatabaseService {
   }
 
   static async updateUser(id: string, updates: any): Promise<User> {
-    const { data, error } = await (supabase as any)
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await (client as any)
       .from('users')
       .update(updates)
       .eq('id', id)
@@ -72,9 +88,11 @@ export class DatabaseService {
 
   // タスク関連操作
   static async createTask(taskData: CreateTaskRequest): Promise<Task> {
+    const client = DatabaseService.getSupabaseClient();
+
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await client.auth.getUser();
 
     if (!user) {
       throw new Error('認証が必要です');
@@ -90,7 +108,7 @@ export class DatabaseService {
       priority: taskData.priority || 'medium',
     };
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (client as any)
       .from('tasks')
       .insert([insertData])
       .select()
@@ -108,7 +126,9 @@ export class DatabaseService {
     priority?: Task['priority'];
     limit?: number;
   }): Promise<Task[]> {
-    let query = supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    let query = client
       .from('tasks')
       .select('*')
       .order('created_at', { ascending: false });
@@ -135,7 +155,9 @@ export class DatabaseService {
   }
 
   static async getTaskById(id: string): Promise<Task | null> {
-    const { data, error } = await supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await client
       .from('tasks')
       .select('*')
       .eq('id', id)
@@ -155,11 +177,13 @@ export class DatabaseService {
     id: string,
     updates: UpdateTaskRequest
   ): Promise<Task> {
+    const client = DatabaseService.getSupabaseClient();
+
     const updateData: any = {
       ...updates,
     };
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (client as any)
       .from('tasks')
       .update(updateData)
       .eq('id', id)
@@ -174,7 +198,9 @@ export class DatabaseService {
   }
 
   static async deleteTask(id: string): Promise<void> {
-    const { error } = await supabase.from('tasks').delete().eq('id', id);
+    const client = DatabaseService.getSupabaseClient();
+
+    const { error } = await client.from('tasks').delete().eq('id', id);
 
     if (error) {
       throw new Error(`タスク削除エラー: ${error.message}`);
@@ -183,15 +209,17 @@ export class DatabaseService {
 
   // タグ関連操作
   static async createTag(name: string, color: string): Promise<Tag> {
+    const client = DatabaseService.getSupabaseClient();
+
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await client.auth.getUser();
 
     if (!user) {
       throw new Error('認証が必要です');
     }
 
-    const { data, error } = await (supabase as any)
+    const { data, error } = await (client as any)
       .from('tags')
       .insert([
         {
@@ -214,7 +242,9 @@ export class DatabaseService {
   }
 
   static async getTags(): Promise<Tag[]> {
-    const { data, error } = await supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await client
       .from('tags')
       .select('*')
       .order('usage_count', { ascending: false });
@@ -230,7 +260,9 @@ export class DatabaseService {
     id: string,
     updates: { name?: string; color?: string }
   ): Promise<Tag> {
-    const { data, error } = await (supabase as any)
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await (client as any)
       .from('tags')
       .update(updates)
       .eq('id', id)
@@ -245,7 +277,9 @@ export class DatabaseService {
   }
 
   static async deleteTag(id: string): Promise<void> {
-    const { error } = await supabase.from('tags').delete().eq('id', id);
+    const client = DatabaseService.getSupabaseClient();
+
+    const { error } = await client.from('tags').delete().eq('id', id);
 
     if (error) {
       throw new Error(`タグ削除エラー: ${error.message}`);
@@ -254,7 +288,9 @@ export class DatabaseService {
 
   // タスク-タグ関連操作
   static async addTagToTask(taskId: string, tagId: string): Promise<void> {
-    const { error } = await supabase.from('task_tags').insert({
+    const client = DatabaseService.getSupabaseClient();
+
+    const { error } = await client.from('task_tags').insert({
       task_id: taskId,
       tag_id: tagId,
     } as any);
@@ -268,7 +304,7 @@ export class DatabaseService {
 
     // タグの使用頻度を増やす
     try {
-      await supabase.rpc('increment_tag_usage', { tag_id: tagId } as any);
+      await client.rpc('increment_tag_usage', { tag_id: tagId } as any);
     } catch (err) {
       // 使用頻度の更新に失敗しても、タグの追加は成功とする
       console.warn('タグ使用頻度の更新に失敗:', err);
@@ -276,7 +312,9 @@ export class DatabaseService {
   }
 
   static async removeTagFromTask(taskId: string, tagId: string): Promise<void> {
-    const { error } = await supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    const { error } = await client
       .from('task_tags')
       .delete()
       .eq('task_id', taskId)
@@ -288,7 +326,7 @@ export class DatabaseService {
 
     // タグの使用頻度を減らす
     try {
-      await supabase.rpc('decrement_tag_usage', { tag_id: tagId } as any);
+      await client.rpc('decrement_tag_usage', { tag_id: tagId } as any);
     } catch (err) {
       // 使用頻度の更新に失敗しても、タグの削除は成功とする
       console.warn('タグ使用頻度の更新に失敗:', err);
@@ -296,7 +334,9 @@ export class DatabaseService {
   }
 
   static async getTasksWithTags(): Promise<(Task & { tags: Tag[] })[]> {
-    const { data, error } = await supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await client
       .from('tasks')
       .select(
         `
@@ -331,7 +371,9 @@ export class DatabaseService {
     completed: boolean;
     started_at: string;
   }): Promise<Session> {
-    const { data, error } = await (supabase as any)
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await (client as any)
       .from('sessions')
       .insert([sessionData])
       .select()
@@ -353,7 +395,9 @@ export class DatabaseService {
       task_completion_status?: Session['task_completion_status'];
     }
   ): Promise<Session> {
-    const { data, error } = await (supabase as any)
+    const client = DatabaseService.getSupabaseClient();
+
+    const { data, error } = await (client as any)
       .from('sessions')
       .update(updates)
       .eq('id', id)
@@ -374,7 +418,9 @@ export class DatabaseService {
     startDate?: string;
     endDate?: string;
   }): Promise<Session[]> {
-    let query = supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    let query = client
       .from('sessions')
       .select('*')
       .order('started_at', { ascending: false });
@@ -436,9 +482,11 @@ export class DatabaseService {
     originalTask: Task,
     subtasks: Array<{ title: string; estimated_pomodoros: number }>
   ): Promise<Task[]> {
+    const client = DatabaseService.getSupabaseClient();
+
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await client.auth.getUser();
 
     if (!user) {
       throw new Error('認証が必要です');
@@ -491,7 +539,9 @@ export class DatabaseService {
     }
   }
   static async getSessionStats(dateRange?: { start: string; end: string }) {
-    let query = supabase.from('sessions').select('*').eq('completed', true);
+    const client = DatabaseService.getSupabaseClient();
+
+    let query = client.from('sessions').select('*').eq('completed', true);
 
     if (dateRange) {
       query = query
@@ -529,7 +579,9 @@ export class DatabaseService {
     start: string;
     end: string;
   }): Promise<number> {
-    let query = supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    let query = client
       .from('tasks')
       .select('id', { count: 'exact' })
       .eq('status', 'completed');
@@ -905,11 +957,416 @@ export class DatabaseService {
     };
   }
 
+  /**
+   * タグ別統計データを取得（要件3.12, 3.17）
+   */
+  static async getTagStatistics(): Promise<
+    Array<{
+      tagId: string;
+      tagName: string;
+      tagColor: string;
+      completedTasks: number;
+      totalWorkTime: number; // 分単位
+      sessionCount: number;
+      averageTaskCompletion: number; // パーセンテージ
+    }>
+  > {
+    // タグ付きタスクを取得
+    const tasksWithTags = await DatabaseService.getTasksWithTags();
+
+    // セッションデータを取得
+    const sessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+      completed: true,
+    });
+
+    // タスクIDごとの作業時間を計算
+    const workTimeByTask: Record<string, number> = {};
+    const sessionCountByTask: Record<string, number> = {};
+
+    sessions.forEach((session: any) => {
+      if (session.task_id) {
+        workTimeByTask[session.task_id] =
+          (workTimeByTask[session.task_id] || 0) +
+          Math.round((session.actual_duration || 0) / 60);
+        sessionCountByTask[session.task_id] =
+          (sessionCountByTask[session.task_id] || 0) + 1;
+      }
+    });
+
+    // タグ別に統計を集計
+    const tagStats: Record<
+      string,
+      {
+        tagId: string;
+        tagName: string;
+        tagColor: string;
+        completedTasks: number;
+        totalTasks: number;
+        totalWorkTime: number;
+        sessionCount: number;
+      }
+    > = {};
+
+    tasksWithTags.forEach(task => {
+      task.tags.forEach(tag => {
+        if (!tagStats[tag.id]) {
+          tagStats[tag.id] = {
+            tagId: tag.id,
+            tagName: tag.name,
+            tagColor: tag.color,
+            completedTasks: 0,
+            totalTasks: 0,
+            totalWorkTime: 0,
+            sessionCount: 0,
+          };
+        }
+
+        tagStats[tag.id].totalTasks += 1;
+
+        if (task.status === 'completed') {
+          tagStats[tag.id].completedTasks += 1;
+        }
+
+        tagStats[tag.id].totalWorkTime += workTimeByTask[task.id] || 0;
+        tagStats[tag.id].sessionCount += sessionCountByTask[task.id] || 0;
+      });
+    });
+
+    return Object.values(tagStats).map(stat => ({
+      ...stat,
+      averageTaskCompletion:
+        stat.totalTasks > 0
+          ? Math.round((stat.completedTasks / stat.totalTasks) * 100)
+          : 0,
+    }));
+  }
+
+  /**
+   * 最も生産的なタグと時間帯の組み合わせを取得（要件3.13）
+   */
+  static async getMostProductiveTagTimeSlots(): Promise<{
+    mostProductiveTag: string;
+    bestTimeSlot: string;
+    productivity: number; // セッション完了率
+    tagTimeAnalysis: Array<{
+      tagName: string;
+      timeSlot: string;
+      sessionCount: number;
+      completionRate: number;
+      averageWorkTime: number;
+    }>;
+  }> {
+    // タグ付きタスクを取得
+    const tasksWithTags = await DatabaseService.getTasksWithTags();
+
+    // セッションデータを取得
+    const sessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+    });
+
+    // タスクIDとタグの関連を作成
+    const taskTagMap: Record<string, Tag[]> = {};
+    tasksWithTags.forEach(task => {
+      taskTagMap[task.id] = task.tags;
+    });
+
+    // 時間帯別・タグ別の統計を集計
+    const tagTimeStats: Record<
+      string,
+      Record<
+        string,
+        {
+          sessionCount: number;
+          completedSessions: number;
+          totalWorkTime: number;
+        }
+      >
+    > = {};
+
+    sessions.forEach((session: any) => {
+      if (!session.task_id || !taskTagMap[session.task_id]) return;
+
+      const sessionDate = new Date(session.started_at);
+      const hour = sessionDate.getHours();
+
+      // 時間帯を分類
+      let timeSlot: string;
+      if (hour >= 6 && hour < 12) {
+        timeSlot = '朝（6-12時）';
+      } else if (hour >= 12 && hour < 18) {
+        timeSlot = '昼（12-18時）';
+      } else if (hour >= 18 && hour < 24) {
+        timeSlot = '夜（18-24時）';
+      } else {
+        timeSlot = '深夜（0-6時）';
+      }
+
+      taskTagMap[session.task_id].forEach(tag => {
+        if (!tagTimeStats[tag.name]) {
+          tagTimeStats[tag.name] = {};
+        }
+        if (!tagTimeStats[tag.name][timeSlot]) {
+          tagTimeStats[tag.name][timeSlot] = {
+            sessionCount: 0,
+            completedSessions: 0,
+            totalWorkTime: 0,
+          };
+        }
+
+        tagTimeStats[tag.name][timeSlot].sessionCount += 1;
+        if (session.completed) {
+          tagTimeStats[tag.name][timeSlot].completedSessions += 1;
+        }
+        tagTimeStats[tag.name][timeSlot].totalWorkTime += Math.round(
+          (session.actual_duration || 0) / 60
+        );
+      });
+    });
+
+    // 分析結果を生成
+    const tagTimeAnalysis: Array<{
+      tagName: string;
+      timeSlot: string;
+      sessionCount: number;
+      completionRate: number;
+      averageWorkTime: number;
+    }> = [];
+
+    let bestProductivity = 0;
+    let mostProductiveTag = '';
+    let bestTimeSlot = '';
+
+    Object.entries(tagTimeStats).forEach(([tagName, timeSlots]) => {
+      Object.entries(timeSlots).forEach(([timeSlot, stats]) => {
+        const completionRate =
+          stats.sessionCount > 0
+            ? (stats.completedSessions / stats.sessionCount) * 100
+            : 0;
+
+        const averageWorkTime =
+          stats.completedSessions > 0
+            ? Math.round(stats.totalWorkTime / stats.completedSessions)
+            : 0;
+
+        tagTimeAnalysis.push({
+          tagName,
+          timeSlot,
+          sessionCount: stats.sessionCount,
+          completionRate: Math.round(completionRate * 100) / 100,
+          averageWorkTime,
+        });
+
+        // 最も生産的な組み合わせを更新
+        if (completionRate > bestProductivity && stats.sessionCount >= 3) {
+          bestProductivity = completionRate;
+          mostProductiveTag = tagName;
+          bestTimeSlot = timeSlot;
+        }
+      });
+    });
+
+    return {
+      mostProductiveTag,
+      bestTimeSlot,
+      productivity: Math.round(bestProductivity * 100) / 100,
+      tagTimeAnalysis: tagTimeAnalysis.sort(
+        (a, b) => b.completionRate - a.completionRate
+      ),
+    };
+  }
+
+  /**
+   * 時間帯別・曜日別の作業分布を取得（要件3.15）
+   */
+  static async getWorkDistributionByTimeAndDay(): Promise<{
+    hourlyDistribution: Array<{
+      hour: number;
+      sessionCount: number;
+      averageProductivity: number;
+    }>;
+    dailyDistribution: Array<{
+      dayOfWeek: number; // 0=日曜日, 1=月曜日, ...
+      dayName: string;
+      sessionCount: number;
+      averageWorkTime: number;
+    }>;
+    heatmapData: Array<{
+      day: number;
+      hour: number;
+      sessionCount: number;
+      productivity: number;
+    }>;
+  }> {
+    const sessions = await DatabaseService.getSessions({
+      type: 'pomodoro',
+    });
+
+    // 時間帯別統計
+    const hourlyStats: Record<
+      number,
+      { sessionCount: number; completedSessions: number }
+    > = {};
+
+    // 曜日別統計
+    const dailyStats: Record<
+      number,
+      { sessionCount: number; totalWorkTime: number }
+    > = {};
+
+    // ヒートマップ用データ
+    const heatmapStats: Record<
+      string,
+      { sessionCount: number; completedSessions: number }
+    > = {};
+
+    // 初期化
+    for (let hour = 0; hour < 24; hour++) {
+      hourlyStats[hour] = { sessionCount: 0, completedSessions: 0 };
+    }
+
+    for (let day = 0; day < 7; day++) {
+      dailyStats[day] = { sessionCount: 0, totalWorkTime: 0 };
+    }
+
+    sessions.forEach((session: any) => {
+      const sessionDate = new Date(session.started_at);
+      const hour = sessionDate.getHours();
+      const dayOfWeek = sessionDate.getDay();
+      const heatmapKey = `${dayOfWeek}-${hour}`;
+
+      // 時間帯別統計
+      hourlyStats[hour].sessionCount += 1;
+      if (session.completed) {
+        hourlyStats[hour].completedSessions += 1;
+      }
+
+      // 曜日別統計
+      dailyStats[dayOfWeek].sessionCount += 1;
+      if (session.completed) {
+        dailyStats[dayOfWeek].totalWorkTime += Math.round(
+          (session.actual_duration || 0) / 60
+        );
+      }
+
+      // ヒートマップ統計
+      if (!heatmapStats[heatmapKey]) {
+        heatmapStats[heatmapKey] = { sessionCount: 0, completedSessions: 0 };
+      }
+      heatmapStats[heatmapKey].sessionCount += 1;
+      if (session.completed) {
+        heatmapStats[heatmapKey].completedSessions += 1;
+      }
+    });
+
+    // 結果を整形
+    const hourlyDistribution = Object.entries(hourlyStats).map(
+      ([hour, stats]) => ({
+        hour: parseInt(hour),
+        sessionCount: stats.sessionCount,
+        averageProductivity:
+          stats.sessionCount > 0
+            ? Math.round(
+                (stats.completedSessions / stats.sessionCount) * 100 * 100
+              ) / 100
+            : 0,
+      })
+    );
+
+    const dayNames = [
+      '日曜日',
+      '月曜日',
+      '火曜日',
+      '水曜日',
+      '木曜日',
+      '金曜日',
+      '土曜日',
+    ];
+
+    const dailyDistribution = Object.entries(dailyStats).map(
+      ([day, stats]) => ({
+        dayOfWeek: parseInt(day),
+        dayName: dayNames[parseInt(day)],
+        sessionCount: stats.sessionCount,
+        averageWorkTime:
+          stats.sessionCount > 0
+            ? Math.round(stats.totalWorkTime / stats.sessionCount)
+            : 0,
+      })
+    );
+
+    const heatmapData = Object.entries(heatmapStats).map(([key, stats]) => {
+      const [day, hour] = key.split('-').map(Number);
+      return {
+        day,
+        hour,
+        sessionCount: stats.sessionCount,
+        productivity:
+          stats.sessionCount > 0
+            ? Math.round(
+                (stats.completedSessions / stats.sessionCount) * 100 * 100
+              ) / 100
+            : 0,
+      };
+    });
+
+    return {
+      hourlyDistribution,
+      dailyDistribution,
+      heatmapData,
+    };
+  }
+
+  /**
+   * タスクカテゴリ別の時間配分を取得（要件3.16）
+   */
+  static async getTaskCategoryTimeDistribution(): Promise<{
+    categoryData: Array<{
+      tagName: string;
+      tagColor: string;
+      workTime: number; // 分単位
+      sessionCount: number;
+      percentage: number;
+    }>;
+    totalWorkTime: number;
+    totalSessions: number;
+  }> {
+    const tagStats = await DatabaseService.getTagStatistics();
+
+    const totalWorkTime = tagStats.reduce(
+      (sum, stat) => sum + stat.totalWorkTime,
+      0
+    );
+    const totalSessions = tagStats.reduce(
+      (sum, stat) => sum + stat.sessionCount,
+      0
+    );
+
+    const categoryData = tagStats.map(stat => ({
+      tagName: stat.tagName,
+      tagColor: stat.tagColor,
+      workTime: stat.totalWorkTime,
+      sessionCount: stat.sessionCount,
+      percentage:
+        totalWorkTime > 0
+          ? Math.round((stat.totalWorkTime / totalWorkTime) * 100 * 100) / 100
+          : 0,
+    }));
+
+    return {
+      categoryData: categoryData.sort((a, b) => b.workTime - a.workTime),
+      totalWorkTime,
+      totalSessions,
+    };
+  }
+
   // リアルタイム同期
   static subscribeToTasks(
     callback: (payload: { eventType: string; new: Task; old: Task }) => void
   ) {
-    return supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    return client
       .channel('tasks-changes')
       .on(
         'postgres_changes' as any,
@@ -930,7 +1387,9 @@ export class DatabaseService {
       old: Session;
     }) => void
   ) {
-    return supabase
+    const client = DatabaseService.getSupabaseClient();
+
+    return client
       .channel('sessions-changes')
       .on(
         'postgres_changes' as any,
@@ -947,7 +1406,8 @@ export class DatabaseService {
   // データベース接続テスト
   static async testConnection(): Promise<boolean> {
     try {
-      const { error } = await supabase.from('users').select('count').limit(1);
+      const client = DatabaseService.getSupabaseClient();
+      const { error } = await client.from('users').select('count').limit(1);
 
       return !error;
     } catch (error) {

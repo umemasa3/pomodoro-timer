@@ -7,6 +7,10 @@ import {
   TaskTypeBreakdown,
   WorkStreak,
   SessionCompletionRate,
+  TagStatistics,
+  ProductivityAnalysis,
+  WorkDistributionHeatmap,
+  CategoryTimePieChart,
 } from '../components/statistics';
 
 /**
@@ -53,6 +57,31 @@ export const StatisticsPage: React.FC = () => {
               {/* タスク種類別内訳を全幅で表示 */}
               <div className="mb-6">
                 <TaskTypeBreakdown />
+              </div>
+            </div>
+          </div>
+
+          {/* タグ別統計・分析セクション（要件3.12-3.17） */}
+          <div className="space-y-6">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                タグ別統計・分析
+              </h2>
+
+              {/* タグ別統計概要 */}
+              <div className="mb-6">
+                <TagStatistics />
+              </div>
+
+              {/* 生産性分析と作業分布を並列配置 */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                <ProductivityAnalysis />
+                <CategoryTimePieChart />
+              </div>
+
+              {/* 作業分布ヒートマップを全幅で表示 */}
+              <div className="mb-6">
+                <WorkDistributionHeatmap />
               </div>
             </div>
           </div>
