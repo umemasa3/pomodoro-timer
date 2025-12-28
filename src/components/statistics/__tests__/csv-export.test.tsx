@@ -20,10 +20,10 @@ Object.defineProperty(document, 'createElement', {
 describe('CSVExport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // DOM環境の設定
     document.body.innerHTML = '<div id="root"></div>';
-    
+
     // document.createElementのモック設定（無限再帰を防ぐ）
     mockCreateElement.mockImplementation((tagName: string) => {
       // 実際のDOM要素を作成せず、モックオブジェクトを返す
@@ -36,13 +36,13 @@ describe('CSVExport', () => {
       };
       return mockElement as any;
     });
-    
+
     // document.bodyのモック
     document.body.appendChild = vi.fn();
     document.body.removeChild = vi.fn();
-    
+
     // URL.createObjectURLとrevokeObjectURLのモック
-    (global as any).URL = {
+    (globalThis as any).URL = {
       createObjectURL: vi.fn(() => 'mock-url'),
       revokeObjectURL: vi.fn(),
     };
@@ -52,9 +52,7 @@ describe('CSVExport', () => {
     render(<CSVExport />);
 
     expect(screen.getByText('データエクスポート')).toBeInTheDocument();
-    expect(
-      screen.getByText('CSV形式でダウンロード')
-    ).toBeInTheDocument();
+    expect(screen.getByText('CSV形式でダウンロード')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /統計データをエクスポート/ })
     ).toBeInTheDocument();
@@ -141,7 +139,9 @@ describe('CSVExport', () => {
   it('ダークモード対応が正しく適用される', () => {
     render(<CSVExport />);
 
-    const container = screen.getByText('データエクスポート').closest('.bg-white');
+    const container = screen
+      .getByText('データエクスポート')
+      .closest('.bg-white');
     expect(container).toHaveClass('bg-white', 'dark:bg-gray-800');
 
     const title = screen.getByText('データエクスポート');
