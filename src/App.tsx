@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { AuthGuard } from './components/auth';
 import { AuthPage } from './pages/auth-page';
 import { StatisticsPage } from './pages/statistics-page';
+import { TasksPage } from './pages/tasks-page';
 import { TimerComponent } from './components/timer';
 import { SyncStatusIndicator } from './components/sync-status-indicator';
 import { useAuthStore } from './stores/auth-store';
 import { useTimerStore } from './stores/timer-store';
 import './index.css';
 
-type PageType = 'timer' | 'statistics';
+type PageType = 'timer' | 'tasks' | 'statistics';
 
 function App() {
   const { isAuthenticated, user, signOut, isLoading, initializeAuth } =
@@ -56,6 +57,8 @@ function App() {
 
   const renderCurrentPage = () => {
     switch (currentPage) {
+      case 'tasks':
+        return <TasksPage />;
       case 'statistics':
         return <StatisticsPage />;
       case 'timer':
@@ -119,6 +122,16 @@ function App() {
                   }`}
                 >
                   タイマー
+                </button>
+                <button
+                  onClick={() => setCurrentPage('tasks')}
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    currentPage === 'tasks'
+                      ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  タスク管理
                 </button>
                 <button
                   onClick={() => setCurrentPage('statistics')}

@@ -147,7 +147,8 @@ export class DatabaseService {
     status?: Task['status'];
     priority?: Task['priority'];
     limit?: number;
-  }): Promise<Task[]> {
+    tagId?: string;
+  }): Promise<(Task & { tags: Tag[] })[]> {
     const realtimeService = RealtimeSyncService.getInstance();
 
     // オフライン時はキャッシュから取得
@@ -165,14 +166,21 @@ export class DatabaseService {
         tasks = tasks.slice(0, filters.limit);
       }
 
-      return tasks;
+      return tasks.map(task => ({ ...task, tags: [] })); // オフライン時はタグ情報なし
     }
 
     const client = DatabaseService.getSupabaseClient();
 
     let query = client
       .from('tasks')
-      .select('*')
+      .select(
+        `
+        *,
+        task_tags (
+          tags (*)
+        )
+      `
+      )
       .order('created_at', { ascending: false });
 
     if (filters?.status) {
@@ -181,6 +189,11 @@ export class DatabaseService {
 
     if (filters?.priority) {
       query = query.eq('priority', filters.priority);
+    }
+
+    // タグIDでフィルタリング
+    if (filters?.tagId) {
+      query = query.eq('task_tags.tag_id', filters.tagId);
     }
 
     if (filters?.limit) {
@@ -193,8 +206,15 @@ export class DatabaseService {
       throw new Error(`タスク取得エラー: ${error.message}`);
     }
 
+    // データ構造を整形
+    const tasks = (data || []).map((task: any) => ({
+      ...task,
+      tags:
+        task.task_tags?.map((tt: { tags: Tag }) => tt.tags).filter(Boolean) ||
+        [],
+    }));
+
     // オンライン時はキャッシュも更新
-    const tasks = data || [];
     tasks.forEach(task => {
       realtimeService.updateLocalTaskCache({
         eventType: 'INSERT',
@@ -267,7 +287,11 @@ export class DatabaseService {
   }
 
   // タグ関連操作
-  static async createTag(name: string, color: string): Promise<Tag> {
+  static async createTag(tagData: {
+    name: string;
+    color: string;
+    created_at: string;
+  }): Promise<Tag> {
     const client = DatabaseService.getSupabaseClient();
 
     const {
@@ -283,8 +307,8 @@ export class DatabaseService {
       .insert([
         {
           user_id: user.id,
-          name,
-          color,
+          name: tagData.name,
+          color: tagData.color,
         },
       ])
       .select()
@@ -389,6 +413,37 @@ export class DatabaseService {
     } catch (err) {
       // 使用頻度の更新に失敗しても、タグの削除は成功とする
       console.warn('タグ使用頻度の更新に失敗:', err);
+    }
+  }
+
+  // タスクのタグを一括更新
+  static async updateTaskTags(taskId: string, tagIds: string[]): Promise<void> {
+    const client = DatabaseService.getSupabaseClient();
+
+    // 既存のタグ関連付けを削除
+    const { error: deleteError } = await client
+      .from('task_tags')
+      .delete()
+      .eq('task_id', taskId);
+
+    if (deleteError) {
+      throw new Error(`既存タグ削除エラー: ${deleteError.message}`);
+    }
+
+    // 新しいタグ関連付けを追加
+    if (tagIds.length > 0) {
+      const insertData = tagIds.map(tagId => ({
+        task_id: taskId,
+        tag_id: tagId,
+      }));
+
+      const { error: insertError } = await client
+        .from('task_tags')
+        .insert(insertData);
+
+      if (insertError) {
+        throw new Error(`新規タグ追加エラー: ${insertError.message}`);
+      }
     }
   }
 
