@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 import type { Database } from '../types/database';
 import type {
-  User,
   Task,
   Tag,
   Session,
@@ -27,7 +26,7 @@ export class DatabaseService {
   // ユーザー関連操作
   static async createUser(
     userData: Database['public']['Tables']['users']['Insert']
-  ): Promise<User> {
+  ): Promise<Database['public']['Tables']['users']['Row']> {
     const { data, error } = await supabase
       .from('users')
       .insert(userData)
@@ -41,7 +40,9 @@ export class DatabaseService {
     return data;
   }
 
-  static async getUserById(id: string): Promise<User | null> {
+  static async getUserById(
+    id: string
+  ): Promise<Database['public']['Tables']['users']['Row'] | null> {
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -61,7 +62,7 @@ export class DatabaseService {
   static async updateUser(
     id: string,
     updates: Database['public']['Tables']['users']['Update']
-  ): Promise<User> {
+  ): Promise<Database['public']['Tables']['users']['Row']> {
     const { data, error } = await supabase
       .from('users')
       .update(updates)
@@ -78,6 +79,38 @@ export class DatabaseService {
 
   // タスク関連操作
   async createTask(taskData: CreateTaskRequest): Promise<Task> {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error('認証が必要です');
+    }
+
+    const insertData: Database['public']['Tables']['tasks']['Insert'] = {
+      user_id: user.id,
+      title: taskData.title,
+      description: taskData.description,
+      estimated_pomodoros: taskData.estimated_pomodoros || 1,
+      completed_pomodoros: 0,
+      status: 'pending',
+      priority: taskData.priority || 'medium',
+    };
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`タスク作成エラー: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async createTask(taskData: CreateTaskRequest): Promise<Task> {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -158,6 +191,28 @@ export class DatabaseService {
   }
 
   async updateTask(id: string, updates: UpdateTaskRequest): Promise<Task> {
+    const updateData: Database['public']['Tables']['tasks']['Update'] = {
+      ...updates,
+    };
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`タスク更新エラー: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  static async updateTask(
+    id: string,
+    updates: UpdateTaskRequest
+  ): Promise<Task> {
     const updateData: Database['public']['Tables']['tasks']['Update'] = {
       ...updates,
     };
@@ -458,7 +513,7 @@ export class DatabaseService {
       const createdSubtasks: Task[] = [];
 
       // 元のタスクを完了状態に変更
-      await this.updateTask(originalTask.id, {
+      await DatabaseService.updateTask(originalTask.id, {
         status: 'completed',
         completed_at: new Date().toISOString(),
       });
@@ -472,7 +527,7 @@ export class DatabaseService {
           priority: originalTask.priority,
         };
 
-        const createdSubtask = await this.createTask(createRequest);
+        const createdSubtask = await DatabaseService.createTask(createRequest);
         createdSubtasks.push(createdSubtask);
       }
 
@@ -480,7 +535,7 @@ export class DatabaseService {
     } catch (error) {
       // エラーが発生した場合、元のタスクの状態を元に戻す
       try {
-        await this.updateTask(originalTask.id, {
+        await DatabaseService.updateTask(originalTask.id, {
           status: originalTask.status,
           completed_at: originalTask.completed_at,
         });
@@ -520,6 +575,104 @@ export class DatabaseService {
             sessions.length
           : 0,
     };
+  }
+
+  // 統計機能用の追加メソッド
+  static async getCompletedTasksCount(dateRange?: {
+    start: string;
+    end: string;
+  }): Promise<number> {
+    let query = supabase
+      .from('tasks')
+      .select('id', { count: 'exact' })
+      .eq('status', 'completed');
+
+    if (dateRange) {
+      query = query
+        .gte('completed_at', dateRange.start)
+        .lte('completed_at', dateRange.end);
+    }
+
+    const { count, error } = await query;
+
+    if (error) {
+      throw new Error(`完了タスク数取得エラー: ${error.message}`);
+    }
+
+    return count || 0;
+  }
+
+  static async getDailySessionStats(days: number = 7): Promise<
+    Array<{
+      date: string;
+      sessions: number;
+      workTime: number;
+      completedTasks: number;
+    }>
+  > {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // セッションデータを取得
+    const sessions = await DatabaseService.getSessions({
+      startDate: startDate.toISOString(),
+      completed: true,
+    });
+
+    // タスクデータを取得
+    const dbService = DatabaseService.getInstance();
+    const tasks = await dbService.getTasks({
+      status: 'completed',
+    });
+
+    // 日付別にデータを集計
+    const statsByDate: Record<
+      string,
+      {
+        sessions: number;
+        workTime: number;
+        completedTasks: number;
+      }
+    > = {};
+
+    // 指定された日数分の日付を初期化
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateKey = date.toISOString().split('T')[0];
+      statsByDate[dateKey] = { sessions: 0, workTime: 0, completedTasks: 0 };
+    }
+
+    // セッションデータを集計
+    sessions.forEach(session => {
+      const sessionDate = new Date(session.completed_at || session.started_at);
+      const dateKey = sessionDate.toISOString().split('T')[0];
+
+      if (statsByDate[dateKey]) {
+        statsByDate[dateKey].sessions += 1;
+        if (session.type === 'pomodoro') {
+          statsByDate[dateKey].workTime += session.actual_duration || 0;
+        }
+      }
+    });
+
+    // タスクデータを集計
+    tasks.forEach(task => {
+      if (task.completed_at) {
+        const taskDate = new Date(task.completed_at);
+        const dateKey = taskDate.toISOString().split('T')[0];
+
+        if (statsByDate[dateKey]) {
+          statsByDate[dateKey].completedTasks += 1;
+        }
+      }
+    });
+
+    // 結果を配列に変換
+    return Object.entries(statsByDate).map(([date, stats]) => ({
+      date,
+      ...stats,
+    }));
   }
 
   // リアルタイム同期
