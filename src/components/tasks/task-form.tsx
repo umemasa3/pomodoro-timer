@@ -25,7 +25,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     description: '',
     estimated_pomodoros: 1,
     priority: 'medium' as 'low' | 'medium' | 'high',
-    status: 'active' as 'active' | 'in_progress' | 'paused' | 'completed',
+    status: 'pending' as 'pending' | 'in_progress' | 'paused' | 'completed',
   });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -55,7 +55,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
           description: '',
           estimated_pomodoros: 1,
           priority: 'medium',
-          status: 'active',
+          status: 'pending',
         });
         setSelectedTags([]);
       }
@@ -95,34 +95,36 @@ export const TaskForm: React.FC<TaskFormProps> = ({
 
     setLoading(true);
     try {
+      console.log('タスク保存開始:', { formData, task });
+
       if (task) {
         // 既存タスクの更新
-        await DatabaseService.updateTask(task.id, {
-          ...formData,
-          updated_at: new Date().toISOString(),
-        });
+        console.log('タスク更新:', task.id, formData);
+        await DatabaseService.updateTask(task.id, formData);
 
         // タグの更新
+        console.log('タグ更新:', task.id, selectedTags);
         await DatabaseService.updateTaskTags(task.id, selectedTags);
       } else {
         // 新しいタスクの作成
-        const newTask = await DatabaseService.createTask({
-          ...formData,
-          completed_pomodoros: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
+        console.log('新規タスク作成:', formData);
+        const newTask = await DatabaseService.createTask(formData);
+        console.log('作成されたタスク:', newTask);
 
         // タグの関連付け
         if (selectedTags.length > 0) {
+          console.log('タグ関連付け:', newTask.id, selectedTags);
           await DatabaseService.updateTaskTags(newTask.id, selectedTags);
         }
       }
 
+      console.log('タスク保存完了');
       onSubmit();
     } catch (error) {
       console.error('タスク保存エラー:', error);
-      alert('タスクの保存に失敗しました');
+      alert(
+        `タスクの保存に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`
+      );
     } finally {
       setLoading(false);
     }
@@ -276,7 +278,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                 }
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
-                <option value="active">未開始</option>
+                <option value="pending">未開始</option>
                 <option value="in_progress">進行中</option>
                 <option value="paused">一時停止</option>
                 <option value="completed">完了</option>

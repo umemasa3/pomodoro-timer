@@ -134,33 +134,64 @@ export class DatabaseService {
 
   // タスク関連操作
   static async createTask(taskData: CreateTaskRequest): Promise<Task> {
+    console.log('DatabaseService.createTask 開始:', taskData);
+
+    // デモモードの場合は直接オフライン処理を実行
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      console.log('デモモードでタスク作成');
+      const realtimeService = RealtimeSyncService.getInstance();
+
+      // デモユーザーIDを使用
+      const offlineTaskData = {
+        user_id: 'demo-user-id',
+        title: taskData.title,
+        description: taskData.description,
+        estimated_pomodoros: taskData.estimated_pomodoros || 1,
+        priority: taskData.priority || 'medium',
+      };
+
+      console.log('デモモードタスクデータ:', offlineTaskData);
+      const result = await realtimeService.createTaskOffline(offlineTaskData);
+      console.log('デモモードタスク作成結果:', result);
+      return result;
+    }
+
     const realtimeService = RealtimeSyncService.getInstance();
 
     // オフライン時はローカルで作成
     if (!realtimeService.isNetworkOnline()) {
+      console.log('オフラインモードでタスク作成');
       const {
         data: { user },
       } = await DatabaseService.getSupabaseClient().auth.getUser();
 
+      console.log('認証ユーザー:', user);
       if (!user) {
         throw new Error('認証が必要です');
       }
 
-      return realtimeService.createTaskOffline({
+      const offlineTaskData = {
         user_id: user.id,
         title: taskData.title,
         description: taskData.description,
         estimated_pomodoros: taskData.estimated_pomodoros || 1,
         priority: taskData.priority || 'medium',
-      });
+      };
+
+      console.log('オフラインタスクデータ:', offlineTaskData);
+      const result = await realtimeService.createTaskOffline(offlineTaskData);
+      console.log('オフラインタスク作成結果:', result);
+      return result;
     }
 
+    console.log('オンラインモードでタスク作成');
     const client = DatabaseService.getSupabaseClient();
 
     const {
       data: { user },
     } = await client.auth.getUser();
 
+    console.log('認証ユーザー:', user);
     if (!user) {
       throw new Error('認証が必要です');
     }
@@ -175,12 +206,14 @@ export class DatabaseService {
       priority: taskData.priority || 'medium',
     };
 
+    console.log('データベース挿入データ:', insertData);
     const { data, error } = await (client as any)
       .from('tasks')
       .insert([insertData])
       .select()
       .single();
 
+    console.log('データベース挿入結果:', { data, error });
     if (error) {
       throw new Error(`タスク作成エラー: ${error.message}`);
     }
@@ -194,6 +227,27 @@ export class DatabaseService {
     limit?: number;
     tagId?: string;
   }): Promise<(Task & { tags: Tag[] })[]> {
+    // デモモードの場合は直接キャッシュから取得
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      console.log('デモモードでタスク取得');
+      const realtimeService = RealtimeSyncService.getInstance();
+      let tasks = realtimeService.getTasksFromCache();
+
+      // フィルタリングを適用
+      if (filters?.status) {
+        tasks = tasks.filter(task => task.status === filters.status);
+      }
+      if (filters?.priority) {
+        tasks = tasks.filter(task => task.priority === filters.priority);
+      }
+      if (filters?.limit) {
+        tasks = tasks.slice(0, filters.limit);
+      }
+
+      // タグ情報を追加（デモモードでは空配列）
+      return tasks.map(task => ({ ...task, tags: [] }));
+    }
+
     const realtimeService = RealtimeSyncService.getInstance();
 
     // オフライン時はキャッシュから取得
@@ -336,6 +390,13 @@ export class DatabaseService {
     id: string,
     updates: UpdateTaskRequest
   ): Promise<Task> {
+    // デモモードの場合は直接オフライン処理を実行
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      console.log('デモモードでタスク更新:', id, updates);
+      const realtimeService = RealtimeSyncService.getInstance();
+      return realtimeService.updateTaskOffline(id, updates);
+    }
+
     const realtimeService = RealtimeSyncService.getInstance();
 
     // オフライン時はローカルで更新
@@ -412,6 +473,12 @@ export class DatabaseService {
   }
 
   static async getTags(): Promise<Tag[]> {
+    // デモモードの場合は空配列を返す（タグ機能は簡略化）
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      console.log('デモモードでタグ取得をスキップ');
+      return [];
+    }
+
     const client = DatabaseService.getSupabaseClient();
 
     const { data, error } = await client
@@ -505,6 +572,12 @@ export class DatabaseService {
 
   // タスクのタグを一括更新
   static async updateTaskTags(taskId: string, tagIds: string[]): Promise<void> {
+    // デモモードの場合は何もしない（タグ機能は簡略化）
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      console.log('デモモードでタグ更新をスキップ:', taskId, tagIds);
+      return;
+    }
+
     const client = DatabaseService.getSupabaseClient();
 
     // 既存のタグ関連付けを削除

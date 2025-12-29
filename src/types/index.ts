@@ -40,6 +40,7 @@ export interface Task {
   created_at: string;
   updated_at: string;
   completed_at?: string;
+  tags?: Tag[]; // タスクに関連付けられたタグ
 }
 
 export interface Tag {

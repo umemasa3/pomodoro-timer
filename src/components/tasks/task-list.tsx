@@ -29,13 +29,8 @@ export const TaskList: React.FC<TaskListProps> = ({
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [filterTag, setFilterTag] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<
-    'all' | 'active' | 'completed'
-  >('active');
-
-  useEffect(() => {
-    loadTasks();
-    loadTags();
-  }, [loadTasks]);
+    'all' | 'pending' | 'completed'
+  >('pending');
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -47,7 +42,7 @@ export const TaskList: React.FC<TaskListProps> = ({
 
       // ステータスでフィルタリング
       const filteredTasks = allTasks.filter((task: Task) => {
-        if (filterStatus === 'active') return task.status !== 'completed';
+        if (filterStatus === 'pending') return task.status !== 'completed';
         if (filterStatus === 'completed') return task.status === 'completed';
         return true; // 'all'の場合
       });
@@ -59,6 +54,11 @@ export const TaskList: React.FC<TaskListProps> = ({
       setLoading(false);
     }
   }, [filterTag, filterStatus]);
+
+  useEffect(() => {
+    loadTasks();
+    loadTags();
+  }, [loadTasks]);
 
   const loadTags = async () => {
     try {
@@ -93,7 +93,7 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   const handleToggleComplete = async (task: Task) => {
     try {
-      const newStatus = task.status === 'completed' ? 'active' : 'completed';
+      const newStatus = task.status === 'completed' ? 'pending' : 'completed';
       await DatabaseService.updateTask(task.id, { status: newStatus });
       await loadTasks();
     } catch (error) {
@@ -158,7 +158,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             data-testid="filter-status-select"
           >
-            <option value="active">進行中</option>
+            <option value="pending">進行中</option>
             <option value="completed">完了済み</option>
             <option value="all">すべて</option>
           </select>
@@ -191,7 +191,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         </div>
       ) : tasks.length === 0 ? (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          {filterStatus === 'active'
+          {filterStatus === 'pending'
             ? '進行中のタスクがありません'
             : 'タスクがありません'}
         </div>
