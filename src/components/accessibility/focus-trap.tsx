@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useMemo } from 'react';
 import { useKeyboardNavigation } from '../../hooks/use-keyboard-navigation';
 
 interface FocusTrapProps {
@@ -20,20 +20,25 @@ export const FocusTrap: React.FC<FocusTrapProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useKeyboardNavigation(containerRef, {
-    enabled: active,
-    trapFocus: true,
-    restoreFocus,
-    autoFocus,
-    onEscape,
-  });
+  // useKeyboardNavigationのオプションをメモ化
+  const navigationOptions = useMemo(
+    () => ({
+      enabled: active,
+      trapFocus: true,
+      restoreFocus,
+      autoFocus,
+      onEscape,
+    }),
+    [active, restoreFocus, autoFocus, onEscape]
+  );
+
+  useKeyboardNavigation(
+    containerRef as React.RefObject<HTMLElement>,
+    navigationOptions
+  );
 
   return (
-    <div
-      ref={containerRef}
-      className={className}
-      tabIndex={-1}
-    >
+    <div ref={containerRef} className={className} tabIndex={-1}>
       {children}
     </div>
   );
@@ -62,7 +67,7 @@ export const ModalFocusTrap: React.FC<{
 // フォーカス可能な要素を管理するコンポーネント
 export const FocusableElement: React.FC<{
   children: React.ReactNode;
-  as?: keyof JSX.IntrinsicElements;
+  as?: keyof React.JSX.IntrinsicElements;
   disabled?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -91,23 +96,30 @@ export const FocusableElement: React.FC<{
     }
   }, [disabled, onBlur]);
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (disabled) {
-      event.preventDefault();
-      return;
-    }
+  const { onClick } = props;
 
-    // Enterキーでクリックをシミュレート
-    if (event.key === 'Enter' && props.onClick) {
-      event.preventDefault();
-      props.onClick(event);
-    }
-  }, [disabled, props.onClick]);
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (disabled) {
+        event.preventDefault();
+        return;
+      }
+
+      // Enterキーでクリックをシミュレート
+      if (event.key === 'Enter' && onClick) {
+        event.preventDefault();
+        onClick(event);
+      }
+    },
+    [disabled, onClick]
+  );
+
+  const ElementComponent = Component as React.ElementType;
 
   return (
-    <Component
+    <ElementComponent
       ref={elementRef}
-      tabIndex={disabled ? -1 : props.tabIndex ?? 0}
+      tabIndex={disabled ? -1 : (props.tabIndex ?? 0)}
       onFocus={handleFocus}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
@@ -116,44 +128,6 @@ export const FocusableElement: React.FC<{
       {...props}
     >
       {children}
-    </Component>
+    </ElementComponent>
   );
-};
-
-// フォーカス管理のためのユーティリティフック
-export const useFocusManagement = () => {
-  const saveFocus = useCallback(() => {
-    return document.activeElement as HTMLElement;
-  }, []);
-
-  const restoreFocus = useCallback((element: HTMLElement | null) => {
-    if (element && element.focus) {
-      element.focus();
-    }
-  }, []);
-
-  const focusElement = useCallback((selector: string) => {
-    const element = document.querySelector(selector) as HTMLElement;
-    if (element && element.focus) {
-      element.focus();
-    }
-  }, []);
-
-  const focusFirstInContainer = useCallback((container: HTMLElement) => {
-    const focusableElements = container.querySelectorAll(
-      'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
-    );
-    
-    const firstElement = focusableElements[0] as HTMLElement;
-    if (firstElement && firstElement.focus) {
-      firstElement.focus();
-    }
-  }, []);
-
-  return {
-    saveFocus,
-    restoreFocus,
-    focusElement,
-    focusFirstInContainer,
-  };
 };

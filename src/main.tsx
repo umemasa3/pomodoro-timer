@@ -3,9 +3,41 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
 import { validateEnvironment, logEnvironmentInfo } from './utils/env';
+import { initializePerformanceMonitoring } from './services/performance-monitor';
+import { initializeHealthMonitoring } from './services/health-monitor';
 
 // Sentryの初期化（最初に実行）
 import '../sentry.client.config';
+
+// パフォーマンス監視の初期化
+if (typeof window !== 'undefined') {
+  initializePerformanceMonitoring({
+    enabled: true,
+    enableConsoleLogging: import.meta.env.DEV,
+    thresholds: {
+      LCP: 2500,
+      FID: 100,
+      CLS: 0.1,
+      customMetrics: {
+        'page-load-time': 3000,
+        'api-response-time': 2000,
+        'memory-usage': 100 * 1024 * 1024,
+      },
+    },
+  });
+
+  // ヘルスモニターの初期化
+  initializeHealthMonitoring({
+    enabled: true,
+    enableConsoleLogging: import.meta.env.DEV,
+    checkInterval: 60000, // 1分
+    alertThresholds: {
+      responseTime: 5000,
+      errorRate: 0.1,
+      consecutiveFailures: 3,
+    },
+  });
+}
 
 // 環境変数の検証
 try {

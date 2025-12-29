@@ -9,6 +9,7 @@ import { ThemeToggle } from './components/ui/theme-toggle';
 import { ErrorBoundary } from './components/error-boundary';
 import { ProductionErrorBoundary } from './components/error-boundary-production';
 import { MonitoringDashboard } from './components/monitoring-dashboard';
+import { OperationsDashboard } from './components/operations-dashboard';
 import {
   PWAUpdatePrompt,
   PWAInstallPrompt,
@@ -56,14 +57,11 @@ function App() {
   const { initializeTheme } = useThemeStore();
   const [currentPage, setCurrentPage] = useState<PageType>('timer');
   const [showMonitoringDashboard, setShowMonitoringDashboard] = useState(false);
+  const [showOperationsDashboard, setShowOperationsDashboard] = useState(false);
 
   // オンボーディング状態管理
-  const {
-    showSetupWizard,
-    showTour,
-    completeSetup,
-    completeTour,
-  } = useOnboarding();
+  const { showSetupWizard, showTour, completeSetup, completeTour } =
+    useOnboarding();
 
   // キーボードナビゲーション
   useKeyboardNavigation({
@@ -237,7 +235,11 @@ function App() {
             className="min-h-screen"
           >
             <div className="container mx-auto px-4 py-6 md:py-12">
-              <main className="max-w-4xl mx-auto" role="main" aria-label="タイマーページ">
+              <main
+                className="max-w-4xl mx-auto"
+                role="main"
+                aria-label="タイマーページ"
+              >
                 {/* ウェルカムメッセージ */}
                 <motion.div
                   className="text-center mb-8 md:mb-12"
@@ -271,14 +273,17 @@ function App() {
                 >
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <SparklesIcon className="w-6 h-6 text-green-600 dark:text-green-400" aria-hidden="true" />
+                      <SparklesIcon
+                        className="w-6 h-6 text-green-600 dark:text-green-400"
+                        aria-hidden="true"
+                      />
                     </div>
                     <h2 className="text-lg font-semibold text-green-900 dark:text-green-100">
                       認証システム統合完了
                     </h2>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700 dark:text-green-300">
-                  <div className="space-y-2">
+                    <div className="space-y-2">
                       <p>
                         <span className="font-medium">ユーザーID:</span>{' '}
                         {user?.id}
@@ -326,61 +331,64 @@ function App() {
           <HighContrastProvider>
             <SkipLinks />
             <LiveRegion />
-            
+
             <div className="min-h-screen bg-gradient-to-br from-pomodoro-50 via-white to-break-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-            {/* PWA関連コンポーネント */}
-            <PWAUpdatePrompt />
-            <PWAInstallPrompt />
-            <OfflineIndicator />
-            <OfflineNotification />
+              {/* PWA関連コンポーネント */}
+              <PWAUpdatePrompt />
+              <PWAInstallPrompt />
+              <OfflineIndicator />
+              <OfflineNotification />
 
-            {/* 同期状態インジケーター */}
-            <SyncStatusIndicator />
+              {/* 同期状態インジケーター */}
+              <SyncStatusIndicator />
 
-            {/* ナビゲーションヘッダー */}
-            <motion.header
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50"
-              initial={{ y: -100 }}
-              animate={{ y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="container mx-auto px-4">
-                <div className="flex justify-between items-center h-16 md:h-20">
-                  {/* ロゴとタイトル */}
-                  <motion.div
-                    className="flex items-center space-x-2 md:space-x-4"
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="p-1.5 md:p-2 bg-gradient-to-r from-pomodoro-500 to-pomodoro-600 rounded-lg md:rounded-xl shadow-lg">
-                      <ClockIcon className="w-6 h-6 md:w-8 md:h-8 text-white" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <div className="text-lg md:text-2xl font-bold gradient-text">
-                        ポモドーロタイマー
+              {/* ナビゲーションヘッダー */}
+              <motion.header
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50"
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="container mx-auto px-4">
+                  <div className="flex justify-between items-center h-16 md:h-20">
+                    {/* ロゴとタイトル */}
+                    <motion.div
+                      className="flex items-center space-x-2 md:space-x-4"
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="p-1.5 md:p-2 bg-gradient-to-r from-pomodoro-500 to-pomodoro-600 rounded-lg md:rounded-xl shadow-lg">
+                        <ClockIcon
+                          className="w-6 h-6 md:w-8 md:h-8 text-white"
+                          aria-hidden="true"
+                        />
                       </div>
-                      <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                        生産性向上アプリ
-                      </p>
-                    </div>
-                  </motion.div>
+                      <div>
+                        <div className="text-lg md:text-2xl font-bold gradient-text">
+                          ポモドーロタイマー
+                        </div>
+                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                          生産性向上アプリ
+                        </p>
+                      </div>
+                    </motion.div>
 
-                  {/* ナビゲーションメニュー */}
-                  <nav 
-                    id="navigation"
-                    className="flex items-center space-x-1 md:space-x-2"
-                    role="navigation"
-                    aria-label="メインナビゲーション"
-                  >
-                    {navigationItems.map(item => {
-                      const Icon = item.icon;
-                      const isActive = currentPage === item.id;
+                    {/* ナビゲーションメニュー */}
+                    <nav
+                      id="navigation"
+                      className="flex items-center space-x-1 md:space-x-2"
+                      role="navigation"
+                      aria-label="メインナビゲーション"
+                    >
+                      {navigationItems.map(item => {
+                        const Icon = item.icon;
+                        const isActive = currentPage === item.id;
 
-                      const NavigationButton = (
-                        <motion.button
-                          key={item.id}
-                          onClick={() => setCurrentPage(item.id)}
-                          className={`
+                        const NavigationButton = (
+                          <motion.button
+                            key={item.id}
+                            onClick={() => setCurrentPage(item.id)}
+                            className={`
                         relative px-2 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl font-medium transition-all duration-300
                         flex items-center space-x-1 md:space-x-2 group
                         ${
@@ -389,147 +397,180 @@ function App() {
                             : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'
                         }
                       `}
-                          whileHover={{ scale: 1.05, y: -1 }}
-                          whileTap={{ scale: 0.95 }}
-                          transition={{
-                            type: 'spring',
-                            stiffness: 400,
-                            damping: 17,
-                          }}
-                          data-testid={`nav-${item.id}`}
-                          aria-current={isActive ? 'page' : undefined}
-                          aria-label={`${item.label}ページに移動`}
-                        >
-                          <Icon className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
-                          <span className="hidden lg:block text-sm md:text-base">
-                            {item.label}
-                          </span>
-
-                          {/* ツールチップ */}
-                          <div 
-                            className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none lg:hidden"
-                            role="tooltip"
-                            aria-hidden="true"
+                            whileHover={{ scale: 1.05, y: -1 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{
+                              type: 'spring',
+                              stiffness: 400,
+                              damping: 17,
+                            }}
+                            data-testid={`nav-${item.id}`}
+                            aria-current={isActive ? 'page' : undefined}
+                            aria-label={`${item.label}ページに移動`}
                           >
-                            {item.description}
-                          </div>
-                        </motion.button>
-                      );
+                            <Icon
+                              className="w-4 h-4 md:w-5 md:h-5"
+                              aria-hidden="true"
+                            />
+                            <span className="hidden lg:block text-sm md:text-base">
+                              {item.label}
+                            </span>
 
-                      // ツールチップでラップ
-                      if (item.id === 'tasks') {
-                        return <TaskTooltip key={item.id}>{NavigationButton}</TaskTooltip>;
-                      } else if (item.id === 'statistics') {
-                        return <StatisticsTooltip key={item.id}>{NavigationButton}</StatisticsTooltip>;
-                      } else {
-                        return NavigationButton;
-                      }
-                    })}
-                  </nav>
+                            {/* ツールチップ */}
+                            <div
+                              className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none lg:hidden"
+                              role="tooltip"
+                              aria-hidden="true"
+                            >
+                              {item.description}
+                            </div>
+                          </motion.button>
+                        );
 
-                  {/* ユーザーメニュー */}
-                  <div className="flex items-center space-x-2 md:space-x-4">
-                    {/* 監視ダッシュボードボタン（開発環境のみ） */}
-                    {import.meta.env.DEV && (
-                      <motion.button
-                        onClick={() => setShowMonitoringDashboard(true)}
-                        className="flex items-center space-x-1 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        title="監視ダッシュボード"
-                      >
-                        <CogIcon className="w-4 h-4" />
-                        <span className="hidden sm:block">監視</span>
-                      </motion.button>
-                    )}
+                        // ツールチップでラップ
+                        if (item.id === 'tasks') {
+                          return (
+                            <TaskTooltip key={item.id}>
+                              {NavigationButton}
+                            </TaskTooltip>
+                          );
+                        } else if (item.id === 'statistics') {
+                          return (
+                            <StatisticsTooltip key={item.id}>
+                              {NavigationButton}
+                            </StatisticsTooltip>
+                          );
+                        } else {
+                          return NavigationButton;
+                        }
+                      })}
+                    </nav>
 
-                    {/* テーマ切り替えボタン */}
-                    <ThemeToggle size="md" />
+                    {/* ユーザーメニュー */}
+                    <div className="flex items-center space-x-2 md:space-x-4">
+                      {/* 監視ダッシュボードボタン（開発環境のみ） */}
+                      {import.meta.env.DEV && (
+                        <>
+                          <motion.button
+                            onClick={() => setShowMonitoringDashboard(true)}
+                            className="flex items-center space-x-1 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            title="パフォーマンス監視"
+                          >
+                            <CogIcon className="w-4 h-4" />
+                            <span className="hidden sm:block">監視</span>
+                          </motion.button>
+                          <motion.button
+                            onClick={() => setShowOperationsDashboard(true)}
+                            className="flex items-center space-x-1 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            title="運用ダッシュボード"
+                          >
+                            <CogIcon className="w-4 h-4" />
+                            <span className="hidden sm:block">運用</span>
+                          </motion.button>
+                        </>
+                      )}
 
-                    <div className="hidden lg:block text-right">
-                      <div className="flex items-center space-x-2">
-                        <UserCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {user?.display_name || user?.email?.split('@')[0]}
+                      {/* テーマ切り替えボタン */}
+                      <ThemeToggle size="md" />
+
+                      <div className="hidden lg:block text-right">
+                        <div className="flex items-center space-x-2">
+                          <UserCircleIcon
+                            className="w-5 h-5 text-gray-400"
+                            aria-hidden="true"
+                          />
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {user?.display_name || user?.email?.split('@')[0]}
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          こんにちは！
                         </p>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        こんにちは！
-                      </p>
+                      <motion.button
+                        onClick={signOut}
+                        className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        data-testid="logout-button"
+                        aria-label="ログアウト"
+                      >
+                        <ArrowRightOnRectangleIcon
+                          className="w-4 h-4"
+                          aria-hidden="true"
+                        />
+                        <span className="hidden sm:block">ログアウト</span>
+                      </motion.button>
                     </div>
-                    <motion.button
-                      onClick={signOut}
-                      className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      data-testid="logout-button"
-                      aria-label="ログアウト"
-                    >
-                      <ArrowRightOnRectangleIcon className="w-4 h-4" aria-hidden="true" />
-                      <span className="hidden sm:block">ログアウト</span>
-                    </motion.button>
                   </div>
                 </div>
+              </motion.header>
+
+              {/* メインコンテンツ */}
+              <main role="main" aria-label="メインコンテンツ" id="main-content">
+                <AnimatePresence mode="wait">
+                  {renderCurrentPage()}
+                </AnimatePresence>
+              </main>
+
+              {/* 監視ダッシュボード */}
+              <MonitoringDashboard
+                isOpen={showMonitoringDashboard}
+                onClose={() => setShowMonitoringDashboard(false)}
+              />
+
+              {/* 運用ダッシュボード */}
+              <OperationsDashboard
+                isOpen={showOperationsDashboard}
+                onClose={() => setShowOperationsDashboard(false)}
+              />
+
+              {/* オンボーディング関連 */}
+              <SetupWizard
+                isOpen={showSetupWizard}
+                onClose={() => completeSetup()}
+                onComplete={handleSetupComplete}
+              />
+
+              <OnboardingTour
+                isOpen={showTour}
+                onClose={() => completeTour()}
+                onComplete={handleTourComplete}
+              />
+
+              {/* 装飾的な背景要素 */}
+              <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+                <motion.div
+                  className="absolute top-1/4 left-1/4 w-64 h-64 bg-pomodoro-200/10 dark:bg-pomodoro-800/5 rounded-full blur-3xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.3, 0.5, 0.3],
+                  }}
+                  transition={{
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  }}
+                />
+                <motion.div
+                  className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-break-200/10 dark:bg-break-800/5 rounded-full blur-3xl"
+                  animate={{
+                    scale: [1.2, 1, 1.2],
+                    opacity: [0.2, 0.4, 0.2],
+                  }}
+                  transition={{
+                    duration: 10,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    delay: 2,
+                  }}
+                />
               </div>
-            </motion.header>
-
-            {/* メインコンテンツ */}
-            <main 
-              role="main" 
-              aria-label="メインコンテンツ"
-              id="main-content"
-            >
-              <AnimatePresence mode="wait">{renderCurrentPage()}</AnimatePresence>
-            </main>
-
-            {/* 監視ダッシュボード */}
-            <MonitoringDashboard
-              isOpen={showMonitoringDashboard}
-              onClose={() => setShowMonitoringDashboard(false)}
-            />
-
-            {/* オンボーディング関連 */}
-            <SetupWizard
-              isOpen={showSetupWizard}
-              onClose={() => completeSetup()}
-              onComplete={handleSetupComplete}
-            />
-
-            <OnboardingTour
-              isOpen={showTour}
-              onClose={() => completeTour()}
-              onComplete={handleTourComplete}
-            />
-
-            {/* 装飾的な背景要素 */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-              <motion.div
-                className="absolute top-1/4 left-1/4 w-64 h-64 bg-pomodoro-200/10 dark:bg-pomodoro-800/5 rounded-full blur-3xl"
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.3, 0.5, 0.3],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-              />
-              <motion.div
-                className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-break-200/10 dark:bg-break-800/5 rounded-full blur-3xl"
-                animate={{
-                  scale: [1.2, 1, 1.2],
-                  opacity: [0.2, 0.4, 0.2],
-                }}
-                transition={{
-                  duration: 10,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                  delay: 2,
-                }}
-              />
             </div>
-          </div>
           </HighContrastProvider>
         </AuthGuard>
       </ErrorBoundary>
