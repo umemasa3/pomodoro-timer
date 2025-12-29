@@ -15,9 +15,23 @@ import {
   OfflineIndicator,
   OfflineNotification,
 } from './components/pwa';
+import {
+  OnboardingTour,
+  SetupWizard,
+  TimerTooltip,
+  TaskTooltip,
+  StatisticsTooltip,
+  useOnboarding,
+} from './components/onboarding';
+import {
+  SkipLinks,
+  LiveRegion,
+  HighContrastProvider,
+} from './components/accessibility';
 import { useAuthStore } from './stores/auth-store';
 import { useTimerStore } from './stores/timer-store';
 import { useThemeStore } from './stores/theme-store';
+import { useKeyboardNavigation } from './hooks/use-keyboard-navigation';
 import { errorHandler } from './services/error-handler';
 import { monitoringService } from './services/monitoring-service';
 import { ErrorMonitoringService } from './services/error-monitoring';
@@ -42,6 +56,23 @@ function App() {
   const { initializeTheme } = useThemeStore();
   const [currentPage, setCurrentPage] = useState<PageType>('timer');
   const [showMonitoringDashboard, setShowMonitoringDashboard] = useState(false);
+
+  // オンボーディング状態管理
+  const {
+    showSetupWizard,
+    showTour,
+    completeSetup,
+    completeTour,
+  } = useOnboarding();
+
+  // キーボードナビゲーション
+  useKeyboardNavigation({
+    onNavigateToTimer: () => setCurrentPage('timer'),
+    onNavigateToTasks: () => setCurrentPage('tasks'),
+    onNavigateToStatistics: () => setCurrentPage('statistics'),
+    onToggleTheme: () => {}, // ThemeToggleコンポーネントが処理
+    onLogout: signOut,
+  });
 
   // アプリ起動時に認証状態とテーマを初期化
   useEffect(() => {
@@ -141,6 +172,17 @@ function App() {
     },
   ];
 
+  // オンボーディング完了ハンドラー
+  const handleSetupComplete = (setupData: any) => {
+    console.log('セットアップ完了:', setupData);
+    completeSetup();
+  };
+
+  const handleTourComplete = () => {
+    console.log('ツアー完了');
+    completeTour();
+  };
+
   const renderCurrentPage = () => {
     const pageVariants = {
       initial: { opacity: 0, x: 20 },
@@ -195,7 +237,7 @@ function App() {
             className="min-h-screen"
           >
             <div className="container mx-auto px-4 py-6 md:py-12">
-              <main className="max-w-4xl mx-auto">
+              <main className="max-w-4xl mx-auto" role="main" aria-label="タイマーページ">
                 {/* ウェルカムメッセージ */}
                 <motion.div
                   className="text-center mb-8 md:mb-12"
@@ -212,7 +254,11 @@ function App() {
                 </motion.div>
 
                 {/* タイマーコンポーネント */}
-                <TimerComponent />
+                <section aria-label="タイマー操作" id="timer-controls">
+                  <TimerTooltip>
+                    <TimerComponent />
+                  </TimerTooltip>
+                </section>
 
                 {/* 開発用：認証システム統合完了表示 */}
                 <motion.div
@@ -220,17 +266,19 @@ function App() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.5 }}
+                  role="region"
+                  aria-label="認証システム情報"
                 >
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <SparklesIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      <SparklesIcon className="w-6 h-6 text-green-600 dark:text-green-400" aria-hidden="true" />
                     </div>
-                    <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
+                    <h2 className="text-lg font-semibold text-green-900 dark:text-green-100">
                       認証システム統合完了
-                    </h3>
+                    </h2>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700 dark:text-green-300">
-                    <div className="space-y-2">
+                  <div className="space-y-2">
                       <p>
                         <span className="font-medium">ユーザーID:</span>{' '}
                         {user?.id}
@@ -274,7 +322,12 @@ function App() {
     >
       <ErrorBoundary>
         <AuthGuard fallback={<AuthPage onAuthSuccess={() => {}} />}>
-          <div className="min-h-screen bg-gradient-to-br from-pomodoro-50 via-white to-break-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          {/* アクセシビリティ機能 */}
+          <HighContrastProvider>
+            <SkipLinks />
+            <LiveRegion />
+            
+            <div className="min-h-screen bg-gradient-to-br from-pomodoro-50 via-white to-break-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             {/* PWA関連コンポーネント */}
             <PWAUpdatePrompt />
             <PWAInstallPrompt />
@@ -300,12 +353,12 @@ function App() {
                     transition={{ duration: 0.2 }}
                   >
                     <div className="p-1.5 md:p-2 bg-gradient-to-r from-pomodoro-500 to-pomodoro-600 rounded-lg md:rounded-xl shadow-lg">
-                      <ClockIcon className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                      <ClockIcon className="w-6 h-6 md:w-8 md:h-8 text-white" aria-hidden="true" />
                     </div>
                     <div>
-                      <h1 className="text-lg md:text-2xl font-bold gradient-text">
+                      <div className="text-lg md:text-2xl font-bold gradient-text">
                         ポモドーロタイマー
-                      </h1>
+                      </div>
                       <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
                         生産性向上アプリ
                       </p>
@@ -313,12 +366,17 @@ function App() {
                   </motion.div>
 
                   {/* ナビゲーションメニュー */}
-                  <nav className="flex items-center space-x-1 md:space-x-2">
+                  <nav 
+                    id="navigation"
+                    className="flex items-center space-x-1 md:space-x-2"
+                    role="navigation"
+                    aria-label="メインナビゲーション"
+                  >
                     {navigationItems.map(item => {
                       const Icon = item.icon;
                       const isActive = currentPage === item.id;
 
-                      return (
+                      const NavigationButton = (
                         <motion.button
                           key={item.id}
                           onClick={() => setCurrentPage(item.id)}
@@ -339,18 +397,33 @@ function App() {
                             damping: 17,
                           }}
                           data-testid={`nav-${item.id}`}
+                          aria-current={isActive ? 'page' : undefined}
+                          aria-label={`${item.label}ページに移動`}
                         >
-                          <Icon className="w-4 h-4 md:w-5 md:h-5" />
+                          <Icon className="w-4 h-4 md:w-5 md:h-5" aria-hidden="true" />
                           <span className="hidden lg:block text-sm md:text-base">
                             {item.label}
                           </span>
 
                           {/* ツールチップ */}
-                          <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none lg:hidden">
+                          <div 
+                            className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none lg:hidden"
+                            role="tooltip"
+                            aria-hidden="true"
+                          >
                             {item.description}
                           </div>
                         </motion.button>
                       );
+
+                      // ツールチップでラップ
+                      if (item.id === 'tasks') {
+                        return <TaskTooltip key={item.id}>{NavigationButton}</TaskTooltip>;
+                      } else if (item.id === 'statistics') {
+                        return <StatisticsTooltip key={item.id}>{NavigationButton}</StatisticsTooltip>;
+                      } else {
+                        return NavigationButton;
+                      }
                     })}
                   </nav>
 
@@ -375,7 +448,7 @@ function App() {
 
                     <div className="hidden lg:block text-right">
                       <div className="flex items-center space-x-2">
-                        <UserCircleIcon className="w-5 h-5 text-gray-400" />
+                        <UserCircleIcon className="w-5 h-5 text-gray-400" aria-hidden="true" />
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {user?.display_name || user?.email?.split('@')[0]}
                         </p>
@@ -390,8 +463,9 @@ function App() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       data-testid="logout-button"
+                      aria-label="ログアウト"
                     >
-                      <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                      <ArrowRightOnRectangleIcon className="w-4 h-4" aria-hidden="true" />
                       <span className="hidden sm:block">ログアウト</span>
                     </motion.button>
                   </div>
@@ -400,12 +474,31 @@ function App() {
             </motion.header>
 
             {/* メインコンテンツ */}
-            <AnimatePresence mode="wait">{renderCurrentPage()}</AnimatePresence>
+            <main 
+              role="main" 
+              aria-label="メインコンテンツ"
+              id="main-content"
+            >
+              <AnimatePresence mode="wait">{renderCurrentPage()}</AnimatePresence>
+            </main>
 
             {/* 監視ダッシュボード */}
             <MonitoringDashboard
               isOpen={showMonitoringDashboard}
               onClose={() => setShowMonitoringDashboard(false)}
+            />
+
+            {/* オンボーディング関連 */}
+            <SetupWizard
+              isOpen={showSetupWizard}
+              onClose={() => completeSetup()}
+              onComplete={handleSetupComplete}
+            />
+
+            <OnboardingTour
+              isOpen={showTour}
+              onClose={() => completeTour()}
+              onComplete={handleTourComplete}
             />
 
             {/* 装飾的な背景要素 */}
@@ -437,6 +530,7 @@ function App() {
               />
             </div>
           </div>
+          </HighContrastProvider>
         </AuthGuard>
       </ErrorBoundary>
     </ProductionErrorBoundary>
