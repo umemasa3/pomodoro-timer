@@ -10,7 +10,11 @@ interface BugReportFormProps {
   isSubmitted: boolean;
 }
 
-export const BugReportForm: React.FC<BugReportFormProps> = ({ onSubmit, isSubmitting, isSubmitted }) => {
+export const BugReportForm: React.FC<BugReportFormProps> = ({
+  onSubmit,
+  isSubmitting,
+  isSubmitted,
+}) => {
   const [description, setDescription] = React.useState('');
   const [isExpanded, setIsExpanded] = React.useState(false);
 
@@ -41,12 +45,15 @@ export const BugReportForm: React.FC<BugReportFormProps> = ({ onSubmit, isSubmit
         <BugAntIcon className="w-4 h-4 mr-2" />
         バグを報告
       </button>
-      
+
       {isExpanded && (
-        <form onSubmit={handleSubmit} className="p-3 border-t border-gray-200 dark:border-gray-600">
+        <form
+          onSubmit={handleSubmit}
+          className="p-3 border-t border-gray-200 dark:border-gray-600"
+        >
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={e => setDescription(e.target.value)}
             placeholder="何をしていた時にエラーが発生しましたか？詳細を教えてください。"
             className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             rows={3}

@@ -275,15 +275,16 @@ export const TaskList: React.FC<TaskListProps> = ({
 
                   {/* タグ表示 */}
                   {task.tags && task.tags.length > 0 && (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 mt-2">
                       <TagIcon className="w-4 h-4 text-gray-400" />
                       <div className="flex flex-wrap gap-1">
                         {task.tags.map(tag => (
                           <span
                             key={tag.id}
-                            className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full"
+                            className="px-2 py-1 text-xs rounded-full border"
                             style={{
-                              backgroundColor: tag.color + '20',
+                              backgroundColor: `${tag.color}20`,
+                              borderColor: tag.color,
                               color: tag.color,
                             }}
                           >

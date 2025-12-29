@@ -14,14 +14,22 @@ import {
   setupPropertyTest,
   teardownPropertyTest,
 } from '../../test/property-test-setup';
-import { ErrorMonitoringService, type ErrorRecoveryActions } from '../error-monitoring';
+import {
+  ErrorMonitoringService,
+  type ErrorRecoveryActions,
+} from '../error-monitoring';
 import React from 'react';
 
 // テスト用のエラー監視サービス実装
 class TestErrorMonitoringService {
   private static capturedErrors: Array<{ error: Error; context?: any }> = [];
-  private static capturedMessages: Array<{ message: string; level: string }> = [];
-  private static breadcrumbs: Array<{ message: string; category: string; level: string }> = [];
+  private static capturedMessages: Array<{ message: string; level: string }> =
+    [];
+  private static breadcrumbs: Array<{
+    message: string;
+    category: string;
+    level: string;
+  }> = [];
 
   // エラーキャプチャのモック実装
   static captureError(error: Error, context?: Record<string, any>): string {
@@ -31,19 +39,28 @@ class TestErrorMonitoringService {
   }
 
   // メッセージキャプチャのモック実装
-  static captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info'): string {
+  static captureMessage(
+    message: string,
+    level: 'info' | 'warning' | 'error' = 'info'
+  ): string {
     const messageId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     this.capturedMessages.push({ message, level });
     return messageId;
   }
 
   // ブレッドクラム追加のモック実装
-  static addBreadcrumb(message: string, category: string, level: 'info' | 'warning' | 'error' = 'info'): void {
+  static addBreadcrumb(
+    message: string,
+    category: string,
+    level: 'info' | 'warning' | 'error' = 'info'
+  ): void {
     this.breadcrumbs.push({ message, category, level });
   }
 
   // エラーの重要度を判定（実際のサービスから委譲）
-  static classifyErrorSeverity(error: Error): 'low' | 'medium' | 'high' | 'critical' {
+  static classifyErrorSeverity(
+    error: Error
+  ): 'low' | 'medium' | 'high' | 'critical' {
     return ErrorMonitoringService.classifyErrorSeverity(error);
   }
 
@@ -56,7 +73,11 @@ class TestErrorMonitoringService {
     return [...this.capturedMessages];
   }
 
-  static getBreadcrumbs(): Array<{ message: string; category: string; level: string }> {
+  static getBreadcrumbs(): Array<{
+    message: string;
+    category: string;
+    level: string;
+  }> {
     return [...this.breadcrumbs];
   }
 
@@ -78,13 +99,13 @@ class TestErrorBoundary {
     this.lastError = error;
     this.lastErrorInfo = errorInfo;
     this.hasError = true;
-    
+
     // エラーをキャプチャ
     TestErrorMonitoringService.captureError(error, {
       componentStack: errorInfo.componentStack,
       errorBoundary: true,
     });
-    
+
     // 回復アクションを生成
     this.recoveryActions = {
       retry: vi.fn(() => {
@@ -102,11 +123,22 @@ class TestErrorBoundary {
         }
       }),
       reportBug: vi.fn((description: string) => {
-        TestErrorMonitoringService.captureMessage(`User bug report: ${description}`, 'info');
-        TestErrorMonitoringService.addBreadcrumb('User submitted bug report', 'user', 'info');
+        TestErrorMonitoringService.captureMessage(
+          `User bug report: ${description}`,
+          'info'
+        );
+        TestErrorMonitoringService.addBreadcrumb(
+          'User submitted bug report',
+          'user',
+          'info'
+        );
       }),
       goHome: vi.fn(() => {
-        TestErrorMonitoringService.addBreadcrumb('User clicked go home', 'user', 'info');
+        TestErrorMonitoringService.addBreadcrumb(
+          'User clicked go home',
+          'user',
+          'info'
+        );
       }),
     };
   }
@@ -254,7 +286,9 @@ const workDataGenerator = () =>
 const bugReportGenerator = () =>
   fc.record({
     description: fc.string({ minLength: 10, maxLength: 500 }),
-    steps: fc.array(fc.string({ minLength: 5, maxLength: 100 }), { maxLength: 10 }),
+    steps: fc.array(fc.string({ minLength: 5, maxLength: 100 }), {
+      maxLength: 10,
+    }),
     expectedBehavior: fc.string({ minLength: 10, maxLength: 200 }),
     actualBehavior: fc.string({ minLength: 10, maxLength: 200 }),
   });
@@ -285,7 +319,7 @@ describe('エラー回復 プロパティテスト', () => {
           async (error, errorInfo, workData) => {
             // 作業データを設定
             workDataManager.setWorkData('currentWork', workData);
-            
+
             // 自動保存が実行されることを確認
             const initialBackup = localStorage.getItem('work-data-backup');
             expect(initialBackup).not.toBeNull();
@@ -294,9 +328,10 @@ describe('エラー回復 プロパティテスト', () => {
             errorBoundary.simulateError(error, errorInfo);
 
             // プロパティ1: エラーが適切にキャプチャされる
-            const capturedErrors = TestErrorMonitoringService.getCapturedErrors();
+            const capturedErrors =
+              TestErrorMonitoringService.getCapturedErrors();
             expect(capturedErrors.length).toBeGreaterThan(0);
-            
+
             const lastCapturedError = capturedErrors[capturedErrors.length - 1];
             expect(lastCapturedError.error.message).toBe(error.message);
 
@@ -308,13 +343,19 @@ describe('エラー回復 プロパティテスト', () => {
             const restoredData = workDataManager.getWorkData('currentWork');
             expect(restoredData).not.toBeNull();
             expect(restoredData.currentTask.id).toBe(workData.currentTask.id);
-            expect(restoredData.currentTask.title).toBe(workData.currentTask.title);
-            expect(restoredData.timerState.isRunning).toBe(workData.timerState.isRunning);
+            expect(restoredData.currentTask.title).toBe(
+              workData.currentTask.title
+            );
+            expect(restoredData.timerState.isRunning).toBe(
+              workData.timerState.isRunning
+            );
 
             // プロパティ3: 未保存の変更も保護される
             if (workData.unsavedChanges.length > 0) {
               expect(restoredData.unsavedChanges).toBeDefined();
-              expect(restoredData.unsavedChanges.length).toBe(workData.unsavedChanges.length);
+              expect(restoredData.unsavedChanges.length).toBe(
+                workData.unsavedChanges.length
+              );
             }
 
             // プロパティ4: エラー境界が回復アクションを提供する
@@ -346,10 +387,10 @@ describe('エラー回復 プロパティテスト', () => {
             // プロパティ2: retry アクションが正常に動作する
             const retryAction = recoveryActions!.retry;
             expect(typeof retryAction).toBe('function');
-            
+
             // retry を実行
             retryAction();
-            
+
             // エラー状態がリセットされることを確認（テスト用の実装）
             expect(errorBoundary.getLastError()).toBeNull();
 
@@ -358,7 +399,10 @@ describe('エラー回復 プロパティテスト', () => {
             expect(typeof resetAction).toBe('function');
 
             // 設定データを事前に保存
-            localStorage.setItem('pomodoro-settings', JSON.stringify({ theme: 'dark' }));
+            localStorage.setItem(
+              'pomodoro-settings',
+              JSON.stringify({ theme: 'dark' })
+            );
             localStorage.setItem('other-data', 'should be cleared');
 
             // reset を実行
@@ -376,8 +420,9 @@ describe('エラー回復 プロパティテスト', () => {
             reportBugAction(bugDescription);
 
             // バグレポートがキャプチャされることを確認
-            const capturedMessages = TestErrorMonitoringService.getCapturedMessages();
-            const bugReportMessage = capturedMessages.find(msg => 
+            const capturedMessages =
+              TestErrorMonitoringService.getCapturedMessages();
+            const bugReportMessage = capturedMessages.find(msg =>
               msg.message.includes(bugDescription)
             );
             expect(bugReportMessage).toBeDefined();
@@ -385,7 +430,7 @@ describe('エラー回復 プロパティテスト', () => {
             // プロパティ5: goHome アクションが正常に動作する
             const goHomeAction = recoveryActions!.goHome;
             expect(typeof goHomeAction).toBe('function');
-            
+
             // goHome は例外を投げない
             expect(() => goHomeAction()).not.toThrow();
           }
@@ -409,32 +454,39 @@ describe('エラー回復 プロパティテスト', () => {
             fc.constant(new Error('component failed')),
             fc.constant(new Error('general error'))
           ),
-          (error) => {
+          error => {
             // エラーの重要度を分類
-            const severity = TestErrorMonitoringService.classifyErrorSeverity(error);
+            const severity =
+              TestErrorMonitoringService.classifyErrorSeverity(error);
 
             // プロパティ1: 重要度が有効な値である
             expect(['low', 'medium', 'high', 'critical']).toContain(severity);
 
             // プロパティ2: セキュリティ関連エラーは critical に分類される
-            if (error.message.includes('security') || 
-                error.message.includes('unauthorized') || 
-                error.message.includes('data loss')) {
+            if (
+              error.message.includes('security') ||
+              error.message.includes('unauthorized') ||
+              error.message.includes('data loss')
+            ) {
               expect(severity).toBe('critical');
             }
 
             // プロパティ3: ネットワーク関連エラーは high に分類される
-            if (error.message.includes('network') || 
-                error.message.includes('fetch') || 
-                error.message.includes('timeout') ||
-                error instanceof TypeError) {
+            if (
+              error.message.includes('network') ||
+              error.message.includes('fetch') ||
+              error.message.includes('timeout') ||
+              error instanceof TypeError
+            ) {
               expect(severity).toBe('high');
             }
 
             // プロパティ4: UI関連エラーは medium に分類される
-            if (error.message.includes('render') || 
-                error.message.includes('component') ||
-                error instanceof ReferenceError) {
+            if (
+              error.message.includes('render') ||
+              error.message.includes('component') ||
+              error instanceof ReferenceError
+            ) {
               expect(severity).toBe('medium');
             }
 
@@ -466,8 +518,9 @@ describe('エラー回復 プロパティテスト', () => {
             recoveryActions!.reportBug(bugReport.description);
 
             // プロパティ1: バグレポートがキャプチャされる
-            const capturedMessages = TestErrorMonitoringService.getCapturedMessages();
-            const bugReportMessage = capturedMessages.find(msg => 
+            const capturedMessages =
+              TestErrorMonitoringService.getCapturedMessages();
+            const bugReportMessage = capturedMessages.find(msg =>
               msg.message.includes(bugReport.description)
             );
             expect(bugReportMessage).toBeDefined();
@@ -477,7 +530,7 @@ describe('エラー回復 プロパティテスト', () => {
 
             // プロパティ2: ブレッドクラムが記録される
             const breadcrumbs = TestErrorMonitoringService.getBreadcrumbs();
-            const bugReportBreadcrumb = breadcrumbs.find(bc => 
+            const bugReportBreadcrumb = breadcrumbs.find(bc =>
               bc.message.includes('bug report')
             );
             expect(bugReportBreadcrumb).toBeDefined();
@@ -486,11 +539,12 @@ describe('エラー回復 プロパティテスト', () => {
             }
 
             // プロパティ3: エラー情報も併せて記録される
-            const capturedErrors = TestErrorMonitoringService.getCapturedErrors();
+            const capturedErrors =
+              TestErrorMonitoringService.getCapturedErrors();
             expect(capturedErrors.length).toBeGreaterThan(0);
-            
-            const errorCapture = capturedErrors.find(capture => 
-              capture.error.message === error.message
+
+            const errorCapture = capturedErrors.find(
+              capture => capture.error.message === error.message
             );
             expect(errorCapture).toBeDefined();
 
@@ -518,7 +572,7 @@ describe('エラー回復 プロパティテスト', () => {
           ),
           async (primaryWorkData, additionalData) => {
             let saveCallbackCount = 0;
-            
+
             // 保存コールバックを設定
             const unsubscribe = workDataManager.onSave(() => {
               saveCallbackCount++;
@@ -541,7 +595,9 @@ describe('エラー回復 プロパティテスト', () => {
 
             const parsedBackup = JSON.parse(backup!);
             expect(parsedBackup.primary).toBeDefined();
-            expect(parsedBackup.primary.currentTask.id).toBe(primaryWorkData.currentTask.id);
+            expect(parsedBackup.primary.currentTask.id).toBe(
+              primaryWorkData.currentTask.id
+            );
 
             for (const item of additionalData) {
               expect(parsedBackup[item.key]).toBeDefined();
@@ -558,8 +614,12 @@ describe('エラー回復 プロパティテスト', () => {
             const restoredPrimary = workDataManager.getWorkData('primary');
             expect(restoredPrimary).not.toBeNull();
             if (restoredPrimary) {
-              expect(restoredPrimary.currentTask.id).toBe(primaryWorkData.currentTask.id);
-              expect(restoredPrimary.timerState.isRunning).toBe(primaryWorkData.timerState.isRunning);
+              expect(restoredPrimary.currentTask.id).toBe(
+                primaryWorkData.currentTask.id
+              );
+              expect(restoredPrimary.timerState.isRunning).toBe(
+                primaryWorkData.timerState.isRunning
+              );
             }
 
             for (const item of additionalData) {

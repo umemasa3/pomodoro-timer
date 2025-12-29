@@ -525,6 +525,11 @@ export const useTimerStore = create<TimerStore>()(
           isRunning: false,
           intervalId: null,
         });
+
+        console.log(
+          'タイマーを一時停止しました。現在時間を保持:',
+          get().currentTime
+        );
       },
 
       resetTimer: () => {

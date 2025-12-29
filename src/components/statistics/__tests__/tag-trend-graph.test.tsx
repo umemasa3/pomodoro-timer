@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  act,
+} from '@testing-library/react';
 import { TagTrendGraph } from '../tag-trend-graph';
 import { DatabaseService } from '../../../services/database-service';
 
@@ -102,8 +108,12 @@ describe('TagTrendGraph', () => {
     // 凡例の表示確認（ボタン内のテキストを確認）
     const workButton = screen.getByRole('button', { name: /Work.*19.*h/ });
     expect(workButton).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Personal.*8.*h/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Study.*12.*h/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Personal.*8.*h/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Study.*12.*h/ })
+    ).toBeInTheDocument();
   });
 
   it('期間選択ボタンが正しく動作する', async () => {
@@ -117,7 +127,7 @@ describe('TagTrendGraph', () => {
 
     // 7日間オプションを選択
     const select = screen.getByDisplayValue('過去30日');
-    
+
     await act(async () => {
       fireEvent.change(select, { target: { value: '7' } });
     });
@@ -162,7 +172,9 @@ describe('TagTrendGraph', () => {
     render(<TagTrendGraph />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Work.*2.5.*h/ })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /Work.*2.5.*h/ })
+      ).toBeInTheDocument();
       expect(
         screen.getByRole('img', { name: /タグ別時間推移グラフ/ })
       ).toBeInTheDocument();
@@ -178,7 +190,9 @@ describe('TagTrendGraph', () => {
 
     expect(screen.getByText('タグ別時間推移')).toBeInTheDocument();
     expect(
-      screen.getByText('タグ別時間推移').parentElement?.querySelector('.animate-pulse')
+      screen
+        .getByText('タグ別時間推移')
+        .parentElement?.querySelector('.animate-pulse')
     ).toBeInTheDocument();
   });
 
@@ -198,7 +212,9 @@ describe('TagTrendGraph', () => {
 
   it('グラフの最大値が正しく計算される', async () => {
     const highValueData = {
-      trendData: [{ date: '2024-12-28', tagData: { Work: 8.0, Personal: 2.0 } }],
+      trendData: [
+        { date: '2024-12-28', tagData: { Work: 8.0, Personal: 2.0 } },
+      ],
       tagList: [
         { tagName: 'Work', tagColor: '#3B82F6', totalHours: 8 },
         { tagName: 'Personal', tagColor: '#10B981', totalHours: 2 },

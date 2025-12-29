@@ -134,11 +134,18 @@ export const TaskForm: React.FC<TaskFormProps> = ({
     if (!newTagName.trim()) return;
 
     try {
+      console.log('新しいタグを作成中:', {
+        name: newTagName.trim(),
+        color: newTagColor,
+      });
+
       const newTag = await DatabaseService.createTag({
         name: newTagName.trim(),
         color: newTagColor,
         created_at: new Date().toISOString(),
       });
+
+      console.log('タグ作成成功:', newTag);
 
       setAvailableTags([...availableTags, newTag]);
       setSelectedTags([...selectedTags, newTag.id]);
@@ -147,7 +154,9 @@ export const TaskForm: React.FC<TaskFormProps> = ({
       setShowNewTagForm(false);
     } catch (error) {
       console.error('タグ作成エラー:', error);
-      alert('タグの作成に失敗しました');
+      const errorMessage =
+        error instanceof Error ? error.message : 'タグの作成に失敗しました';
+      alert(errorMessage);
     }
   };
 

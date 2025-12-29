@@ -227,6 +227,8 @@ export class DatabaseService {
     limit?: number;
     tagId?: string;
   }): Promise<(Task & { tags: Tag[] })[]> {
+    console.log('DatabaseService.getTasks 開始:', filters);
+
     // デモモードの場合は直接キャッシュから取得
     if (import.meta.env.VITE_DEMO_MODE === 'true') {
       console.log('デモモードでタスク取得');
@@ -244,8 +246,18 @@ export class DatabaseService {
         tasks = tasks.slice(0, filters.limit);
       }
 
-      // タグ情報を追加（デモモードでは空配列）
-      return tasks.map(task => ({ ...task, tags: [] }));
+      // デモモードでもタグ情報を含める（デフォルトタグを使用）
+      const demoTags = await DatabaseService.getTags();
+      return tasks.map(task => ({
+        ...task,
+        tags: task.id.includes('work')
+          ? [demoTags[0]]
+          : task.id.includes('study')
+            ? [demoTags[1]]
+            : task.id.includes('personal')
+              ? [demoTags[2]]
+              : [],
+      }));
     }
 
     const realtimeService = RealtimeSyncService.getInstance();
@@ -302,6 +314,7 @@ export class DatabaseService {
     const { data, error } = await query;
 
     if (error) {
+      console.error('タスク取得エラー:', error);
       throw new Error(`タスク取得エラー: ${error.message}`);
     }
 
@@ -322,6 +335,7 @@ export class DatabaseService {
       });
     });
 
+    console.log('タスク取得成功:', tasks);
     return tasks;
   }
 
@@ -440,6 +454,22 @@ export class DatabaseService {
     color: string;
     created_at: string;
   }): Promise<Tag> {
+    console.log('DatabaseService.createTag 開始:', tagData);
+
+    // デモモードの場合は簡易的なタグを作成
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      console.log('デモモードでタグ作成をスキップ');
+      // デモモードでは簡易的なタグオブジェクトを返す
+      return {
+        id: `demo-tag-${Date.now()}`,
+        name: tagData.name,
+        color: tagData.color,
+        user_id: 'demo-user-id',
+        usage_count: 0,
+        created_at: tagData.created_at,
+      };
+    }
+
     const client = DatabaseService.getSupabaseClient();
 
     const {
@@ -449,6 +479,12 @@ export class DatabaseService {
     if (!user) {
       throw new Error('認証が必要です');
     }
+
+    console.log('タグ作成データ:', {
+      user_id: user.id,
+      name: tagData.name,
+      color: tagData.color,
+    });
 
     const { data, error } = await (client as any)
       .from('tags')
@@ -462,6 +498,8 @@ export class DatabaseService {
       .select()
       .single();
 
+    console.log('タグ作成結果:', { data, error });
+
     if (error) {
       if (error.code === '23505') {
         throw new Error('同じ名前のタグが既に存在します');
@@ -469,14 +507,42 @@ export class DatabaseService {
       throw new Error(`タグ作成エラー: ${error.message}`);
     }
 
+    console.log('タグ作成成功:', data);
     return data;
   }
 
   static async getTags(): Promise<Tag[]> {
-    // デモモードの場合は空配列を返す（タグ機能は簡略化）
+    console.log('DatabaseService.getTags 開始');
+
+    // デモモードの場合は簡易的なタグリストを返す
     if (import.meta.env.VITE_DEMO_MODE === 'true') {
-      console.log('デモモードでタグ取得をスキップ');
-      return [];
+      console.log('デモモードでタグ取得 - デフォルトタグを返す');
+      return [
+        {
+          id: 'demo-tag-work',
+          name: '仕事',
+          color: '#3B82F6',
+          user_id: 'demo-user-id',
+          usage_count: 0,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'demo-tag-study',
+          name: '勉強',
+          color: '#10B981',
+          user_id: 'demo-user-id',
+          usage_count: 0,
+          created_at: new Date().toISOString(),
+        },
+        {
+          id: 'demo-tag-personal',
+          name: '個人',
+          color: '#F59E0B',
+          user_id: 'demo-user-id',
+          usage_count: 0,
+          created_at: new Date().toISOString(),
+        },
+      ];
     }
 
     const client = DatabaseService.getSupabaseClient();
@@ -487,9 +553,11 @@ export class DatabaseService {
       .order('usage_count', { ascending: false });
 
     if (error) {
+      console.error('タグ取得エラー:', error);
       throw new Error(`タグ取得エラー: ${error.message}`);
     }
 
+    console.log('タグ取得成功:', data);
     return data || [];
   }
 
@@ -570,8 +638,9 @@ export class DatabaseService {
     }
   }
 
-  // タスクのタグを一括更新
   static async updateTaskTags(taskId: string, tagIds: string[]): Promise<void> {
+    console.log('DatabaseService.updateTaskTags 開始:', taskId, tagIds);
+
     // デモモードの場合は何もしない（タグ機能は簡略化）
     if (import.meta.env.VITE_DEMO_MODE === 'true') {
       console.log('デモモードでタグ更新をスキップ:', taskId, tagIds);
@@ -587,6 +656,7 @@ export class DatabaseService {
       .eq('task_id', taskId);
 
     if (deleteError) {
+      console.error('既存タグ削除エラー:', deleteError);
       throw new Error(`既存タグ削除エラー: ${deleteError.message}`);
     }
 
@@ -597,14 +667,19 @@ export class DatabaseService {
         tag_id: tagId,
       }));
 
+      console.log('タグ関連付けデータ:', insertData);
+
       const { error: insertError } = await client
         .from('task_tags')
         .insert(insertData as any);
 
       if (insertError) {
+        console.error('新規タグ追加エラー:', insertError);
         throw new Error(`新規タグ追加エラー: ${insertError.message}`);
       }
     }
+
+    console.log('タグ更新完了');
   }
 
   static async getTasksWithTags(): Promise<(Task & { tags: Tag[] })[]> {

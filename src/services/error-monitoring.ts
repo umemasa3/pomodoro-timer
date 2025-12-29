@@ -10,10 +10,14 @@ export class ErrorMonitoringService {
    * ユーザーコンテキストを設定
    */
   static setUserContext(user: User | null): void {
-    Sentry.setUser(user ? {
-      id: user.id,
-      email: user.email,
-    } : null);
+    Sentry.setUser(
+      user
+        ? {
+            id: user.id,
+            email: user.email,
+          }
+        : null
+    );
   }
 
   /**
@@ -31,7 +35,10 @@ export class ErrorMonitoringService {
   /**
    * メッセージを記録
    */
-  static captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info'): string {
+  static captureMessage(
+    message: string,
+    level: 'info' | 'warning' | 'error' = 'info'
+  ): string {
     return Sentry.captureMessage(message, level);
   }
 
@@ -39,10 +46,13 @@ export class ErrorMonitoringService {
    * パフォーマンス監視のトランザクション開始
    */
   static startTransaction(name: string, operation: string) {
-    return Sentry.startSpan({
-      name,
-      op: operation,
-    }, (span) => span);
+    return Sentry.startSpan(
+      {
+        name,
+        op: operation,
+      },
+      span => span
+    );
   }
 
   /**
@@ -57,7 +67,11 @@ export class ErrorMonitoringService {
   /**
    * ブレッドクラムを追加（ユーザーアクションの追跡）
    */
-  static addBreadcrumb(message: string, category: string, level: 'info' | 'warning' | 'error' = 'info'): void {
+  static addBreadcrumb(
+    message: string,
+    category: string,
+    level: 'info' | 'warning' | 'error' = 'info'
+  ): void {
     Sentry.addBreadcrumb({
       message,
       category,
@@ -69,9 +83,12 @@ export class ErrorMonitoringService {
   /**
    * エラーレポートの生成
    */
-  static generateErrorReport(error: Error, componentStack?: string): ErrorReport {
+  static generateErrorReport(
+    error: Error,
+    componentStack?: string
+  ): ErrorReport {
     const errorId = this.generateErrorId();
-    
+
     return {
       id: errorId,
       message: error.message,
@@ -94,30 +111,38 @@ export class ErrorMonitoringService {
   /**
    * エラーの重要度を判定
    */
-  static classifyErrorSeverity(error: Error): 'low' | 'medium' | 'high' | 'critical' {
+  static classifyErrorSeverity(
+    error: Error
+  ): 'low' | 'medium' | 'high' | 'critical' {
     const message = error.message.toLowerCase();
     const stack = error.stack?.toLowerCase() || '';
 
     // クリティカル: セキュリティ関連、データ損失
-    if (message.includes('security') || 
-        message.includes('unauthorized') || 
-        message.includes('data loss') ||
-        stack.includes('auth')) {
+    if (
+      message.includes('security') ||
+      message.includes('unauthorized') ||
+      message.includes('data loss') ||
+      stack.includes('auth')
+    ) {
       return 'critical';
     }
 
     // 高: 機能停止、ネットワークエラー
-    if (message.includes('network') || 
-        message.includes('fetch') || 
-        message.includes('timeout') ||
-        error.name === 'TypeError') {
+    if (
+      message.includes('network') ||
+      message.includes('fetch') ||
+      message.includes('timeout') ||
+      error.name === 'TypeError'
+    ) {
       return 'high';
     }
 
     // 中: UI関連、非致命的エラー
-    if (message.includes('render') || 
-        message.includes('component') ||
-        error.name === 'ReferenceError') {
+    if (
+      message.includes('render') ||
+      message.includes('component') ||
+      error.name === 'ReferenceError'
+    ) {
       return 'medium';
     }
 
