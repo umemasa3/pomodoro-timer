@@ -116,6 +116,54 @@ export interface TagStatistics {
   timeByTag: Record<string, number>; // minutes
 }
 
+// 目標設定関連の型
+export interface Goal {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  metric: 'sessions' | 'minutes' | 'tasks';
+  target_value: number;
+  current_value: number;
+  period_start: string; // ISO date string
+  period_end: string; // ISO date string
+  tags: string[]; // タグIDの配列
+  is_active: boolean;
+  achieved_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateGoalRequest {
+  title: string;
+  description?: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  metric: 'sessions' | 'minutes' | 'tasks';
+  target_value: number;
+  tags?: string[];
+}
+
+export interface UpdateGoalRequest {
+  title?: string;
+  description?: string;
+  target_value?: number;
+  tags?: string[];
+  is_active?: boolean;
+}
+
+// 統計フィルタリング関連の型
+export interface StatisticsFilter {
+  dateRange: {
+    start: Date;
+    end: Date;
+    preset?: 'today' | 'week' | 'month' | 'custom';
+  };
+  tags: string[];
+  sessionTypes: ('pomodoro' | 'short_break' | 'long_break')[];
+  taskStatus: ('completed' | 'in_progress' | 'paused')[];
+}
+
 // マルチデバイス同期関連の型
 export interface DeviceInfo {
   id: string;

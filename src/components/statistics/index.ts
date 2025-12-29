@@ -13,3 +13,5 @@ export { GoalProgress } from './goal-progress';
 export { ComparisonAnalysis } from './comparison-analysis';
 export { TagTrendGraph } from './tag-trend-graph';
 export { CSVExport } from './csv-export';
+export { GoalSettingDialog } from './goal-setting-dialog';
+export { StatisticsFilterComponent } from './statistics-filter';

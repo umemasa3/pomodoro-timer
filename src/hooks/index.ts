@@ -13,3 +13,4 @@ export {
 } from './use-responsive';
 
 export { useOnlineStatus } from './use-online-status';
+export { useStatisticsFilter } from './use-statistics-filter';

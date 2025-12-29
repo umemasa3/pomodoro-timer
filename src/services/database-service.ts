@@ -2213,6 +2213,178 @@ export class DatabaseService {
     return csvData.join('\n');
   }
 
+  // 目標設定関連操作
+  static async createGoal(goalData: {
+    title: string;
+    description?: string;
+    type: 'daily' | 'weekly' | 'monthly';
+    metric: 'sessions' | 'minutes' | 'tasks';
+    target_value: number;
+    tags?: string[];
+  }): Promise<Goal> {
+    const client = DatabaseService.getSupabaseClient();
+
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+
+    if (!user) {
+      throw new Error('認証が必要です');
+    }
+
+    // 期間の開始日と終了日を計算
+    const now = new Date();
+    let periodStart: Date;
+    let periodEnd: Date;
+
+    switch (goalData.type) {
+      case 'daily':
+        periodStart = new Date(now);
+        periodStart.setHours(0, 0, 0, 0);
+        periodEnd = new Date(now);
+        periodEnd.setHours(23, 59, 59, 999);
+        break;
+      case 'weekly':
+        periodStart = new Date(now);
+        periodStart.setDate(now.getDate() - now.getDay());
+        periodStart.setHours(0, 0, 0, 0);
+        periodEnd = new Date(periodStart);
+        periodEnd.setDate(periodStart.getDate() + 6);
+        periodEnd.setHours(23, 59, 59, 999);
+        break;
+      case 'monthly':
+        periodStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        periodEnd.setHours(23, 59, 59, 999);
+        break;
+    }
+
+    const insertData = {
+      user_id: user.id,
+      title: goalData.title,
+      description: goalData.description,
+      type: goalData.type,
+      metric: goalData.metric,
+      target_value: goalData.target_value,
+      period_start: periodStart.toISOString().split('T')[0],
+      period_end: periodEnd.toISOString().split('T')[0],
+      tags: JSON.stringify(goalData.tags || []),
+    };
+
+    const { data, error } = await (client as any)
+      .from('goals')
+      .insert([insertData])
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`目標作成エラー: ${error.message}`);
+    }
+
+    // 初期進捗を計算
+    await DatabaseService.updateGoalProgress(data.id);
+
+    return {
+      ...data,
+      tags: JSON.parse(data.tags || '[]'),
+    };
+  }
+
+  static async getGoals(filters?: {
+    type?: 'daily' | 'weekly' | 'monthly';
+    is_active?: boolean;
+  }): Promise<Goal[]> {
+    const client = DatabaseService.getSupabaseClient();
+
+    let query = client
+      .from('goals')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (filters?.type) {
+      query = query.eq('type', filters.type);
+    }
+
+    if (filters?.is_active !== undefined) {
+      query = query.eq('is_active', filters.is_active);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error(`目標取得エラー: ${error.message}`);
+    }
+
+    return (data || []).map((goal: any) => ({
+      ...goal,
+      tags: JSON.parse(goal.tags || '[]'),
+    }));
+  }
+
+  static async updateGoal(
+    id: string,
+    updates: {
+      title?: string;
+      description?: string;
+      target_value?: number;
+      tags?: string[];
+      is_active?: boolean;
+    }
+  ): Promise<Goal> {
+    const client = DatabaseService.getSupabaseClient();
+
+    const updateData: any = { ...updates };
+    if (updates.tags) {
+      updateData.tags = JSON.stringify(updates.tags);
+    }
+
+    const { data, error } = await (client as any)
+      .from('goals')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`目標更新エラー: ${error.message}`);
+    }
+
+    return {
+      ...data,
+      tags: JSON.parse(data.tags || '[]'),
+    };
+  }
+
+  static async deleteGoal(id: string): Promise<void> {
+    const client = DatabaseService.getSupabaseClient();
+
+    const { error } = await client.from('goals').delete().eq('id', id);
+
+    if (error) {
+      throw new Error(`目標削除エラー: ${error.message}`);
+    }
+  }
+
+  static async updateGoalProgress(goalId: string): Promise<void> {
+    const client = DatabaseService.getSupabaseClient();
+
+    const { error } = await client.rpc('update_goal_progress', {
+      goal_id: goalId,
+    } as any);
+
+    if (error) {
+      throw new Error(`目標進捗更新エラー: ${error.message}`);
+    }
+  }
+
+  static async updateAllActiveGoalsProgress(): Promise<void> {
+    const activeGoals = await DatabaseService.getGoals({ is_active: true });
+
+    await Promise.all(
+      activeGoals.map(goal => DatabaseService.updateGoalProgress(goal.id))
+    );
+  }
+
   // データベース接続テスト
   static async testConnection(): Promise<boolean> {
     try {
