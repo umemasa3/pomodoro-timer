@@ -1,25 +1,45 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/database';
+import { env, isProduction, isDevelopment } from '../utils/env';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const isDemoMode = import.meta.env.VITE_DEMO_MODE === 'true';
-
-// デモモードの場合はダミーの値を使用
-const finalSupabaseUrl = isDemoMode ? 'http://localhost:54321' : supabaseUrl;
-const finalSupabaseAnonKey = isDemoMode ? 'demo-key' : supabaseAnonKey;
-
-if (!isDemoMode && (!supabaseUrl || !supabaseAnonKey)) {
+// 環境変数の検証
+if (!env.supabaseUrl || !env.supabaseAnonKey) {
   throw new Error('Supabase環境変数が設定されていません');
 }
 
-export const supabase = isDemoMode
-  ? null
-  : createClient(finalSupabaseUrl, finalSupabaseAnonKey, {
-      db: {
-        schema: 'public',
-      },
-    });
+// Supabaseクライアントの設定
+const supabaseConfig = {
+  db: {
+    schema: 'public' as const,
+  },
+  auth: {
+    // 本番環境では自動リフレッシュを有効化
+    autoRefreshToken: true,
+    // セッション永続化の設定
+    persistSession: true,
+    // 本番環境ではより厳密な設定
+    detectSessionInUrl: isProduction,
+    // 開発環境ではデバッグ情報を有効化
+    debug: isDevelopment,
+  },
+  realtime: {
+    // リアルタイム接続の最適化
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
+  global: {
+    headers: {
+      'X-Client-Info': `${env.appName}@${env.appVersion}`,
+    },
+  },
+};
+
+export const supabase = createClient<Database>(
+  env.supabaseUrl,
+  env.supabaseAnonKey,
+  supabaseConfig
+);
 
 /**
  * 認証関連のヘルパー関数
@@ -35,34 +55,6 @@ export const auth = {
       timezone?: string;
     }
   ) => {
-    if (isDemoMode) {
-      // デモモードでは成功を返す
-      return {
-        data: {
-          user: {
-            id: 'demo-user-id',
-            email,
-            created_at: new Date().toISOString(),
-            user_metadata: userData || {},
-          },
-          session: {
-            access_token: 'demo-token',
-            user: {
-              id: 'demo-user-id',
-              email,
-              created_at: new Date().toISOString(),
-              user_metadata: userData || {},
-            },
-          },
-        },
-        error: null,
-      };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -104,40 +96,6 @@ export const auth = {
 
   // ログイン
   signIn: async (email: string, password: string) => {
-    if (isDemoMode) {
-      // デモモードでは成功を返す
-      return {
-        data: {
-          user: {
-            id: 'demo-user-id',
-            email,
-            created_at: new Date().toISOString(),
-            user_metadata: {
-              display_name: 'デモユーザー',
-              timezone: 'Asia/Tokyo',
-            },
-          },
-          session: {
-            access_token: 'demo-token',
-            user: {
-              id: 'demo-user-id',
-              email,
-              created_at: new Date().toISOString(),
-              user_metadata: {
-                display_name: 'デモユーザー',
-                timezone: 'Asia/Tokyo',
-              },
-            },
-          },
-        },
-        error: null,
-      };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -147,28 +105,12 @@ export const auth = {
 
   // ログアウト
   signOut: async () => {
-    if (isDemoMode) {
-      return { error: null };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { error } = await supabase.auth.signOut();
     return { error };
   },
 
   // パスワードリセット
   resetPassword: async (email: string) => {
-    if (isDemoMode) {
-      return { data: null, error: null };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
@@ -177,14 +119,6 @@ export const auth = {
 
   // パスワード更新
   updatePassword: async (newPassword: string) => {
-    if (isDemoMode) {
-      return { data: null, error: null };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword,
     });
@@ -193,70 +127,16 @@ export const auth = {
 
   // 現在のユーザー取得
   getCurrentUser: () => {
-    if (isDemoMode) {
-      return Promise.resolve({
-        data: {
-          user: {
-            id: 'demo-user-id',
-            email: 'demo@example.com',
-            created_at: new Date().toISOString(),
-            user_metadata: {
-              display_name: 'デモユーザー',
-              timezone: 'Asia/Tokyo',
-            },
-          },
-        },
-        error: null,
-      });
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     return supabase.auth.getUser();
   },
 
   // 現在のセッション取得
   getCurrentSession: () => {
-    if (isDemoMode) {
-      return Promise.resolve({
-        data: {
-          session: {
-            access_token: 'demo-token',
-            user: {
-              id: 'demo-user-id',
-              email: 'demo@example.com',
-              created_at: new Date().toISOString(),
-              user_metadata: {
-                display_name: 'デモユーザー',
-                timezone: 'Asia/Tokyo',
-              },
-            },
-          },
-        },
-        error: null,
-      });
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     return supabase.auth.getSession();
   },
 
   // 認証状態変更の監視
   onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
-    if (isDemoMode) {
-      // デモモードでは何もしない
-      return { data: { subscription: { unsubscribe: () => {} } } };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     return supabase.auth.onAuthStateChange(callback);
   },
 
@@ -266,20 +146,6 @@ export const auth = {
     avatar_url?: string;
     timezone?: string;
   }) => {
-    if (isDemoMode) {
-      return {
-        authData: null,
-        profileData: {
-          id: 'demo-user-id',
-          ...updates,
-        },
-      };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -316,14 +182,6 @@ export const auth = {
 
   // ユーザーメタデータ更新
   updateUserMetadata: async (metadata: Record<string, unknown>) => {
-    if (isDemoMode) {
-      return { data: null, error: null };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { data, error } = await supabase.auth.updateUser({
       data: metadata,
     });
@@ -332,14 +190,6 @@ export const auth = {
 
   // メール確認の再送信
   resendConfirmation: async (email: string) => {
-    if (isDemoMode) {
-      return { data: null, error: null };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { data, error } = await supabase.auth.resend({
       type: 'signup',
       email,
@@ -349,14 +199,6 @@ export const auth = {
 
   // 認証状態の確認
   isAuthenticated: async (): Promise<boolean> => {
-    if (isDemoMode) {
-      return true;
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -365,14 +207,6 @@ export const auth = {
 
   // トークンの更新
   refreshSession: async () => {
-    if (isDemoMode) {
-      return { data: null, error: null };
-    }
-
-    if (!supabase) {
-      throw new Error('Supabaseが初期化されていません');
-    }
-
     const { data, error } = await supabase.auth.refreshSession();
     return { data, error };
   },

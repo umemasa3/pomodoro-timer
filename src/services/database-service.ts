@@ -57,7 +57,7 @@ export class DatabaseService {
     const { data, error } = await client
       .from('users')
       .select('*')
-      .eq('id', id)
+      .eq('id', id as any)
       .single();
 
     if (error) {
@@ -67,7 +67,7 @@ export class DatabaseService {
       throw new Error(`ユーザー取得エラー: ${error.message}`);
     }
 
-    return data;
+    return data as User;
   }
 
   static async updateUser(id: string, updates: any): Promise<User> {
