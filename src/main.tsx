@@ -4,6 +4,9 @@ import './index.css';
 import App from './App.tsx';
 import { validateEnvironment, logEnvironmentInfo } from './utils/env';
 
+// Sentryの初期化（最初に実行）
+import '../sentry.client.config';
+
 // 環境変数の検証
 try {
   validateEnvironment();

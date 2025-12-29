@@ -91,6 +91,9 @@ interface TimerStore extends TimerState {
 
   // 初期化
   initializeTimer: () => void;
+
+  // セッション復元用
+  setTimerState: (state: Partial<TimerState>) => void;
 }
 
 export const useTimerStore = create<TimerStore>()(
@@ -713,6 +716,10 @@ export const useTimerStore = create<TimerStore>()(
           sessionType: 'pomodoro',
           intervalId: null,
         });
+      },
+
+      setTimerState: (state: Partial<TimerState>) => {
+        set(state);
       },
     }),
     {

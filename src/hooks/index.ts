@@ -14,3 +14,4 @@ export {
 
 export { useOnlineStatus } from './use-online-status';
 export { useStatisticsFilter } from './use-statistics-filter';
+export { useOfflineSync } from './use-offline-sync';

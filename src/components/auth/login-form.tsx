@@ -14,15 +14,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { signIn, isLoading } = useAuthStore();
+  const { signIn, isLoading, checkAccountLock } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
+
+    // アカウントロック状態をチェック
+    if (checkAccountLock()) {
+      setError(
+        'アカウントがロックされています。しばらく待ってから再試行してください。'
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
     // バリデーション
     if (!email || !password) {
@@ -38,7 +48,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
 
     try {
-      const result = await signIn(email, password);
+      const result = await signIn(email, password, rememberMe);
 
       if (result.success) {
         onSuccess?.();
@@ -129,6 +139,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({
                 パスワードを入力してください
               </div>
             )}
+          </div>
+
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={e => setRememberMe(e.target.checked)}
+              disabled={isFormDisabled}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="remember-me-checkbox"
+            />
+            <label
+              htmlFor="remember-me"
+              className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+            >
+              ログイン状態を保持する（30日間）
+            </label>
           </div>
 
           <button

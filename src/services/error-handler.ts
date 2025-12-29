@@ -1,7 +1,11 @@
 /**
  * 包括的なエラーハンドリングサービス
- * 要件12.6: エラーハンドリング・監視の実装
+ * 要件3.1: エラーハンドリングシステムの実装
+ *
+ * 新しいErrorMonitoringServiceと統合し、Sentryへのエラー報告を行う
  */
+
+import { ErrorMonitoringService } from './error-monitoring';
 
 export interface ErrorContext {
   userId?: string;
@@ -137,6 +141,23 @@ export class ErrorHandler {
 
     // ログに記録
     this.logError(errorReport);
+
+    // Sentryにエラーを報告
+    ErrorMonitoringService.captureError(errorObj, {
+      type: errorReport.type,
+      severity: errorReport.severity,
+      context: errorReport.context,
+      errorId: errorReport.id,
+    });
+
+    // ブレッドクラムを追加
+    ErrorMonitoringService.addBreadcrumb(
+      `Error handled: ${errorReport.type}`,
+      'error',
+      errorReport.severity === 'critical' || errorReport.severity === 'high'
+        ? 'error'
+        : 'warning'
+    );
 
     // ユーザーに表示するかどうか
     if (options.showToUser !== false) {
@@ -558,8 +579,11 @@ export class ErrorHandler {
    */
   private async reportError(errorReport: ErrorReport): Promise<void> {
     try {
-      // 実際の実装では、Sentry、LogRocket、または独自のログサービスに送信
-      console.log('エラー報告:', errorReport);
+      // Sentryにエラーを報告（既にhandleErrorで実行済みだが、重要なエラーは追加情報と共に再送）
+      ErrorMonitoringService.captureMessage(
+        `Critical error reported: ${errorReport.message}`,
+        'error'
+      );
 
       // 開発環境では詳細なエラー情報をコンソールに出力
       if (import.meta.env.DEV) {
@@ -574,6 +598,10 @@ export class ErrorHandler {
       }
     } catch (reportingError) {
       console.error('エラー報告に失敗:', reportingError);
+      // 報告エラー自体もSentryに送信
+      ErrorMonitoringService.captureError(reportingError as Error, {
+        context: { originalError: errorReport },
+      });
     }
   }
 

@@ -61,7 +61,7 @@ export const StatisticsPage: React.FC = () => {
               >
                 基本統計
               </h2>
-              <StatisticsOverview filter={filter} />
+              <StatisticsOverview />
             </div>
           </div>
 
@@ -78,17 +78,17 @@ export const StatisticsPage: React.FC = () => {
               {/* 目標進捗と比較分析を並列配置 */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
                 <GoalProgress />
-                <ComparisonAnalysis filter={filter} />
+                <ComparisonAnalysis />
               </div>
 
               {/* タグ別時間推移グラフを全幅で表示 */}
               <div className="mb-6">
-                <TagTrendGraph filter={filter} />
+                <TagTrendGraph />
               </div>
 
               {/* CSVエクスポート機能 */}
               <div className="mb-6">
-                <CSVExport filter={filter} />
+                <CSVExport />
               </div>
             </div>
           </div>
@@ -105,18 +105,18 @@ export const StatisticsPage: React.FC = () => {
 
               {/* 連続作業日数と完了率を上段に配置 */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <WorkStreak filter={filter} />
-                <SessionCompletionRate filter={filter} />
+                <WorkStreak />
+                <SessionCompletionRate />
               </div>
 
               {/* 作業時間グラフを全幅で表示 */}
               <div className="mb-6">
-                <WorkTimeGraph filter={filter} />
+                <WorkTimeGraph />
               </div>
 
               {/* タスク種類別内訳を全幅で表示 */}
               <div className="mb-6">
-                <TaskTypeBreakdown filter={filter} />
+                <TaskTypeBreakdown />
               </div>
             </div>
           </div>
@@ -133,26 +133,26 @@ export const StatisticsPage: React.FC = () => {
 
               {/* タグ別統計概要 */}
               <div className="mb-6">
-                <TagStatistics filter={filter} />
+                <TagStatistics />
               </div>
 
               {/* 生産性分析と作業分布を並列配置 */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-                <ProductivityAnalysis filter={filter} />
-                <CategoryTimePieChart filter={filter} />
+                <ProductivityAnalysis />
+                <CategoryTimePieChart />
               </div>
 
               {/* 作業分布ヒートマップを全幅で表示 */}
               <div className="mb-6">
-                <WorkDistributionHeatmap filter={filter} />
+                <WorkDistributionHeatmap />
               </div>
             </div>
           </div>
 
           {/* 基本統計チャートとセッション履歴 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <StatisticsChart filter={filter} />
-            <SessionHistory filter={filter} />
+            <StatisticsChart />
+            <SessionHistory />
           </div>
         </div>
       </div>

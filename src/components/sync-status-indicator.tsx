@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTimerStore } from '../stores/timer-store';
 import { RealtimeSyncService } from '../services/realtime-sync-service';
+import { useOfflineSync } from '../hooks/use-offline-sync';
 import type {
   SyncStatus,
   ConflictInfo,
@@ -10,10 +11,16 @@ import type {
 /**
  * 同期状態インジケーター
  * ネットワーク状態、未同期の変更数、競合、接続デバイス数を表示
+ * オフライン同期サービスと連携してオフライン対応を強化
  */
 export const SyncStatusIndicator: React.FC = () => {
   const { isOnline, pendingChangesCount, syncStatus, forcSync } =
     useTimerStore();
+  const {
+    offlineState,
+    forceSync: forceOfflineSync,
+    isLoading: isOfflineSyncing,
+  } = useOfflineSync();
   const [syncService] = useState(() => RealtimeSyncService.getInstance());
   const [detailedSyncStatus, setDetailedSyncStatus] =
     useState<SyncStatus | null>(null);
@@ -69,7 +76,15 @@ export const SyncStatusIndicator: React.FC = () => {
 
   const handleManualSync = async () => {
     try {
-      await forcSync();
+      // オフライン同期サービスの手動同期を優先
+      if (
+        offlineState?.pendingActions.length &&
+        offlineState.pendingActions.length > 0
+      ) {
+        await forceOfflineSync();
+      } else {
+        await forcSync();
+      }
     } catch (error) {
       console.error('手動同期エラー:', error);
     }
@@ -93,11 +108,14 @@ export const SyncStatusIndicator: React.FC = () => {
   };
 
   // オンライン状態で未同期の変更がなく、競合もない場合は簡易表示
+  const totalPendingChanges =
+    pendingChangesCount + (offlineState?.pendingActions.length || 0);
   const hasIssues =
     !isOnline ||
-    pendingChangesCount > 0 ||
+    totalPendingChanges > 0 ||
     conflicts.length > 0 ||
-    syncStatus !== 'idle';
+    syncStatus !== 'idle' ||
+    offlineState?.syncStatus !== 'idle';
 
   if (!hasIssues && !showDetails) {
     return (
@@ -157,12 +175,15 @@ export const SyncStatusIndicator: React.FC = () => {
               ? 'オフライン'
               : conflicts.length > 0
                 ? `${conflicts.length}件の競合`
-                : syncStatus === 'syncing'
+                : syncStatus === 'syncing' ||
+                    offlineState?.syncStatus === 'syncing' ||
+                    isOfflineSyncing
                   ? '同期中...'
-                  : syncStatus === 'error'
+                  : syncStatus === 'error' ||
+                      offlineState?.syncStatus === 'error'
                     ? '同期エラー'
-                    : pendingChangesCount > 0
-                      ? `${pendingChangesCount}件の未同期変更`
+                    : totalPendingChanges > 0
+                      ? `${totalPendingChanges}件の未同期変更`
                       : '同期済み'}
           </span>
 
@@ -187,20 +208,32 @@ export const SyncStatusIndicator: React.FC = () => {
 
             {/* 手動同期ボタン */}
             {isOnline &&
-              (pendingChangesCount > 0 || syncStatus === 'error') && (
+              (totalPendingChanges > 0 ||
+                syncStatus === 'error' ||
+                offlineState?.syncStatus === 'error') && (
                 <button
                   onClick={handleManualSync}
-                  disabled={syncStatus === 'syncing'}
+                  disabled={
+                    syncStatus === 'syncing' ||
+                    offlineState?.syncStatus === 'syncing' ||
+                    isOfflineSyncing
+                  }
                   className={`
                   px-2 py-1 text-xs rounded transition-colors
                   ${
-                    syncStatus === 'syncing'
+                    syncStatus === 'syncing' ||
+                    offlineState?.syncStatus === 'syncing' ||
+                    isOfflineSyncing
                       ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                       : 'bg-blue-500 text-white hover:bg-blue-600'
                   }
                 `}
                 >
-                  {syncStatus === 'syncing' ? '同期中' : '同期'}
+                  {syncStatus === 'syncing' ||
+                  offlineState?.syncStatus === 'syncing' ||
+                  isOfflineSyncing
+                    ? '同期中'
+                    : '同期'}
                 </button>
               )}
 
@@ -227,8 +260,15 @@ export const SyncStatusIndicator: React.FC = () => {
 
               <div className="flex justify-between">
                 <span className="font-medium">未同期変更:</span>
-                <span>{pendingChangesCount}件</span>
+                <span>{totalPendingChanges}件</span>
               </div>
+
+              {offlineState && offlineState.pendingActions.length > 0 && (
+                <div className="flex justify-between">
+                  <span className="font-medium">オフライン変更:</span>
+                  <span>{offlineState.pendingActions.length}件</span>
+                </div>
+              )}
 
               <div className="flex justify-between">
                 <span className="font-medium">競合:</span>
@@ -246,12 +286,14 @@ export const SyncStatusIndicator: React.FC = () => {
                 <span>{detailedSyncStatus?.connectedDevices || 0}台</span>
               </div>
 
-              {detailedSyncStatus?.lastSyncTime && (
+              {(detailedSyncStatus?.lastSyncTime ||
+                offlineState?.lastSyncTime) && (
                 <div className="flex justify-between">
                   <span className="font-medium">最終同期:</span>
                   <span>
                     {new Date(
-                      detailedSyncStatus.lastSyncTime
+                      (detailedSyncStatus?.lastSyncTime ||
+                        offlineState?.lastSyncTime) as string
                     ).toLocaleTimeString()}
                   </span>
                 </div>
