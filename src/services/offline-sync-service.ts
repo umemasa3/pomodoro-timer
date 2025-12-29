@@ -1,6 +1,6 @@
 import { DatabaseService } from './database-service';
 import { RealtimeSyncService } from './realtime-sync-service';
-import type { Task, Session, Tag } from '../types';
+import type { Task, Session } from '../types';
 
 /**
  * 未同期アクション
@@ -49,7 +49,7 @@ export class OfflineSyncService {
   private lastSyncTime: Date | null = null;
   private errorMessage?: string;
   private syncCallbacks: Array<(state: OfflineState) => void> = [];
-  private retryTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private retryTimeouts: Map<string, number> = new Map();
   private realtimeSync: RealtimeSyncService;
 
   // 設定
@@ -84,7 +84,9 @@ export class OfflineSyncService {
     });
 
     window.addEventListener('offline', () => {
-      console.log('ネットワーク接続が切断されました - オフラインモードに切り替え');
+      console.log(
+        'ネットワーク接続が切断されました - オフラインモードに切り替え'
+      );
       this.isOnline = false;
       this.syncStatus = 'idle';
       this.notifyStateChange();
@@ -103,7 +105,9 @@ export class OfflineSyncService {
           ...action,
           timestamp: new Date(action.timestamp),
         }));
-        console.log(`${this.pendingActions.length}件の未同期アクションを読み込みました`);
+        console.log(
+          `${this.pendingActions.length}件の未同期アクションを読み込みました`
+        );
       }
     } catch (error) {
       console.error('未同期アクションの読み込みエラー:', error);
@@ -131,7 +135,10 @@ export class OfflineSyncService {
    */
   private savePendingActions(): void {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.pendingActions));
+      localStorage.setItem(
+        this.STORAGE_KEY,
+        JSON.stringify(this.pendingActions)
+      );
     } catch (error) {
       console.error('未同期アクションの保存エラー:', error);
     }
@@ -143,7 +150,10 @@ export class OfflineSyncService {
   private saveLastSyncTime(): void {
     try {
       if (this.lastSyncTime) {
-        localStorage.setItem(this.LAST_SYNC_KEY, this.lastSyncTime.toISOString());
+        localStorage.setItem(
+          this.LAST_SYNC_KEY,
+          this.lastSyncTime.toISOString()
+        );
       }
     } catch (error) {
       console.error('最終同期時刻の保存エラー:', error);
@@ -153,14 +163,16 @@ export class OfflineSyncService {
   /**
    * アクションをキューに追加
    */
-  async queueAction(action: Omit<PendingAction, 'id' | 'timestamp' | 'retryCount' | 'deviceId'>): Promise<void> {
+  async queueAction(
+    action: Omit<PendingAction, 'id' | 'timestamp' | 'retryCount' | 'deviceId'>
+  ): Promise<void> {
     const pendingAction: PendingAction = {
       id: `action-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       timestamp: new Date(),
       retryCount: 0,
       deviceId: this.getDeviceId(),
-      maxRetries: this.MAX_RETRIES,
       ...action,
+      maxRetries: this.MAX_RETRIES,
     };
 
     this.pendingActions.push(pendingAction);
@@ -228,7 +240,9 @@ export class OfflineSyncService {
         console.log('アクション同期成功:', action.id);
 
         // 成功したアクションを削除
-        this.pendingActions = this.pendingActions.filter(a => a.id !== action.id);
+        this.pendingActions = this.pendingActions.filter(
+          a => a.id !== action.id
+        );
       } catch (error) {
         console.error('アクション同期失敗:', action.id, error);
         result.failedCount++;
@@ -245,7 +259,9 @@ export class OfflineSyncService {
         } else {
           console.error('最大リトライ回数に達しました:', action.id);
           // 最大リトライ回数に達したアクションは削除
-          this.pendingActions = this.pendingActions.filter(a => a.id !== action.id);
+          this.pendingActions = this.pendingActions.filter(
+            a => a.id !== action.id
+          );
         }
       }
     }
@@ -260,9 +276,10 @@ export class OfflineSyncService {
 
     // 同期完了
     this.syncStatus = result.failedCount > 0 ? 'error' : 'idle';
-    this.errorMessage = result.failedCount > 0 
-      ? `${result.failedCount}件のアクションの同期に失敗しました`
-      : undefined;
+    this.errorMessage =
+      result.failedCount > 0
+        ? `${result.failedCount}件のアクションの同期に失敗しました`
+        : undefined;
 
     if (result.syncedCount > 0) {
       this.lastSyncTime = new Date();
@@ -279,13 +296,18 @@ export class OfflineSyncService {
    * リトライをスケジュール
    */
   private scheduleRetry(action: PendingAction): void {
-    const delay = this.RETRY_DELAYS[Math.min(action.retryCount - 1, this.RETRY_DELAYS.length - 1)];
-    
-    console.log(`アクション ${action.id} を ${delay}ms 後にリトライします (${action.retryCount}/${action.maxRetries})`);
+    const delay =
+      this.RETRY_DELAYS[
+        Math.min(action.retryCount - 1, this.RETRY_DELAYS.length - 1)
+      ];
+
+    console.log(
+      `アクション ${action.id} を ${delay}ms 後にリトライします (${action.retryCount}/${action.maxRetries})`
+    );
 
     const timeoutId = setTimeout(async () => {
       this.retryTimeouts.delete(action.id);
-      
+
       if (this.isOnline && this.syncStatus === 'idle') {
         await this.syncPendingActions();
       }
@@ -341,7 +363,10 @@ export class OfflineSyncService {
         await DatabaseService.createSession(action.data);
         break;
       case 'update':
-        await DatabaseService.updateSession(action.data.id, action.data.updates);
+        await DatabaseService.updateSession(
+          action.data.id,
+          action.data.updates
+        );
         break;
       case 'delete':
         // セッションの削除は通常行わないが、必要に応じて実装
@@ -373,7 +398,9 @@ export class OfflineSyncService {
   /**
    * オフライン時のタスク作成
    */
-  async createTaskOffline(taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>): Promise<Task> {
+  async createTaskOffline(
+    taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<Task> {
     const offlineTask: Task = {
       id: `offline-task-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       created_at: new Date().toISOString(),
@@ -407,7 +434,7 @@ export class OfflineSyncService {
     // ローカルキャッシュから現在のタスクを取得
     const tasks = this.realtimeSync.getTasksFromCache();
     const taskIndex = tasks.findIndex(task => task.id === id);
-    
+
     if (taskIndex === -1) {
       throw new Error('タスクが見つかりません');
     }
@@ -440,7 +467,9 @@ export class OfflineSyncService {
   /**
    * オフライン時のセッション作成
    */
-  async createSessionOffline(sessionData: Omit<Session, 'id'>): Promise<Session> {
+  async createSessionOffline(
+    sessionData: Omit<Session, 'id'>
+  ): Promise<Session> {
     const offlineSession: Session = {
       id: `offline-session-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       ...sessionData,

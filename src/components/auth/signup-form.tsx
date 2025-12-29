@@ -17,8 +17,23 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   const [timezone, setTimezone] = useState('Asia/Tokyo');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState<{
+    isValid: boolean;
+    errors: string[];
+    score: number;
+  } | null>(null);
 
-  const { signUp, isLoading } = useAuthStore();
+  const { signUp, isLoading, validatePasswordStrength } = useAuthStore();
+
+  const handlePasswordChange = (newPassword: string) => {
+    setPassword(newPassword);
+    if (newPassword) {
+      const strength = validatePasswordStrength(newPassword);
+      setPasswordStrength(strength);
+    } else {
+      setPasswordStrength(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +53,17 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
       return;
     }
 
-    if (password.length < 6) {
-      setError('パスワードは6文字以上で入力してください');
+    if (password.length < 8) {
+      setError('パスワードは8文字以上で入力してください');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // パスワード強度チェック
+    if (passwordStrength && !passwordStrength.isValid) {
+      setError(
+        `パスワードが要件を満たしていません: ${passwordStrength.errors.join(', ')}`
+      );
       setIsSubmitting(false);
       return;
     }
@@ -172,19 +196,69 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               id="password"
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => handlePasswordChange(e.target.value)}
               disabled={isFormDisabled}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="6文字以上のパスワード"
+              placeholder="8文字以上の強力なパスワード"
               data-testid="signup-password-input"
               required
             />
-            {password.length > 0 && password.length < 6 && (
+            {password.length > 0 && passwordStrength && (
+              <div className="mt-2">
+                <div className="flex items-center space-x-2">
+                  <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        passwordStrength.score >= 4
+                          ? 'bg-green-500'
+                          : passwordStrength.score >= 3
+                            ? 'bg-yellow-500'
+                            : passwordStrength.score >= 2
+                              ? 'bg-orange-500'
+                              : 'bg-red-500'
+                      }`}
+                      style={{
+                        width: `${(passwordStrength.score / 5) * 100}%`,
+                      }}
+                    />
+                  </div>
+                  <span
+                    className={`text-xs font-medium ${
+                      passwordStrength.score >= 4
+                        ? 'text-green-600 dark:text-green-400'
+                        : passwordStrength.score >= 3
+                          ? 'text-yellow-600 dark:text-yellow-400'
+                          : passwordStrength.score >= 2
+                            ? 'text-orange-600 dark:text-orange-400'
+                            : 'text-red-600 dark:text-red-400'
+                    }`}
+                  >
+                    {passwordStrength.score >= 4
+                      ? '強力'
+                      : passwordStrength.score >= 3
+                        ? '普通'
+                        : passwordStrength.score >= 2
+                          ? '弱い'
+                          : '非常に弱い'}
+                  </span>
+                </div>
+                {passwordStrength.errors.length > 0 && (
+                  <div className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    <ul className="list-disc list-inside space-y-1">
+                      {passwordStrength.errors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+            {password.length > 0 && password.length < 8 && (
               <div
                 className="text-red-600 text-sm mt-1"
                 data-testid="password-strength-error"
               >
-                パスワードは6文字以上で入力してください
+                パスワードは8文字以上で入力してください
               </div>
             )}
           </div>

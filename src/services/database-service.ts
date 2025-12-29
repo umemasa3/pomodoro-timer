@@ -2221,7 +2221,7 @@ export class DatabaseService {
     metric: 'sessions' | 'minutes' | 'tasks';
     target_value: number;
     tags?: string[];
-  }): Promise<Goal> {
+  }): Promise<import('../types').Goal> {
     const client = DatabaseService.getSupabaseClient();
 
     const {
@@ -2293,7 +2293,7 @@ export class DatabaseService {
   static async getGoals(filters?: {
     type?: 'daily' | 'weekly' | 'monthly';
     is_active?: boolean;
-  }): Promise<Goal[]> {
+  }): Promise<import('../types').Goal[]> {
     const client = DatabaseService.getSupabaseClient();
 
     let query = client
@@ -2330,7 +2330,7 @@ export class DatabaseService {
       tags?: string[];
       is_active?: boolean;
     }
-  ): Promise<Goal> {
+  ): Promise<import('../types').Goal> {
     const client = DatabaseService.getSupabaseClient();
 
     const updateData: any = { ...updates };
@@ -2396,5 +2396,55 @@ export class DatabaseService {
       console.error('データベース接続テストエラー:', error);
       return false;
     }
+  }
+
+  // オフライン対応のヘルパーメソッド
+  static async createTaskWithOfflineSupport(
+    taskData: CreateTaskRequest
+  ): Promise<Task> {
+    const realtimeService = RealtimeSyncService.getInstance();
+
+    // オフライン時はオフライン同期サービスを使用
+    if (!realtimeService.isNetworkOnline()) {
+      const { OfflineSyncService } = await import('./offline-sync-service');
+      const offlineSync = OfflineSyncService.getInstance();
+      return await offlineSync.createTaskOffline(taskData);
+    }
+
+    // オンライン時は通常のデータベース操作
+    return await DatabaseService.createTask(taskData);
+  }
+
+  static async updateTaskWithOfflineSupport(
+    id: string,
+    updates: UpdateTaskRequest
+  ): Promise<Task> {
+    const realtimeService = RealtimeSyncService.getInstance();
+
+    // オフライン時はオフライン同期サービスを使用
+    if (!realtimeService.isNetworkOnline()) {
+      const { OfflineSyncService } = await import('./offline-sync-service');
+      const offlineSync = OfflineSyncService.getInstance();
+      return await offlineSync.updateTaskOffline(id, updates);
+    }
+
+    // オンライン時は通常のデータベース操作
+    return await DatabaseService.updateTask(id, updates);
+  }
+
+  static async createSessionWithOfflineSupport(
+    sessionData: Omit<Session, 'id'>
+  ): Promise<Session> {
+    const realtimeService = RealtimeSyncService.getInstance();
+
+    // オフライン時はオフライン同期サービスを使用
+    if (!realtimeService.isNetworkOnline()) {
+      const { OfflineSyncService } = await import('./offline-sync-service');
+      const offlineSync = OfflineSyncService.getInstance();
+      return await offlineSync.createSessionOffline(sessionData);
+    }
+
+    // オンライン時は通常のデータベース操作
+    return await DatabaseService.createSession(sessionData);
   }
 }

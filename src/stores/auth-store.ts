@@ -8,6 +8,14 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
 
+  // 新規追加: セキュリティ機能
+  loginAttempts: number;
+  lastLoginAttempt: Date | null;
+  isLocked: boolean;
+  lockUntil: Date | null;
+  rememberMe: boolean;
+  sessionExpiry: Date | null;
+
   // アクション
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
@@ -21,7 +29,8 @@ interface AuthState {
   ) => Promise<{ success: boolean; error?: string }>;
   signIn: (
     email: string,
-    password: string
+    password: string,
+    rememberMe?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (
@@ -39,6 +48,18 @@ interface AuthState {
     settings: Partial<User['settings']>
   ) => Promise<{ success: boolean; error?: string }>;
   initializeAuth: () => Promise<void>;
+
+  // 新規追加: セキュリティ機能
+  checkAccountLock: () => boolean;
+  incrementLoginAttempts: () => void;
+  resetLoginAttempts: () => void;
+  lockAccount: () => void;
+  unlockAccount: () => void;
+  validatePasswordStrength: (password: string) => {
+    isValid: boolean;
+    errors: string[];
+    score: number;
+  };
 }
 
 type UserMetadata = Record<string, unknown>;
@@ -49,6 +70,14 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isLoading: true,
       isAuthenticated: false,
+
+      // セキュリティ機能の初期値
+      loginAttempts: 0,
+      lastLoginAttempt: null,
+      isLocked: false,
+      lockUntil: null,
+      rememberMe: false,
+      sessionExpiry: null,
 
       setUser: user => {
         set({
@@ -63,6 +92,17 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signUp: async (email, password, userData) => {
+        const { validatePasswordStrength } = get();
+
+        // パスワード強度チェック
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.isValid) {
+          return {
+            success: false,
+            error: `パスワードが要件を満たしていません: ${passwordValidation.errors.join(', ')}`,
+          };
+        }
+
         set({ isLoading: true });
 
         try {
@@ -142,21 +182,64 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      signIn: async (email, password) => {
+      signIn: async (email, password, rememberMe = false) => {
+        const {
+          checkAccountLock,
+          incrementLoginAttempts,
+          resetLoginAttempts,
+          lockAccount,
+        } = get();
+
+        // アカウントロック状態をチェック
+        if (checkAccountLock()) {
+          const { lockUntil } = get();
+          const remainingTime = lockUntil
+            ? Math.ceil((lockUntil.getTime() - Date.now()) / 1000 / 60)
+            : 0;
+          return {
+            success: false,
+            error: `アカウントがロックされています。${remainingTime}分後に再試行してください。`,
+          };
+        }
+
         set({ isLoading: true });
 
         try {
           const { data, error } = await auth.signIn(email, password);
 
           if (error) {
+            // ログイン失敗時の処理
+            incrementLoginAttempts();
+            const { loginAttempts } = get();
+
+            // 5回失敗でアカウントロック
+            if (loginAttempts >= 5) {
+              lockAccount();
+              set({ isLoading: false });
+              return {
+                success: false,
+                error:
+                  'ログインに5回失敗したため、アカウントを15分間ロックしました。',
+              };
+            }
+
             set({ isLoading: false });
             return {
               success: false,
-              error: error.message || 'ログインに失敗しました',
+              error: `${error.message || 'ログインに失敗しました'} (残り${5 - loginAttempts}回)`,
             };
           }
 
           if (data.user && data.session) {
+            // ログイン成功時の処理
+            resetLoginAttempts();
+
+            // セッション期限の設定
+            const sessionDuration = rememberMe
+              ? 30 * 24 * 60 * 60 * 1000
+              : 24 * 60 * 60 * 1000; // 30日 or 1日
+            const sessionExpiry = new Date(Date.now() + sessionDuration);
+
             // ユーザープロファイルを取得
             const {
               data: { user: authUser },
@@ -191,12 +274,20 @@ export const useAuthStore = create<AuthState>()(
                 user: userProfile,
                 isAuthenticated: true,
                 isLoading: false,
+                rememberMe,
+                sessionExpiry,
               });
+
+              // セッション監視を開始
+              const { sessionManager } =
+                await import('../services/session-manager');
+              sessionManager.startSessionMonitoring();
             }
           }
 
           return { success: true };
         } catch (error) {
+          incrementLoginAttempts();
           set({ isLoading: false });
           return {
             success: false,
@@ -210,19 +301,42 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
 
         try {
+          // セッション監視を停止
+          const { sessionManager } =
+            await import('../services/session-manager');
+          sessionManager.stopSessionMonitoring();
+
           await auth.signOut();
           set({
             user: null,
             isAuthenticated: false,
             isLoading: false,
+            // セキュリティ状態をリセット
+            loginAttempts: 0,
+            lastLoginAttempt: null,
+            isLocked: false,
+            lockUntil: null,
+            rememberMe: false,
+            sessionExpiry: null,
           });
         } catch (error) {
           console.error('ログアウトエラー:', error);
           // エラーが発生してもローカル状態はクリア
+          const { sessionManager } =
+            await import('../services/session-manager');
+          sessionManager.stopSessionMonitoring();
+
           set({
             user: null,
             isAuthenticated: false,
             isLoading: false,
+            // セキュリティ状態をリセット
+            loginAttempts: 0,
+            lastLoginAttempt: null,
+            isLocked: false,
+            lockUntil: null,
+            rememberMe: false,
+            sessionExpiry: null,
           });
         }
       },
@@ -349,6 +463,124 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      // セキュリティ機能の実装
+      checkAccountLock: () => {
+        const { isLocked, lockUntil } = get();
+
+        if (!isLocked || !lockUntil) {
+          return false;
+        }
+
+        // ロック期限が過ぎている場合は自動的にロック解除
+        if (Date.now() > lockUntil.getTime()) {
+          set({
+            isLocked: false,
+            lockUntil: null,
+            loginAttempts: 0,
+          });
+          return false;
+        }
+
+        return true;
+      },
+
+      incrementLoginAttempts: () => {
+        const { loginAttempts } = get();
+        set({
+          loginAttempts: loginAttempts + 1,
+          lastLoginAttempt: new Date(),
+        });
+      },
+
+      resetLoginAttempts: () => {
+        set({
+          loginAttempts: 0,
+          lastLoginAttempt: null,
+        });
+      },
+
+      lockAccount: () => {
+        const lockDuration = 15 * 60 * 1000; // 15分
+        const lockUntil = new Date(Date.now() + lockDuration);
+
+        set({
+          isLocked: true,
+          lockUntil,
+          loginAttempts: 0,
+        });
+      },
+
+      unlockAccount: () => {
+        set({
+          isLocked: false,
+          lockUntil: null,
+          loginAttempts: 0,
+        });
+      },
+
+      validatePasswordStrength: (password: string) => {
+        const errors: string[] = [];
+        let score = 0;
+
+        // 最小長チェック
+        if (password.length < 8) {
+          errors.push('8文字以上である必要があります');
+        } else {
+          score += 1;
+        }
+
+        // 大文字チェック
+        if (!/[A-Z]/.test(password)) {
+          errors.push('大文字を含む必要があります');
+        } else {
+          score += 1;
+        }
+
+        // 小文字チェック
+        if (!/[a-z]/.test(password)) {
+          errors.push('小文字を含む必要があります');
+        } else {
+          score += 1;
+        }
+
+        // 数字チェック
+        if (!/\d/.test(password)) {
+          errors.push('数字を含む必要があります');
+        } else {
+          score += 1;
+        }
+
+        // 特殊文字チェック
+        if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+          errors.push('特殊文字を含む必要があります');
+        } else {
+          score += 1;
+        }
+
+        // 禁止パターンチェック
+        const forbiddenPatterns = [
+          /123456/,
+          /password/i,
+          /qwerty/i,
+          /admin/i,
+          /user/i,
+        ];
+
+        for (const pattern of forbiddenPatterns) {
+          if (pattern.test(password)) {
+            errors.push('一般的なパスワードパターンは使用できません');
+            score = Math.max(0, score - 2);
+            break;
+          }
+        }
+
+        return {
+          isValid: errors.length === 0 && score >= 4,
+          errors,
+          score,
+        };
+      },
+
       initializeAuth: async () => {
         set({ isLoading: true });
 
@@ -384,6 +616,12 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
               isLoading: false,
             });
+
+            // デモモードでもセッション監視を開始
+            const { sessionManager } =
+              await import('../services/session-manager');
+            sessionManager.startSessionMonitoring();
+
             return;
           }
 
@@ -419,11 +657,23 @@ export const useAuthStore = create<AuthState>()(
               updated_at: new Date().toISOString(),
             };
 
+            // セッション期限を設定（既存のセッションの場合は24時間後）
+            const sessionExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
             set({
               user: userProfile,
               isAuthenticated: true,
               isLoading: false,
+              sessionExpiry,
             });
+
+            // セッション監視を開始
+            const { sessionManager } =
+              await import('../services/session-manager');
+            sessionManager.startSessionMonitoring();
+
+            // 保存された作業データがあれば復元を提案
+            await sessionManager.restoreWorkInProgress();
           } else {
             set({
               user: null,
@@ -433,7 +683,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // 認証状態変更の監視を開始
-          auth.onAuthStateChange((event, session) => {
+          auth.onAuthStateChange(async (event, session) => {
             if (
               event === 'SIGNED_IN' &&
               session &&
@@ -472,16 +722,37 @@ export const useAuthStore = create<AuthState>()(
                 updated_at: new Date().toISOString(),
               };
 
+              // セッション期限を設定
+              const sessionExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
               set({
                 user: userProfile,
                 isAuthenticated: true,
                 isLoading: false,
+                sessionExpiry,
               });
+
+              // セッション監視を開始
+              const { sessionManager } =
+                await import('../services/session-manager');
+              sessionManager.startSessionMonitoring();
             } else if (event === 'SIGNED_OUT') {
+              // セッション監視を停止
+              const { sessionManager } =
+                await import('../services/session-manager');
+              sessionManager.stopSessionMonitoring();
+
               set({
                 user: null,
                 isAuthenticated: false,
                 isLoading: false,
+                // セキュリティ状態をリセット
+                loginAttempts: 0,
+                lastLoginAttempt: null,
+                isLocked: false,
+                lockUntil: null,
+                rememberMe: false,
+                sessionExpiry: null,
               });
             }
           });
@@ -500,6 +771,12 @@ export const useAuthStore = create<AuthState>()(
       partialize: state => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        loginAttempts: state.loginAttempts,
+        lastLoginAttempt: state.lastLoginAttempt,
+        isLocked: state.isLocked,
+        lockUntil: state.lockUntil,
+        rememberMe: state.rememberMe,
+        sessionExpiry: state.sessionExpiry,
       }),
     }
   )
