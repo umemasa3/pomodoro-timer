@@ -6,6 +6,11 @@ import { TasksPage } from './pages/tasks-page';
 import { TimerComponent } from './components/timer';
 import { SyncStatusIndicator } from './components/sync-status-indicator';
 import { ThemeToggle } from './components/ui/theme-toggle';
+import {
+  PWAUpdatePrompt,
+  PWAInstallPrompt,
+  OfflineIndicator,
+} from './components/pwa';
 import { useAuthStore } from './stores/auth-store';
 import { useTimerStore } from './stores/timer-store';
 import { useThemeStore } from './stores/theme-store';
@@ -225,6 +230,11 @@ function App() {
   return (
     <AuthGuard fallback={<AuthPage onAuthSuccess={() => {}} />}>
       <div className="min-h-screen bg-gradient-to-br from-pomodoro-50 via-white to-break-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {/* PWA関連コンポーネント */}
+        <PWAUpdatePrompt />
+        <PWAInstallPrompt />
+        <OfflineIndicator />
+
         {/* 同期状態インジケーター */}
         <SyncStatusIndicator />
 
