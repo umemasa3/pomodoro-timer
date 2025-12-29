@@ -87,6 +87,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <button
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            data-testid="settings-close-button"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -169,6 +170,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             className="px-6 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            data-testid="settings-save-button"
           >
             閉じる
           </motion.button>

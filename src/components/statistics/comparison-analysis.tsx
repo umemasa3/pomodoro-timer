@@ -257,7 +257,10 @@ export const ComparisonAnalysis: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3
+          className="text-lg font-semibold text-gray-900 dark:text-white"
+          data-testid="comparison-analysis-title"
+        >
           比較分析
         </h3>
         <div className="text-sm text-gray-500 dark:text-gray-400">

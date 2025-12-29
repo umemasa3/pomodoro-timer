@@ -230,7 +230,7 @@ describe('TimerComponent', () => {
     it('設定ボタンが表示される', () => {
       render(<TimerComponent />);
 
-      const settingsButton = screen.getByTestId('motion-button');
+      const settingsButton = screen.getByTestId('settings-button');
       expect(settingsButton).toBeInTheDocument();
       expect(settingsButton).toHaveAttribute('title', '設定');
       expect(screen.getByTestId('settings-icon')).toBeInTheDocument();
@@ -362,7 +362,7 @@ describe('TimerComponent', () => {
     it('設定ボタンクリックで設定モーダルが開く', async () => {
       render(<TimerComponent />);
 
-      const settingsButton = screen.getByTestId('motion-button');
+      const settingsButton = screen.getByTestId('settings-button');
       fireEvent.click(settingsButton);
 
       await waitFor(() => {
@@ -374,7 +374,7 @@ describe('TimerComponent', () => {
       render(<TimerComponent />);
 
       // 設定モーダルを開く
-      const settingsButton = screen.getByTestId('motion-button');
+      const settingsButton = screen.getByTestId('settings-button');
       fireEvent.click(settingsButton);
 
       await waitFor(() => {
@@ -590,7 +590,7 @@ describe('TimerComponent', () => {
     it('設定ボタンに適切なaria-labelが設定される', () => {
       render(<TimerComponent />);
 
-      const settingsButton = screen.getByTestId('motion-button');
+      const settingsButton = screen.getByTestId('settings-button');
       expect(settingsButton).toHaveAttribute('title', '設定');
     });
 

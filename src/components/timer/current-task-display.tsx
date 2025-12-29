@@ -14,7 +14,10 @@ export const CurrentTaskDisplay: React.FC = () => {
   }
 
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+    <div
+      className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4"
+      data-testid="current-task-display"
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h3 className="text-lg font-medium text-blue-900 mb-1">

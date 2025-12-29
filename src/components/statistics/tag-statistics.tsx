@@ -89,7 +89,10 @@ export const TagStatistics: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
+      <h3
+        className="text-lg font-semibold text-gray-900 dark:text-white mb-6"
+        data-testid="tag-statistics-title"
+      >
         タグ別統計
       </h3>
 
@@ -108,6 +111,7 @@ export const TagStatistics: React.FC = () => {
                 <div
                   key={tag.tagId}
                   className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50"
+                  data-testid="tag-stat-item"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center space-x-3">

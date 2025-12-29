@@ -110,7 +110,10 @@ export const ProductivityAnalysis: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div
+      className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+      data-testid="productivity-analysis"
+    >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
         生産性分析
       </h3>
@@ -130,7 +133,10 @@ export const ProductivityAnalysis: React.FC = () => {
                 <div className="text-sm text-emerald-600 dark:text-emerald-400 mb-1">
                   タグ
                 </div>
-                <div className="text-xl font-bold text-emerald-800 dark:text-emerald-200">
+                <div
+                  className="text-xl font-bold text-emerald-800 dark:text-emerald-200"
+                  data-testid="most-productive-tag"
+                >
                   {data.mostProductiveTag}
                 </div>
               </div>
@@ -138,7 +144,10 @@ export const ProductivityAnalysis: React.FC = () => {
                 <div className="text-sm text-emerald-600 dark:text-emerald-400 mb-1">
                   時間帯
                 </div>
-                <div className="text-xl font-bold text-emerald-800 dark:text-emerald-200">
+                <div
+                  className="text-xl font-bold text-emerald-800 dark:text-emerald-200"
+                  data-testid="most-productive-time"
+                >
                   {getTimeSlotIcon(data.bestTimeSlot)} {data.bestTimeSlot}
                 </div>
               </div>

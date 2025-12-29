@@ -179,9 +179,9 @@ export const TagTrendGraph: React.FC = () => {
 
     return (
       <div className="w-full overflow-x-auto">
-        <svg 
-          width={width} 
-          height={height} 
+        <svg
+          width={width}
+          height={height}
           className="border rounded"
           role="img"
           aria-label="タグ別時間推移グラフ"
@@ -268,7 +268,10 @@ export const TagTrendGraph: React.FC = () => {
                 x: getX(d.date),
                 y: getY((d.tagData[tagName] || 0) / 60), // 分を時間に変換
               }))
-              .filter(p => !isNaN(p.x) && !isNaN(p.y) && isFinite(p.x) && isFinite(p.y));
+              .filter(
+                p =>
+                  !isNaN(p.x) && !isNaN(p.y) && isFinite(p.x) && isFinite(p.y)
+              );
 
             if (points.length < 2) return null;
 
@@ -310,7 +313,10 @@ export const TagTrendGraph: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div
+      className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+      data-testid="tag-trend-graph"
+    >
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           タグ別時間推移
@@ -333,7 +339,7 @@ export const TagTrendGraph: React.FC = () => {
       </div>
 
       {/* タグ選択 */}
-      <div className="space-y-4">
+      <div className="space-y-4" data-testid="trend-legend">
         <h4 className="font-medium text-gray-900 dark:text-white">
           表示するタグを選択
         </h4>

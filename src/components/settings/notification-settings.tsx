@@ -146,6 +146,7 @@ export const NotificationSettings: React.FC = () => {
             }
             className="toggle"
             disabled={permission !== 'granted'}
+            data-testid="notification-toggle"
           />
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400">

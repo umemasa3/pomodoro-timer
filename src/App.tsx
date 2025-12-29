@@ -159,6 +159,7 @@ function App() {
             exit="out"
             variants={pageVariants}
             transition={pageTransition}
+            data-testid="statistics-page"
           >
             <StatisticsPage />
           </motion.div>
@@ -308,6 +309,7 @@ function App() {
                           stiffness: 400,
                           damping: 17,
                         }}
+                        data-testid={`nav-${item.id}`}
                       >
                         <Icon className="w-4 h-4 md:w-5 md:h-5" />
                         <span className="hidden lg:block text-sm md:text-base">
@@ -358,6 +360,7 @@ function App() {
                     className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
+                    data-testid="logout-button"
                   >
                     <ArrowRightOnRectangleIcon className="w-4 h-4" />
                     <span className="hidden sm:block">ログアウト</span>

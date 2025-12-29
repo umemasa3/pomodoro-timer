@@ -139,7 +139,10 @@ export const CategoryTimePieChart: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div
+      className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+      data-testid="category-time-pie-chart"
+    >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
         カテゴリ別時間配分
       </h3>
@@ -218,7 +221,7 @@ export const CategoryTimePieChart: React.FC = () => {
         </div>
 
         {/* 凡例と詳細 */}
-        <div className="space-y-4">
+        <div className="space-y-4" data-testid="pie-chart-legend">
           <h4 className="text-md font-medium text-gray-900 dark:text-white">
             カテゴリ詳細
           </h4>

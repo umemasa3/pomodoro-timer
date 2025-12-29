@@ -114,7 +114,10 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
   if (!isOpen || !currentTask) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      data-testid="task-completion-dialog"
+    >
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl task-completion-dialog">
         <h2 className="text-xl font-semibold mb-4 text-gray-900">
           タスクの状態を確認してください
@@ -151,6 +154,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
             onClick={() => handleComplete('completed')}
             disabled={isProcessing}
             className="w-full bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-left disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            data-testid="task-completed-button"
           >
             <div className="font-medium">
               {isProcessing ? '処理中...' : '完了'}
@@ -162,6 +166,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
             onClick={() => handleComplete('continued')}
             disabled={isProcessing}
             className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 text-left disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            data-testid="task-continued-button"
           >
             <div className="font-medium">
               {isProcessing ? '処理中...' : '継続'}
@@ -175,6 +180,7 @@ export const TaskCompletionDialog: React.FC<TaskCompletionDialogProps> = ({
             onClick={() => handleComplete('paused')}
             disabled={isProcessing}
             className="w-full bg-yellow-600 text-white px-4 py-3 rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 text-left disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            data-testid="task-paused-button"
           >
             <div className="font-medium">
               {isProcessing ? '処理中...' : '一時停止'}

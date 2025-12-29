@@ -110,6 +110,7 @@ export const SessionCompleteNotification: React.FC<
               damping: 25,
               duration: 0.5,
             }}
+            data-testid="session-complete-notification"
           >
             <div className="relative">
               {/* グロー効果 */}

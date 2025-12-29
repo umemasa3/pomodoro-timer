@@ -78,14 +78,20 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+      <div
+        className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6"
+        data-testid="signup-form"
+      >
         <h2 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
           新規登録
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md text-sm">
+            <div
+              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md text-sm"
+              data-testid="signup-error-message"
+            >
               {error}
             </div>
           )}
@@ -105,6 +111,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               disabled={isFormDisabled}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="your@example.com"
+              data-testid="signup-email-input"
               required
             />
           </div>
@@ -124,6 +131,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               disabled={isFormDisabled}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="表示名（任意）"
+              data-testid="display-name-input"
             />
           </div>
 
@@ -140,6 +148,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               onChange={e => setTimezone(e.target.value)}
               disabled={isFormDisabled}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              data-testid="timezone-select"
             >
               <option value="Asia/Tokyo">日本 (JST)</option>
               <option value="UTC">UTC</option>
@@ -167,8 +176,17 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               disabled={isFormDisabled}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="6文字以上のパスワード"
+              data-testid="signup-password-input"
               required
             />
+            {password.length > 0 && password.length < 6 && (
+              <div
+                className="text-red-600 text-sm mt-1"
+                data-testid="password-strength-error"
+              >
+                パスワードは6文字以上で入力してください
+              </div>
+            )}
           </div>
 
           <div>
@@ -186,6 +204,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               disabled={isFormDisabled}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="パスワードを再入力"
+              data-testid="confirm-password-input"
               required
             />
           </div>
@@ -194,6 +213,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
             type="submit"
             disabled={isFormDisabled}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-800"
+            data-testid="signup-button"
           >
             {isSubmitting ? (
               <div className="flex items-center">
@@ -213,6 +233,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
               type="button"
               onClick={onSwitchToLogin}
               className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
+              data-testid="login-link"
             >
               ログイン
             </button>

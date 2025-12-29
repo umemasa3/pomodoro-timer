@@ -72,7 +72,10 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      data-testid="task-selection-dialog"
+    >
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
         <h2 className="text-xl font-semibold mb-4 text-gray-900">
           タスクを選択してください
@@ -99,7 +102,11 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {tasks.map(task => (
-                    <option key={task.id} value={task.id}>
+                    <option
+                      key={task.id}
+                      value={task.id}
+                      data-testid="task-option"
+                    >
                       {task.title} ({task.completed_pomodoros}/
                       {task.estimated_pomodoros} ポモドーロ)
                     </option>
@@ -126,6 +133,7 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
                 <button
                   onClick={handleStartWithTask}
                   className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  data-testid="confirm-task-selection"
                 >
                   選択したタスクで開始
                 </button>

@@ -134,6 +134,7 @@ export const CSVExport: React.FC = () => {
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
           }`}
+          data-testid="csv-export-button"
         >
           {isExporting ? (
             <>
