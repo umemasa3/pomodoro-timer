@@ -85,7 +85,7 @@ export const auth = {
               vibration: false,
             },
           },
-        } as Database['public']['Tables']['users']['Insert']);
+        } as any);
       } catch (profileError) {
         console.error('ユーザープロファイル作成エラー:', profileError);
       }
@@ -166,9 +166,10 @@ export const auth = {
     }
 
     // usersテーブルの更新
-    const { data: profileData, error: profileError } = await supabase
-      .from('users')
-      .update(updates as Database['public']['Tables']['users']['Update'])
+    const { data: profileData, error: profileError } = await (
+      supabase.from('users') as any
+    )
+      .update(updates)
       .eq('id', user.id)
       .select()
       .single();
