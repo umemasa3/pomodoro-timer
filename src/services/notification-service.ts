@@ -3,6 +3,8 @@
  */
 
 import { SoundGenerator } from './sound-generator';
+import { errorHandler } from './error-handler';
+import { monitoringService } from './monitoring-service';
 import type { GeneratedSoundType } from './sound-generator';
 
 export type NotificationPermission = 'default' | 'granted' | 'denied';
@@ -55,9 +57,24 @@ export class NotificationService {
 
     try {
       const permission = await Notification.requestPermission();
+
+      // 監視記録
+      monitoringService.recordUserActivity({
+        action: 'notification_permission_requested',
+        component: 'NotificationService',
+        metadata: { permission },
+      });
+
       return permission as NotificationPermission;
     } catch (error) {
-      console.error('通知権限の要求に失敗しました:', error);
+      await errorHandler.handleError(error as Error, {
+        type: 'ui',
+        severity: 'medium',
+        context: {
+          method: 'requestPermission',
+          browserSupport: 'Notification' in window,
+        },
+      });
       return 'denied';
     }
   }

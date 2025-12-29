@@ -8,6 +8,8 @@ import type {
   UpdateTaskRequest,
 } from '../types';
 import { RealtimeSyncService } from './realtime-sync-service';
+import { errorHandler } from './error-handler';
+import { monitoringService } from './monitoring-service';
 
 /**
  * データベース操作を統一するサービスクラス
@@ -28,46 +30,89 @@ export class DatabaseService {
   // Supabaseクライアントを安全に取得するヘルパー
   private static getSupabaseClient() {
     if (!supabase) {
-      throw new Error(
+      const error = new Error(
         'Supabaseが初期化されていません（デモモードまたは設定エラー）'
       );
+      errorHandler.handleError(error, {
+        type: 'database',
+        severity: 'critical',
+        context: { service: 'DatabaseService', method: 'getSupabaseClient' },
+      });
+      throw error;
     }
     return supabase;
   }
   // ユーザー関連操作
   static async createUser(userData: any): Promise<User> {
-    const client = DatabaseService.getSupabaseClient();
+    const startTime = performance.now();
 
-    const { data, error } = await (client as any)
-      .from('users')
-      .insert([userData])
-      .select()
-      .single();
+    try {
+      const client = DatabaseService.getSupabaseClient();
 
-    if (error) {
-      throw new Error(`ユーザー作成エラー: ${error.message}`);
+      const { data, error } = await (client as any)
+        .from('users')
+        .insert([userData])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`ユーザー作成エラー: ${error.message}`);
+      }
+
+      // 成功時の監視記録
+      monitoringService.recordApiCall(
+        'createUser',
+        performance.now() - startTime
+      );
+      monitoringService.recordUserActivity({
+        action: 'user_created',
+        component: 'DatabaseService',
+        metadata: { userId: data.id },
+      });
+
+      return data;
+    } catch (error) {
+      await errorHandler.handleDatabaseError(error as Error, undefined, {
+        method: 'createUser',
+        userData: { ...userData, password: '[REDACTED]' }, // パスワードは記録しない
+      });
+      throw error;
     }
-
-    return data;
   }
 
   static async getUserById(id: string): Promise<User | null> {
-    const client = DatabaseService.getSupabaseClient();
+    const startTime = performance.now();
 
-    const { data, error } = await client
-      .from('users')
-      .select('*')
-      .eq('id', id as any)
-      .single();
+    try {
+      const client = DatabaseService.getSupabaseClient();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return null; // ユーザーが見つからない場合
+      const { data, error } = await client
+        .from('users')
+        .select('*')
+        .eq('id', id as any)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null; // ユーザーが見つからない場合
+        }
+        throw new Error(`ユーザー取得エラー: ${error.message}`);
       }
-      throw new Error(`ユーザー取得エラー: ${error.message}`);
-    }
 
-    return data as User;
+      // 成功時の監視記録
+      monitoringService.recordApiCall(
+        'getUserById',
+        performance.now() - startTime
+      );
+
+      return data as User;
+    } catch (error) {
+      await errorHandler.handleDatabaseError(error as Error, undefined, {
+        method: 'getUserById',
+        userId: id,
+      });
+      throw error;
+    }
   }
 
   static async updateUser(id: string, updates: any): Promise<User> {
@@ -481,7 +526,7 @@ export class DatabaseService {
 
       const { error: insertError } = await client
         .from('task_tags')
-        .insert(insertData);
+        .insert(insertData as any);
 
       if (insertError) {
         throw new Error(`新規タグ追加エラー: ${insertError.message}`);
