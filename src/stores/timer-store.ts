@@ -18,6 +18,7 @@ interface TimerStore extends TimerState {
   currentSession: Session | null;
   showTaskSelection: boolean;
   showTaskCompletionDialog: boolean;
+  showModeSelection: boolean; // モード選択ダイアログの表示状態
 
   // リアルタイム同期
   isOnline: boolean;
@@ -31,9 +32,17 @@ interface TimerStore extends TimerState {
   setCurrentTask: (task: Task | null) => void;
   setShowTaskSelection: (show: boolean) => void;
   setShowTaskCompletionDialog: (show: boolean) => void;
+  setShowModeSelection: (show: boolean) => void;
   completeTaskInSession: (
     status: 'completed' | 'continued' | 'paused'
   ) => Promise<void>;
+
+  // モード管理
+  setMode: (mode: 'task-based' | 'standalone') => void;
+  getDefaultSessionName: (
+    sessionType: 'pomodoro' | 'short_break' | 'long_break'
+  ) => string;
+  associateTaskWithSession: (task: Task) => Promise<void>;
 
   // リアルタイム同期
   initializeRealtimeSync: () => void;
@@ -93,12 +102,14 @@ export const useTimerStore = create<TimerStore>()(
       sessionType: 'pomodoro',
       completedSessions: 0,
       intervalId: null,
+      mode: 'task-based', // デフォルトはタスクベースモード
 
       // セッション・タスク連携
       currentTask: null,
       currentSession: null,
       showTaskSelection: false,
       showTaskCompletionDialog: false,
+      showModeSelection: false,
 
       // リアルタイム同期
       isOnline: navigator.onLine,
@@ -275,6 +286,72 @@ export const useTimerStore = create<TimerStore>()(
         set({ showTaskCompletionDialog: show });
       },
 
+      setShowModeSelection: (show: boolean) => {
+        set({ showModeSelection: show });
+      },
+
+      // モード管理
+      setMode: (mode: 'task-based' | 'standalone') => {
+        set({ mode });
+      },
+
+      getDefaultSessionName: (
+        sessionType: 'pomodoro' | 'short_break' | 'long_break'
+      ) => {
+        switch (sessionType) {
+          case 'pomodoro':
+            return '集中時間';
+          case 'short_break':
+            return '短い休憩';
+          case 'long_break':
+            return '長い休憩';
+          default:
+            return '集中時間';
+        }
+      },
+
+      associateTaskWithSession: async (task: Task) => {
+        const { currentSession } = get();
+
+        if (!currentSession) {
+          throw new Error('現在のセッションが存在しません');
+        }
+
+        try {
+          // セッションにタスクを関連付け
+          await DatabaseService.updateSession(currentSession.id, {
+            task_id: task.id,
+            mode: 'task-based',
+          });
+
+          // タスクのステータスを「進行中」に更新
+          if (task.status === 'pending') {
+            await DatabaseService.updateTask(task.id, {
+              status: 'in_progress',
+            });
+          }
+
+          // ストアの状態を更新
+          set({
+            currentTask: task,
+            mode: 'task-based',
+            currentSession: {
+              ...currentSession,
+              task_id: task.id,
+              mode: 'task-based',
+            },
+          });
+
+          console.log('タスクがセッションに関連付けられました:', {
+            sessionId: currentSession.id,
+            taskId: task.id,
+          });
+        } catch (error) {
+          console.error('タスク関連付けエラー:', error);
+          throw error;
+        }
+      },
+
       completeTaskInSession: async (
         status: 'completed' | 'continued' | 'paused'
       ) => {
@@ -349,23 +426,36 @@ export const useTimerStore = create<TimerStore>()(
 
       // タイマー制御
       startTimer: async () => {
-        const { isRunning, intervalId, sessionType, currentTask } = get();
+        const { isRunning, intervalId, sessionType, currentTask, mode } = get();
         const { user } = useAuthStore.getState();
 
         if (isRunning) return; // 既に動作中の場合は何もしない
 
-        // ポモドーロセッションでタスクが選択されていない場合、タスク選択を促す
-        if (sessionType === 'pomodoro' && !currentTask) {
-          set({ showTaskSelection: true });
+        // ポモドーロセッションでモードが未選択の場合、モード選択を促す
+        if (
+          sessionType === 'pomodoro' &&
+          !currentTask &&
+          mode === 'task-based'
+        ) {
+          set({ showModeSelection: true });
           return;
         }
 
         // セッション記録を作成
-        if (user && sessionType === 'pomodoro') {
-          const plannedDuration = user.settings.pomodoro_minutes;
+        if (user) {
+          const plannedDuration =
+            sessionType === 'pomodoro'
+              ? user.settings.pomodoro_minutes
+              : sessionType === 'short_break'
+                ? user.settings.short_break_minutes
+                : user.settings.long_break_minutes;
 
-          // タスクが選択されている場合、タスクのステータスを「進行中」に更新
-          if (currentTask && currentTask.status === 'pending') {
+          // タスクベースモードでタスクが選択されている場合、タスクのステータスを「進行中」に更新
+          if (
+            mode === 'task-based' &&
+            currentTask &&
+            currentTask.status === 'pending'
+          ) {
             try {
               await DatabaseService.updateTask(currentTask.id, {
                 status: 'in_progress',
@@ -376,15 +466,22 @@ export const useTimerStore = create<TimerStore>()(
           }
 
           try {
-            const session = await DatabaseService.createSession({
+            const sessionData = {
               user_id: user.id,
-              task_id: currentTask?.id,
+              task_id: mode === 'task-based' ? currentTask?.id : undefined,
               type: sessionType,
               planned_duration: plannedDuration,
               actual_duration: 0,
               completed: false,
               started_at: new Date().toISOString(),
-            });
+              mode,
+              session_name:
+                mode === 'standalone'
+                  ? get().getDefaultSessionName(sessionType)
+                  : undefined,
+            };
+
+            const session = await DatabaseService.createSession(sessionData);
             set({ currentSession: session });
           } catch (error) {
             console.error('セッション作成でエラーが発生しました:', error);
@@ -459,6 +556,7 @@ export const useTimerStore = create<TimerStore>()(
           completedSessions,
           currentTask,
           currentSession,
+          mode,
         } = get();
         const { user } = useAuthStore.getState();
 
@@ -495,8 +593,8 @@ export const useTimerStore = create<TimerStore>()(
             }
           }
 
-          // タスクが選択されている場合、完了確認ダイアログを表示
-          if (currentTask) {
+          // タスクベースモードでタスクが選択されている場合、完了確認ダイアログを表示
+          if (mode === 'task-based' && currentTask) {
             set({ showTaskCompletionDialog: true });
           }
 
@@ -624,6 +722,7 @@ export const useTimerStore = create<TimerStore>()(
         sessionType: state.sessionType,
         currentTime: state.currentTime,
         currentTask: state.currentTask,
+        mode: state.mode,
       }),
     }
   )

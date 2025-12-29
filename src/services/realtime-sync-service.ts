@@ -1010,6 +1010,8 @@ export class RealtimeSyncService {
       task_completion_status: sessionData.task_completion_status,
       started_at: sessionData.started_at,
       completed_at: sessionData.completed_at,
+      mode: sessionData.mode || 'task-based', // デフォルトはtask-based
+      session_name: sessionData.session_name,
     };
 
     // ローカルキャッシュに追加

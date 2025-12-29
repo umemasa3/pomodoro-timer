@@ -38,6 +38,13 @@ function getEnvVar(key: string, defaultValue?: string): string {
 }
 
 /**
+ * デモモードかどうかの判定
+ */
+function isDemoMode(): boolean {
+  return import.meta.env.VITE_DEMO_MODE === 'true';
+}
+
+/**
  * boolean型の環境変数を取得
  */
 function getBooleanEnvVar(key: string, defaultValue: boolean = false): boolean {
@@ -50,9 +57,13 @@ function getBooleanEnvVar(key: string, defaultValue: boolean = false): boolean {
  * 環境設定の取得
  */
 export const env: EnvironmentConfig = {
-  // Supabase設定
-  supabaseUrl: getEnvVar('VITE_SUPABASE_URL'),
-  supabaseAnonKey: getEnvVar('VITE_SUPABASE_ANON_KEY'),
+  // Supabase設定（デモモードの場合はダミー値を使用）
+  supabaseUrl: isDemoMode()
+    ? 'https://demo.supabase.co'
+    : getEnvVar('VITE_SUPABASE_URL'),
+  supabaseAnonKey: isDemoMode()
+    ? 'demo_anon_key'
+    : getEnvVar('VITE_SUPABASE_ANON_KEY'),
 
   // アプリケーション設定
   appEnv: getEnvVar(
@@ -96,6 +107,12 @@ export const isTest = env.appEnv === 'test';
  * 環境設定の検証
  */
 export function validateEnvironment(): void {
+  // デモモードの場合は検証をスキップ
+  if (isDemoMode()) {
+    console.log('🎭 デモモードで実行中');
+    return;
+  }
+
   const requiredVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
 
   const missingVars = requiredVars.filter(varName => !import.meta.env[varName]);
@@ -150,7 +167,10 @@ export function logEnvironmentInfo(): void {
   console.group('🌍 環境情報');
   console.log('環境:', env.appEnv);
   console.log('バージョン:', env.appVersion);
-  console.log('Supabase URL:', env.supabaseUrl);
+  console.log('デモモード:', isDemoMode());
+  if (!isDemoMode()) {
+    console.log('Supabase URL:', env.supabaseUrl);
+  }
   console.log('機能フラグ:', {
     analytics: env.enableAnalytics,
     errorReporting: env.enableErrorReporting,
@@ -161,3 +181,8 @@ export function logEnvironmentInfo(): void {
   });
   console.groupEnd();
 }
+
+/**
+ * デモモードかどうかの判定（エクスポート用）
+ */
+export const isDemo = isDemoMode();

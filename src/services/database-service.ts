@@ -571,6 +571,8 @@ export class DatabaseService {
     actual_duration: number;
     completed: boolean;
     started_at: string;
+    mode: 'task-based' | 'standalone';
+    session_name?: string;
   }): Promise<Session> {
     const realtimeService = RealtimeSyncService.getInstance();
 
@@ -601,6 +603,9 @@ export class DatabaseService {
       completed?: boolean;
       completed_at?: string;
       task_completion_status?: Session['task_completion_status'];
+      task_id?: string;
+      mode?: 'task-based' | 'standalone';
+      session_name?: string;
     }
   ): Promise<Session> {
     const client = DatabaseService.getSupabaseClient();

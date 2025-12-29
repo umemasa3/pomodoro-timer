@@ -62,6 +62,8 @@ export interface Session {
   started_at: string;
   completed_at?: string;
   task_completion_status?: 'completed' | 'continued' | 'paused';
+  mode: 'task-based' | 'standalone'; // セッションのモード
+  session_name?: string; // スタンドアロンモード時のセッション名
 }
 
 export interface TimerState {
@@ -69,6 +71,7 @@ export interface TimerState {
   isRunning: boolean;
   sessionType: 'pomodoro' | 'short_break' | 'long_break';
   completedSessions: number;
+  mode: 'task-based' | 'standalone'; // タスク依存モードまたはスタンドアロンモード
 }
 
 // API関連の型

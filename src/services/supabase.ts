@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/database';
-import { env, isProduction, isDevelopment } from '../utils/env';
+import { env, isProduction, isDevelopment, isDemo } from '../utils/env';
 
-// 環境変数の検証
-if (!env.supabaseUrl || !env.supabaseAnonKey) {
+// デモモードの場合は検証をスキップ
+if (!isDemo && (!env.supabaseUrl || !env.supabaseAnonKey)) {
   throw new Error('Supabase環境変数が設定されていません');
 }
 
@@ -35,11 +35,13 @@ const supabaseConfig = {
   },
 };
 
-export const supabase = createClient<Database>(
-  env.supabaseUrl,
-  env.supabaseAnonKey,
-  supabaseConfig
-);
+export const supabase = isDemo
+  ? null // デモモードではSupabaseクライアントを無効化
+  : createClient<Database>(
+      env.supabaseUrl,
+      env.supabaseAnonKey,
+      supabaseConfig
+    );
 
 /**
  * 認証関連のヘルパー関数
@@ -55,7 +57,7 @@ export const auth = {
       timezone?: string;
     }
   ) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await supabase!.auth.signUp({
       email,
       password,
       options: {
@@ -66,7 +68,7 @@ export const auth = {
     // ユーザー登録成功時にusersテーブルにプロファイル作成
     if (data.user && !error) {
       try {
-        await supabase.from('users').insert({
+        await supabase!.from('users').insert({
           id: data.user.id,
           email: data.user.email!,
           display_name: userData?.display_name,
@@ -96,7 +98,7 @@ export const auth = {
 
   // ログイン
   signIn: async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase!.auth.signInWithPassword({
       email,
       password,
     });
@@ -105,13 +107,13 @@ export const auth = {
 
   // ログアウト
   signOut: async () => {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase!.auth.signOut();
     return { error };
   },
 
   // パスワードリセット
   resetPassword: async (email: string) => {
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { data, error } = await supabase!.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     return { data, error };
@@ -119,7 +121,7 @@ export const auth = {
 
   // パスワード更新
   updatePassword: async (newPassword: string) => {
-    const { data, error } = await supabase.auth.updateUser({
+    const { data, error } = await supabase!.auth.updateUser({
       password: newPassword,
     });
     return { data, error };
@@ -127,17 +129,17 @@ export const auth = {
 
   // 現在のユーザー取得
   getCurrentUser: () => {
-    return supabase.auth.getUser();
+    return supabase!.auth.getUser();
   },
 
   // 現在のセッション取得
   getCurrentSession: () => {
-    return supabase.auth.getSession();
+    return supabase!.auth.getSession();
   },
 
   // 認証状態変更の監視
   onAuthStateChange: (callback: (event: string, session: unknown) => void) => {
-    return supabase.auth.onAuthStateChange(callback);
+    return supabase!.auth.onAuthStateChange(callback);
   },
 
   // ユーザー情報更新
@@ -148,18 +150,17 @@ export const auth = {
   }) => {
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await supabase!.auth.getUser();
 
     if (!user) {
       throw new Error('認証が必要です');
     }
 
     // Supabase Authのメタデータ更新
-    const { data: authData, error: authError } = await supabase.auth.updateUser(
-      {
+    const { data: authData, error: authError } =
+      await supabase!.auth.updateUser({
         data: updates,
-      }
-    );
+      });
 
     if (authError) {
       throw new Error(`認証情報更新エラー: ${authError.message}`);
@@ -167,7 +168,7 @@ export const auth = {
 
     // usersテーブルの更新
     const { data: profileData, error: profileError } = await (
-      supabase.from('users') as any
+      supabase!.from('users') as any
     )
       .update(updates)
       .eq('id', user.id)
@@ -183,7 +184,7 @@ export const auth = {
 
   // ユーザーメタデータ更新
   updateUserMetadata: async (metadata: Record<string, unknown>) => {
-    const { data, error } = await supabase.auth.updateUser({
+    const { data, error } = await supabase!.auth.updateUser({
       data: metadata,
     });
     return { data, error };
@@ -191,7 +192,7 @@ export const auth = {
 
   // メール確認の再送信
   resendConfirmation: async (email: string) => {
-    const { data, error } = await supabase.auth.resend({
+    const { data, error } = await supabase!.auth.resend({
       type: 'signup',
       email,
     });
@@ -202,13 +203,13 @@ export const auth = {
   isAuthenticated: async (): Promise<boolean> => {
     const {
       data: { session },
-    } = await supabase.auth.getSession();
+    } = await supabase!.auth.getSession();
     return !!session;
   },
 
   // トークンの更新
   refreshSession: async () => {
-    const { data, error } = await supabase.auth.refreshSession();
+    const { data, error } = await supabase!.auth.refreshSession();
     return { data, error };
   },
 };

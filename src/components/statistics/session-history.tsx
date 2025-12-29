@@ -198,12 +198,25 @@ export const SessionHistory: React.FC = () => {
                     <span className="text-sm">
                       {getCompletionStatusIcon(session.completed)}
                     </span>
+                    {/* モード表示 */}
+                    {session.mode === 'standalone' && (
+                      <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-full">
+                        スタンドアロン
+                      </span>
+                    )}
                   </div>
-                  <div
-                    className="text-sm text-gray-500 dark:text-gray-400"
-                    data-testid="session-task-name"
-                  >
-                    {formatDate(session.completed_at || session.started_at)}
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    {/* セッション名またはタスク名を表示 */}
+                    <div data-testid="session-task-name">
+                      {session.mode === 'standalone'
+                        ? session.session_name || '集中時間'
+                        : session.task_id
+                          ? 'タスク関連セッション'
+                          : '一般作業'}
+                    </div>
+                    <div className="text-xs">
+                      {formatDate(session.completed_at || session.started_at)}
+                    </div>
                   </div>
                 </div>
               </div>
