@@ -11,3 +11,5 @@ export {
   breakpoints,
   type Breakpoint,
 } from './use-responsive';
+
+export { useOnlineStatus } from './use-online-status';

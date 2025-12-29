@@ -143,3 +143,5 @@ export type ConflictResolutionStrategy =
   | 'last-write-wins' // 最後の書き込みが勝利
   | 'user-choice' // ユーザーが選択
   | 'merge-changes'; // 変更をマージ
+// PWA関連の型定義をエクスポート
+export * from './pwa';
