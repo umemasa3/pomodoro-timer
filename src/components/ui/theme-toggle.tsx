@@ -168,6 +168,7 @@ export const ThemeSelector: React.FC<{ className?: string }> = ({
         "
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
+        aria-label="テーマを選択"
       >
         <CurrentIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
