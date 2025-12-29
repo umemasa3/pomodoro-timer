@@ -196,5 +196,72 @@ export type ConflictResolutionStrategy =
   | 'user-choice' // ユーザーが選択
   | 'merge-changes'; // 変更をマージ
 
+// プライバシー管理関連の型
+export interface PrivacySettings {
+  dataProcessingConsent: boolean;
+  analyticsConsent: boolean;
+  marketingConsent: boolean;
+  consentDate: string; // ISO date string
+  consentVersion: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface UserDataExport {
+  exportDate: string; // ISO date string
+  format: 'JSON';
+  data: {
+    profile: User;
+    tasks: Task[];
+    sessions: Session[];
+    tags: Tag[];
+    goals: Goal[];
+    settings: UserSettings;
+    statistics: {
+      sessions: SessionStatistics;
+      tasks: TaskStatistics;
+      tags: TagStatistics;
+    };
+    privacySettings: PrivacySettings;
+  };
+}
+
+export interface AccountDeletionRequest {
+  id: string;
+  userId: string;
+  requestedAt: string; // ISO date string
+  scheduledDeletionAt: string; // ISO date string (30日後)
+  reason?: string;
+  status: 'pending' | 'cancelled' | 'completed';
+  cancellationDeadline: string; // ISO date string
+}
+
+export interface ConsentRecord {
+  id: string;
+  userId: string;
+  documents: {
+    type: 'terms' | 'privacy' | 'cookie';
+    version: string;
+  }[];
+  consentDate: string; // ISO date string
+  ipAddress: string;
+  userAgent: string;
+  method: 'signup' | 'update' | 'renewal';
+}
+
+// 法的文書関連の型
+export interface LegalDocument {
+  id: string;
+  type: 'terms' | 'privacy' | 'cookie';
+  version: string;
+  title: string;
+  content: string;
+  effectiveDate: string; // ISO date string
+  isActive: boolean;
+  previousVersion?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // PWA関連の型定義をエクスポート
 export * from './pwa';
