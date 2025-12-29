@@ -139,6 +139,7 @@ export const TaskList: React.FC<TaskListProps> = ({
         <button
           onClick={handleCreateTask}
           className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          data-testid="create-task-button"
         >
           <PlusIcon className="w-5 h-5" />
           <span>新しいタスク</span>
@@ -155,6 +156,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value as any)}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            data-testid="filter-status-select"
           >
             <option value="active">進行中</option>
             <option value="completed">完了済み</option>
@@ -170,6 +172,7 @@ export const TaskList: React.FC<TaskListProps> = ({
             value={filterTag}
             onChange={e => setFilterTag(e.target.value)}
             className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            data-testid="filter-tag-select"
           >
             <option value="">すべてのタグ</option>
             {tags.map(tag => (

@@ -92,8 +92,9 @@ export const GoalProgress: React.FC = () => {
     };
     color: string;
     bgColor: string;
-  }> = ({ title, goal, color, bgColor }) => (
-    <div className={`${bgColor} rounded-lg p-4`}>
+    'data-testid'?: string;
+  }> = ({ title, goal, color, bgColor, 'data-testid': testId }) => (
+    <div className={`${bgColor} rounded-lg p-4`} data-testid={testId}>
       <div className="flex items-center justify-between mb-3">
         <h4 className="font-medium text-gray-900 dark:text-white">{title}</h4>
         <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -144,7 +145,10 @@ export const GoalProgress: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3
+          className="text-lg font-semibold text-gray-900 dark:text-white"
+          data-testid="goal-progress-title"
+        >
           目標進捗
         </h3>
         <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -159,6 +163,7 @@ export const GoalProgress: React.FC = () => {
           goal={goalData.weeklyGoal}
           color="bg-blue-500"
           bgColor="bg-blue-50 dark:bg-blue-900/20"
+          data-testid="weekly-goal-display"
         />
 
         {/* 月間目標 */}
@@ -167,6 +172,7 @@ export const GoalProgress: React.FC = () => {
           goal={goalData.monthlyGoal}
           color="bg-purple-500"
           bgColor="bg-purple-50 dark:bg-purple-900/20"
+          data-testid="monthly-goal-display"
         />
       </div>
 

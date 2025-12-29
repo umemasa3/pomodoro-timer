@@ -321,6 +321,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({
                 }
               `}
               whileTap={{ scale: 0.95 }}
+              data-testid="theme-toggle-button"
             >
               <motion.span
                 className="inline-block h-4 w-4 transform rounded-full bg-white shadow-lg transition-transform"

@@ -136,7 +136,10 @@ export const WorkDistributionHeatmap: React.FC = () => {
   );
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+    <div
+      className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
+      data-testid="work-distribution-heatmap"
+    >
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           作業分布分析
@@ -321,7 +324,7 @@ export const WorkDistributionHeatmap: React.FC = () => {
       )}
 
       {viewMode === 'hourly' && (
-        <div>
+        <div data-testid="hourly-distribution">
           <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
             時間帯別分析
           </h4>
@@ -406,7 +409,7 @@ export const WorkDistributionHeatmap: React.FC = () => {
       )}
 
       {viewMode === 'daily' && (
-        <div>
+        <div data-testid="daily-distribution">
           <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
             曜日別分析
           </h4>

@@ -177,6 +177,7 @@ export const SessionHistory: React.FC = () => {
             <div
               key={session.id}
               className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+              data-testid="session-history-item"
             >
               <div className="flex items-center space-x-3">
                 {/* セッションタイプアイコン */}
@@ -198,7 +199,10 @@ export const SessionHistory: React.FC = () => {
                       {getCompletionStatusIcon(session.completed)}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                  <div
+                    className="text-sm text-gray-500 dark:text-gray-400"
+                    data-testid="session-task-name"
+                  >
                     {formatDate(session.completed_at || session.started_at)}
                   </div>
                 </div>

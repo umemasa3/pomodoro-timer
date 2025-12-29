@@ -95,6 +95,7 @@ export const TimerComponent: React.FC = () => {
       <ResponsiveCard
         className={`text-center relative ${isMobile ? 'p-6' : 'p-8'}`}
         padding={isMobile ? 'md' : 'lg'}
+        data-testid="timer-component"
       >
         {/* 設定ボタン */}
         <motion.button
@@ -103,12 +104,16 @@ export const TimerComponent: React.FC = () => {
           title="設定"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
+          data-testid="settings-button"
         >
           <Cog6ToothIcon className="w-5 h-5" />
         </motion.button>
 
         {/* タイマー表示 */}
-        <div className={`${isMobile ? 'mb-6' : 'mb-8'}`}>
+        <div
+          className={`${isMobile ? 'mb-6' : 'mb-8'}`}
+          data-testid="timer-animation"
+        >
           <TimerDisplay
             currentTime={currentTime}
             sessionType={sessionType}

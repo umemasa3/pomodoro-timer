@@ -192,6 +192,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
                   : 'border-gray-300 dark:border-gray-600'
               }`}
               placeholder="タスク名を入力してください"
+              data-testid="task-title-input"
             />
             {errors.title && (
               <p className="mt-1 text-sm text-red-600">{errors.title}</p>
@@ -364,6 +365,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
               type="submit"
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              data-testid="task-form-submit-button"
             >
               {loading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

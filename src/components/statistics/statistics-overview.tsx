@@ -157,7 +157,10 @@ export const StatisticsOverview: React.FC = () => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+      <h2
+        className="text-xl font-semibold text-gray-900 dark:text-white mb-6"
+        data-testid="statistics-overview-title"
+      >
         統計概要
       </h2>
 
@@ -166,6 +169,7 @@ export const StatisticsOverview: React.FC = () => {
           <div
             key={index}
             className={`p-4 rounded-lg ${stat.bg} border border-gray-200 dark:border-gray-700`}
+            data-testid={`${stat.label.includes('今日') ? 'today-sessions' : stat.label.includes('今週') ? 'week-sessions' : stat.label.includes('今月') ? 'month-sessions' : stat.label.includes('総') ? 'total-sessions' : 'completed-tasks'}`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="text-2xl">{stat.icon}</div>

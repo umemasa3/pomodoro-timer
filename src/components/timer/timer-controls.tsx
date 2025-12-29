@@ -38,6 +38,7 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
         whileHover={{ scale: 1.05, y: -2 }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        data-testid={isRunning ? 'timer-pause-button' : 'timer-start-button'}
       >
         {/* シマー効果 */}
         <div className="absolute inset-0 shimmer opacity-20" />
@@ -75,6 +76,7 @@ export const TimerControls: React.FC<TimerControlsProps> = ({
         whileHover={{ scale: 1.05, y: -1 }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+        data-testid="timer-reset-button"
       >
         <div className="flex items-center space-x-2">
           <motion.div

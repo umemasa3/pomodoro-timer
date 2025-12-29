@@ -88,7 +88,11 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
         }}
       >
         {/* 進捗リング */}
-        <div className="timer-progress" style={progressRingStyle} />
+        <div
+          className="timer-progress"
+          style={progressRingStyle}
+          data-testid="timer-progress"
+        />
 
         {/* タイマー内容 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white z-10">
@@ -103,6 +107,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
               repeat: isRunning ? Infinity : 0,
               ease: 'easeInOut',
             }}
+            data-testid="timer-display"
           >
             {formatTime(currentTime)}
           </motion.div>
@@ -113,6 +118,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 0.9, y: 0 }}
             transition={{ duration: 0.5 }}
+            data-testid="session-type"
           >
             {getSessionLabel()}
           </motion.div>
@@ -129,9 +135,23 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
                 repeat: Infinity,
                 ease: 'easeInOut',
               }}
+              data-testid="timer-status"
             >
               <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
               <span>実行中</span>
+            </motion.div>
+          )}
+
+          {/* 停止中・一時停止インジケーター */}
+          {!isRunning && (
+            <motion.div
+              className="text-sm opacity-60"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              transition={{ duration: 0.3 }}
+              data-testid="timer-status"
+            >
+              <span>{currentTime === totalTime ? '停止中' : '一時停止'}</span>
             </motion.div>
           )}
 
