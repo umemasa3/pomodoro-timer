@@ -11,6 +11,7 @@ interface TaskSelectionDialogProps {
 /**
  * セッション開始時のタスク選択ダイアログ
  * 要件10.1: ユーザーがポモドーロセッションを開始する際にタスクの選択を促す
+ * 要件1.1: スタンドアロンセッション中のタスク関連付け機能
  */
 export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
   isOpen,
@@ -20,7 +21,16 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string>('');
 
-  const { setCurrentTask, startTimer } = useTimerStore();
+  const {
+    setCurrentTask,
+    startTimer,
+    mode,
+    isRunning,
+    associateTaskWithSession,
+  } = useTimerStore();
+
+  // スタンドアロンセッション中のタスク関連付けかどうか
+  const isAssociatingTask = mode === 'standalone' && isRunning;
 
   // タスク一覧を取得
   useEffect(() => {
@@ -57,16 +67,34 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
   const handleStartWithTask = async () => {
     const selectedTask = tasks.find(task => task.id === selectedTaskId);
     if (selectedTask) {
-      setCurrentTask(selectedTask);
-      onClose();
-      await startTimer();
+      if (isAssociatingTask) {
+        // スタンドアロンセッション中のタスク関連付け
+        try {
+          await associateTaskWithSession(selectedTask);
+          onClose();
+        } catch (error) {
+          console.error('タスク関連付けエラー:', error);
+          // エラーハンドリング（必要に応じてユーザーに通知）
+        }
+      } else {
+        // 通常のタスクベースセッション開始
+        setCurrentTask(selectedTask);
+        onClose();
+        await startTimer();
+      }
     }
   };
 
   const handleStartWithoutTask = async () => {
-    setCurrentTask(null);
-    onClose();
-    await startTimer();
+    if (isAssociatingTask) {
+      // スタンドアロンセッション中は何もしない（関連付けをキャンセル）
+      onClose();
+    } else {
+      // スタンドアロンモードでセッション開始
+      setCurrentTask(null);
+      onClose();
+      await startTimer();
+    }
   };
 
   if (!isOpen) return null;
@@ -76,13 +104,17 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       data-testid="task-selection-dialog"
     >
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">
-          タスクを選択してください
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+          {isAssociatingTask
+            ? 'タスクを関連付ける'
+            : 'タスクを選択してください'}
         </h2>
 
-        <p className="text-gray-600 mb-4">
-          このポモドーロセッションで取り組むタスクを選択してください。
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
+          {isAssociatingTask
+            ? '現在のセッションに関連付けるタスクを選択してください。'
+            : 'このポモドーロセッションで取り組むタスクを選択してください。'}
         </p>
 
         {loading ? (
@@ -93,13 +125,13 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
           <>
             {tasks.length > 0 ? (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   タスク一覧
                 </label>
                 <select
                   value={selectedTaskId}
                   onChange={e => setSelectedTaskId(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 >
                   {tasks.map(task => (
                     <option
@@ -114,16 +146,18 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
                 </select>
 
                 {selectedTaskId && (
-                  <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
+                  <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-700 rounded text-sm text-gray-600 dark:text-gray-300">
                     {tasks.find(t => t.id === selectedTaskId)?.description ||
                       '説明なし'}
                   </div>
                 )}
               </div>
             ) : (
-              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                <p className="text-yellow-800 text-sm">
-                  利用可能なタスクがありません。先にタスクを作成するか、タスクなしでセッションを開始してください。
+              <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                  {isAssociatingTask
+                    ? '利用可能なタスクがありません。先にタスクを作成してください。'
+                    : '利用可能なタスクがありません。先にタスクを作成するか、タスクなしでセッションを開始してください。'}
                 </p>
               </div>
             )}
@@ -135,20 +169,24 @@ export const TaskSelectionDialog: React.FC<TaskSelectionDialogProps> = ({
                   className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   data-testid="confirm-task-selection"
                 >
-                  選択したタスクで開始
+                  {isAssociatingTask
+                    ? 'タスクを関連付ける'
+                    : '選択したタスクで開始'}
+                </button>
+              )}
+
+              {!isAssociatingTask && (
+                <button
+                  onClick={handleStartWithoutTask}
+                  className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  タスクなしで開始
                 </button>
               )}
 
               <button
-                onClick={handleStartWithoutTask}
-                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                タスクなしで開始
-              </button>
-
-              <button
                 onClick={onClose}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
                 キャンセル
               </button>

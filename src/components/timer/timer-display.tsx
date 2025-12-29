@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useTimerStore } from '../../stores/timer-store';
 
 interface TimerDisplayProps {
   currentTime: number;
@@ -14,6 +15,8 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
   isRunning,
   totalTime = 1500, // デフォルト25分
 }) => {
+  const { mode, currentTask, getDefaultSessionName } = useTimerStore();
+
   // 時間を分:秒形式にフォーマット
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -23,16 +26,10 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
 
   // セッションタイプに応じた表示テキスト
   const getSessionLabel = (): string => {
-    switch (sessionType) {
-      case 'pomodoro':
-        return 'ポモドーロ';
-      case 'short_break':
-        return '短い休憩';
-      case 'long_break':
-        return '長い休憩';
-      default:
-        return 'ポモドーロ';
+    if (mode === 'task-based' && currentTask) {
+      return currentTask.title;
     }
+    return getDefaultSessionName(sessionType);
   };
 
   // セッションタイプに応じたスタイルクラス
@@ -114,7 +111,7 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
 
           {/* セッションラベル */}
           <motion.div
-            className="text-xl font-medium mb-2 opacity-90"
+            className="text-xl font-medium mb-2 opacity-90 text-center px-4"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 0.9, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -122,6 +119,19 @@ export const TimerDisplay: React.FC<TimerDisplayProps> = ({
           >
             {getSessionLabel()}
           </motion.div>
+
+          {/* モード表示（スタンドアロンモードの場合） */}
+          {mode === 'standalone' && sessionType === 'pomodoro' && (
+            <motion.div
+              className="text-sm opacity-60 mb-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              data-testid="session-mode"
+            >
+              スタンドアロンモード
+            </motion.div>
+          )}
 
           {/* 実行中インジケーター */}
           {isRunning && (

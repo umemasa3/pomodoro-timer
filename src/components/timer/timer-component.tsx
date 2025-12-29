@@ -12,6 +12,8 @@ import { SessionCompleteNotification } from './session-complete-notification';
 import { TaskSelectionDialog } from './task-selection-dialog';
 import { TaskCompletionDialog } from './task-completion-dialog';
 import { CurrentTaskDisplay } from './current-task-display';
+import { ModeSelectionDialog } from './mode-selection-dialog';
+import { AssociateTaskButton } from './associate-task-button';
 import { SettingsModal } from '../settings/settings-modal';
 import {
   ResponsiveContainer,
@@ -29,6 +31,7 @@ export const TimerComponent: React.FC = () => {
     showCompletionNotification,
     showTaskSelection,
     showTaskCompletionDialog,
+    showModeSelection,
     startTimer,
     pauseTimer,
     resetTimer,
@@ -39,6 +42,7 @@ export const TimerComponent: React.FC = () => {
     setShowCompletionNotification,
     setShowTaskSelection,
     setShowTaskCompletionDialog,
+    setShowModeSelection,
   } = useTimerStore();
 
   const { user } = useAuthStore();
@@ -128,6 +132,11 @@ export const TimerComponent: React.FC = () => {
           </div>
         )}
 
+        {/* タスク関連付けボタン（スタンドアロンモード時） */}
+        <div className="flex justify-center mb-4">
+          <AssociateTaskButton />
+        </div>
+
         {/* タイマー制御ボタン */}
         <div className={`${isMobile ? 'mb-4' : 'mb-6'}`}>
           <TimerControls
@@ -144,6 +153,12 @@ export const TimerComponent: React.FC = () => {
           sessionType={sessionType}
         />
       </ResponsiveCard>
+
+      {/* モード選択ダイアログ */}
+      <ModeSelectionDialog
+        isOpen={showModeSelection}
+        onClose={() => setShowModeSelection(false)}
+      />
 
       {/* タスク選択ダイアログ */}
       <TaskSelectionDialog
