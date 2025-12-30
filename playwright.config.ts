@@ -77,5 +77,16 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2分
+    stdout: 'pipe',
+    stderr: 'pipe',
+    env: {
+      // テスト環境用の環境変数を設定
+      NODE_ENV: 'test',
+      VITE_DEMO_MODE: 'false', // E2Eテストではデモモードを無効化
+      VITE_ENABLE_ANALYTICS: 'false',
+      VITE_ENABLE_ERROR_REPORTING: 'false',
+      // テスト用のSupabase設定（実際の値は.env.localから読み込まれる）
+      VITE_APP_ENV: 'test',
+    },
   },
 });

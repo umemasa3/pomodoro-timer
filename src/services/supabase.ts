@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/database';
-import { env, isProduction, isDevelopment, isDemo } from '../utils/env';
+import { env, isProduction, isDevelopment, isDemo, isTest } from '../utils/env';
 
-// デモモードの場合は検証をスキップ
-if (!isDemo && (!env.supabaseUrl || !env.supabaseAnonKey)) {
+// テスト環境またはデモモードの場合は検証をスキップ
+if (!isDemo && !isTest && (!env.supabaseUrl || !env.supabaseAnonKey)) {
   throw new Error('Supabase環境変数が設定されていません');
 }
 
@@ -35,13 +35,14 @@ const supabaseConfig = {
   },
 };
 
-export const supabase = isDemo
-  ? null // デモモードではSupabaseクライアントを無効化
-  : createClient<Database>(
-      env.supabaseUrl,
-      env.supabaseAnonKey,
-      supabaseConfig
-    );
+export const supabase =
+  isDemo || isTest
+    ? null // デモモードまたはテスト環境ではSupabaseクライアントを無効化
+    : createClient<Database>(
+        env.supabaseUrl,
+        env.supabaseAnonKey,
+        supabaseConfig
+      );
 
 /**
  * 認証関連のヘルパー関数

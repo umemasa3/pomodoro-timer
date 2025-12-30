@@ -25,6 +25,12 @@ out
 .env.production.local
 .env.*.local
 
+# Keep example and test environment files
+!.env.example
+!.env.*.example
+!.env.e2e
+!.env.test
+
 # API keys and secrets (additional protection)
 *.key
 *.pem
@@ -40,6 +46,9 @@ test-results/
 playwright-report/
 test-results.xml
 junit.xml
+
+# Keep test configuration files
+!test-results/.gitkeep
 
 # Cache directories
 .cache
@@ -119,3 +128,18 @@ storybook-static
 
 # Supabase
 .supabase
+
+# Backup files and directories (exclude from version control)
+backups/
+*.backup
+*-backup/
+config-backup/
+storage-backup/
+database-backup/
+*.sql.gz
+*.tar.gz.backup
+
+# Monitoring and logs (runtime generated)
+monitoring-data/
+performance-logs/
+error-logs/
