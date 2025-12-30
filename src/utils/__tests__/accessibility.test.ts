@@ -25,7 +25,7 @@ describe('Accessibility Utils', () => {
   describe('announceToScreenReader', () => {
     it('スクリーンリーダー用のライブリージョンにメッセージを追加する', () => {
       announceToScreenReader('テストメッセージ');
-      
+
       const liveRegion = document.getElementById('live-region');
       expect(liveRegion).toBeInTheDocument();
       expect(liveRegion?.textContent).toBe('テストメッセージ');
@@ -34,7 +34,7 @@ describe('Accessibility Utils', () => {
 
     it('緊急メッセージの場合はassertiveに設定される', () => {
       announceToScreenReader('緊急メッセージ', 'assertive');
-      
+
       const liveRegion = document.getElementById('live-region');
       expect(liveRegion?.getAttribute('aria-live')).toBe('assertive');
     });
@@ -43,11 +43,11 @@ describe('Accessibility Utils', () => {
       // 最初のメッセージ
       announceToScreenReader('メッセージ1');
       const firstRegion = document.getElementById('live-region');
-      
+
       // 2番目のメッセージ
       announceToScreenReader('メッセージ2');
       const secondRegion = document.getElementById('live-region');
-      
+
       // 同じ要素が再利用されることを確認
       expect(firstRegion).toBe(secondRegion);
       expect(secondRegion?.textContent).toBe('メッセージ2');
@@ -59,21 +59,24 @@ describe('Accessibility Utils', () => {
       const button = document.createElement('button');
       button.id = 'test-button';
       document.body.appendChild(button);
-      
+
       const focusSpy = vi.spyOn(button, 'focus');
-      
+
       focusElement('#test-button');
-      
+
       expect(focusSpy).toHaveBeenCalled();
     });
 
     it('存在しない要素の場合はエラーをログに出力する', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
+
       focusElement('#non-existent');
-      
-      expect(consoleSpy).toHaveBeenCalledWith('フォーカス対象の要素が見つかりません:', '#non-existent');
-      
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'フォーカス対象の要素が見つかりません:',
+        '#non-existent'
+      );
+
       consoleSpy.mockRestore();
     });
 
@@ -81,14 +84,14 @@ describe('Accessibility Utils', () => {
       const button = document.createElement('button');
       button.id = 'delayed-button';
       document.body.appendChild(button);
-      
+
       const focusSpy = vi.spyOn(button, 'focus');
-      
+
       focusElement('#delayed-button', 100);
-      
+
       // 遅延前はフォーカスされていない
       expect(focusSpy).not.toHaveBeenCalled();
-      
+
       // 遅延後にフォーカスされる
       await new Promise(resolve => setTimeout(resolve, 150));
       expect(focusSpy).toHaveBeenCalled();
@@ -104,12 +107,12 @@ describe('Accessibility Utils', () => {
         <input id="input1" type="text" />
       `;
       document.body.appendChild(container);
-      
+
       const cleanup = trapFocus(container);
-      
+
       // クリーンアップ関数が返されることを確認
       expect(typeof cleanup).toBe('function');
-      
+
       // クリーンアップを実行
       cleanup();
     });
@@ -118,9 +121,9 @@ describe('Accessibility Utils', () => {
       const container = document.createElement('div');
       container.innerHTML = '<p>テキストのみ</p>';
       document.body.appendChild(container);
-      
+
       const cleanup = trapFocus(container);
-      
+
       expect(typeof cleanup).toBe('function');
       cleanup();
     });
@@ -157,10 +160,10 @@ describe('Accessibility Utils', () => {
     it('ハイコントラストモードを有効にできる', () => {
       setHighContrastMode(true);
       expect(isHighContrastMode()).toBe(true);
-      
+
       // ローカルストレージに保存されることを確認
       expect(localStorage.getItem('high-contrast-mode')).toBe('true');
-      
+
       // body要素にクラスが追加されることを確認
       expect(document.body.classList.contains('high-contrast')).toBe(true);
     });
@@ -169,14 +172,14 @@ describe('Accessibility Utils', () => {
       // 最初に有効にする
       setHighContrastMode(true);
       expect(isHighContrastMode()).toBe(true);
-      
+
       // 無効にする
       setHighContrastMode(false);
       expect(isHighContrastMode()).toBe(false);
-      
+
       // ローカルストレージから削除されることを確認
       expect(localStorage.getItem('high-contrast-mode')).toBe('false');
-      
+
       // body要素からクラスが削除されることを確認
       expect(document.body.classList.contains('high-contrast')).toBe(false);
     });
@@ -184,7 +187,7 @@ describe('Accessibility Utils', () => {
     it('ローカルストレージの値を読み込む', () => {
       // ローカルストレージに値を設定
       localStorage.setItem('high-contrast-mode', 'true');
-      
+
       // 関数を呼び出して状態を確認
       expect(isHighContrastMode()).toBe(true);
     });
@@ -195,7 +198,7 @@ describe('Accessibility Utils', () => {
       // AA基準: 4.5:1以上
       const goodContrast = getContrastRatio('#ffffff', '#333333');
       expect(goodContrast).toBeGreaterThanOrEqual(4.5);
-      
+
       const poorContrast = getContrastRatio('#ffffff', '#cccccc');
       expect(poorContrast).toBeLessThan(4.5);
     });

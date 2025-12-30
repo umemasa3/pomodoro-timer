@@ -7,7 +7,9 @@ import { OnboardingTour } from '../onboarding-tour';
 vi.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+    button: ({ children, ...props }: any) => (
+      <button {...props}>{children}</button>
+    ),
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
@@ -57,7 +59,9 @@ describe('OnboardingTour', () => {
       />
     );
 
-    expect(screen.queryByText('ポモドーロタイマーへようこそ！')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('ポモドーロタイマーへようこそ！')
+    ).not.toBeInTheDocument();
   });
 
   it('isOpenがtrueの場合は最初のステップを表示する', () => {
@@ -69,8 +73,14 @@ describe('OnboardingTour', () => {
       />
     );
 
-    expect(screen.getByText('ポモドーロタイマーへようこそ！')).toBeInTheDocument();
-    expect(screen.getByText('生産性を向上させるためのシンプルで効果的なツールです。基本的な使い方をご案内します。')).toBeInTheDocument();
+    expect(
+      screen.getByText('ポモドーロタイマーへようこそ！')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        '生産性を向上させるためのシンプルで効果的なツールです。基本的な使い方をご案内します。'
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText('ステップ 1 / 6')).toBeInTheDocument();
   });
 
@@ -107,7 +117,9 @@ describe('OnboardingTour', () => {
     const backButton = screen.getByText('戻る');
     fireEvent.click(backButton);
 
-    expect(screen.getByText('ポモドーロタイマーへようこそ！')).toBeInTheDocument();
+    expect(
+      screen.getByText('ポモドーロタイマーへようこそ！')
+    ).toBeInTheDocument();
     expect(screen.getByText('ステップ 1 / 6')).toBeInTheDocument();
   });
 

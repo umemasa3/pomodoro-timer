@@ -58,7 +58,7 @@ const ProfileStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
         <input
           type="text"
           value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
+          onChange={e => setDisplayName(e.target.value)}
           placeholder="あなたの名前を入力してください"
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pomodoro-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
@@ -73,10 +73,10 @@ const ProfileStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
         </label>
         <select
           value={timezone}
-          onChange={(e) => setTimezone(e.target.value)}
+          onChange={e => setTimezone(e.target.value)}
           className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pomodoro-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         >
-          {timezones.map((tz) => (
+          {timezones.map(tz => (
             <option key={tz.value} value={tz.value}>
               {tz.label}
             </option>
@@ -105,9 +105,15 @@ const TimerStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
   onNext,
   data = {},
 }) => {
-  const [pomodoroMinutes, setPomodoroMinutes] = useState(data.pomodoroMinutes || 25);
-  const [shortBreakMinutes, setShortBreakMinutes] = useState(data.shortBreakMinutes || 5);
-  const [longBreakMinutes, setLongBreakMinutes] = useState(data.longBreakMinutes || 15);
+  const [pomodoroMinutes, setPomodoroMinutes] = useState(
+    data.pomodoroMinutes || 25
+  );
+  const [shortBreakMinutes, setShortBreakMinutes] = useState(
+    data.shortBreakMinutes || 5
+  );
+  const [longBreakMinutes, setLongBreakMinutes] = useState(
+    data.longBreakMinutes || 15
+  );
   const [sessionsUntilLongBreak, setSessionsUntilLongBreak] = useState(
     data.sessionsUntilLongBreak || 4
   );
@@ -133,7 +139,7 @@ const TimerStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
             min="1"
             max="60"
             value={pomodoroMinutes}
-            onChange={(e) => setPomodoroMinutes(Number(e.target.value))}
+            onChange={e => setPomodoroMinutes(Number(e.target.value))}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pomodoro-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -147,7 +153,7 @@ const TimerStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
             min="1"
             max="30"
             value={shortBreakMinutes}
-            onChange={(e) => setShortBreakMinutes(Number(e.target.value))}
+            onChange={e => setShortBreakMinutes(Number(e.target.value))}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pomodoro-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -161,7 +167,7 @@ const TimerStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
             min="1"
             max="60"
             value={longBreakMinutes}
-            onChange={(e) => setLongBreakMinutes(Number(e.target.value))}
+            onChange={e => setLongBreakMinutes(Number(e.target.value))}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pomodoro-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -175,7 +181,7 @@ const TimerStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
             min="2"
             max="10"
             value={sessionsUntilLongBreak}
-            onChange={(e) => setSessionsUntilLongBreak(Number(e.target.value))}
+            onChange={e => setSessionsUntilLongBreak(Number(e.target.value))}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pomodoro-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
@@ -210,10 +216,10 @@ const TimerStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
 };
 
 // ステップ3: 通知設定
-const NotificationStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
-  onNext,
-  data = {},
-}) => {
+const NotificationStep: React.FC<{
+  onNext: (data?: any) => void;
+  data?: any;
+}> = ({ onNext, data = {} }) => {
   const [soundEnabled, setSoundEnabled] = useState(data.soundEnabled ?? true);
   const [soundType, setSoundType] = useState(data.soundType || 'bell');
   const [desktopNotifications, setDesktopNotifications] = useState(
@@ -272,10 +278,10 @@ const NotificationStep: React.FC<{ onNext: (data?: any) => void; data?: any }> =
             </label>
             <select
               value={soundType}
-              onChange={(e) => setSoundType(e.target.value)}
+              onChange={e => setSoundType(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-pomodoro-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
-              {soundTypes.map((sound) => (
+              {soundTypes.map(sound => (
                 <option key={sound.value} value={sound.value}>
                   {sound.label}
                 </option>
@@ -349,9 +355,10 @@ const NotificationStep: React.FC<{ onNext: (data?: any) => void; data?: any }> =
 };
 
 // ステップ4: 完了
-const CompletionStep: React.FC<{ onNext: (data?: any) => void; data?: any }> = ({
-  onNext,
-}) => {
+const CompletionStep: React.FC<{
+  onNext: (data?: any) => void;
+  data?: any;
+}> = ({ onNext }) => {
   return (
     <div className="text-center space-y-6">
       <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-r from-green-500 to-green-600 rounded-full mx-auto">
@@ -475,7 +482,7 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({
 
         // セットアップ完了をマーク
         localStorage.setItem('setup-completed', 'true');
-        
+
         onComplete(newSetupData);
         onClose();
       } catch (error) {
@@ -558,7 +565,9 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({
               <motion.div
                 className="bg-gradient-to-r from-pomodoro-500 to-pomodoro-600 h-2 rounded-full"
                 initial={{ width: 0 }}
-                animate={{ width: `${((currentStep + 1) / setupSteps.length) * 100}%` }}
+                animate={{
+                  width: `${((currentStep + 1) / setupSteps.length) * 100}%`,
+                }}
                 transition={{ duration: 0.3 }}
               />
             </div>

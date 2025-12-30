@@ -161,9 +161,9 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
 
   // コンテキストに応じたヘルプアイテムをフィルタリング
   const relevantHelp = helpItems
-    .filter(item => 
-      item.context.includes(context) && 
-      !dismissedItems.includes(item.id)
+    .filter(
+      item =>
+        item.context.includes(context) && !dismissedItems.includes(item.id)
     )
     .sort((a, b) => a.priority - b.priority);
 
@@ -173,7 +173,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
   useEffect(() => {
     const storageKey = `help-shown-${context}`;
     const hasShown = localStorage.getItem(storageKey);
-    
+
     if (!hasShown && relevantHelp.length > 0) {
       const timer = setTimeout(() => {
         setIsOpen(true);
@@ -187,10 +187,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
   const handleDismiss = (permanent = false) => {
     if (permanent && currentHelp) {
       setDismissedItems(prev => [...prev, currentHelp.id]);
-      localStorage.setItem(
-        `help-dismissed-${currentHelp.id}`,
-        'true'
-      );
+      localStorage.setItem(`help-dismissed-${currentHelp.id}`, 'true');
     }
     setIsOpen(false);
   };
@@ -211,7 +208,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
 
   const getIcon = () => {
     if (!currentHelp) return QuestionMarkCircleIcon;
-    
+
     switch (currentHelp.type) {
       case 'tip':
         return LightBulbIcon;
@@ -226,7 +223,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
 
   const getIconColor = () => {
     if (!currentHelp) return 'text-blue-500';
-    
+
     switch (currentHelp.type) {
       case 'tip':
         return 'text-yellow-500';
@@ -280,7 +277,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
               initial={{ opacity: 0, scale: 0.8, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               {/* ヘッダー */}
               <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -308,9 +305,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
               </div>
 
               {/* コンテンツ */}
-              <div className="p-4">
-                {currentHelp.content}
-              </div>
+              <div className="p-4">{currentHelp.content}</div>
 
               {/* フッター */}
               <div className="p-4 border-t border-gray-200 dark:border-gray-700">
@@ -332,7 +327,7 @@ export const ContextualHelp: React.FC<ContextualHelpProps> = ({
                         前へ
                       </button>
                     )}
-                    
+
                     <button
                       onClick={() => handleDismiss(true)}
                       className="px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"

@@ -51,7 +51,9 @@ export const LiveRegion: React.FC<LiveRegionProps> = ({
 
 // 特定用途向けのライブリージョンコンポーネント
 
-export const TimerAnnouncement: React.FC<{ message: string }> = ({ message }) => (
+export const TimerAnnouncement: React.FC<{ message: string }> = ({
+  message,
+}) => (
   <LiveRegion
     message={message}
     priority="assertive"
@@ -60,7 +62,9 @@ export const TimerAnnouncement: React.FC<{ message: string }> = ({ message }) =>
   />
 );
 
-export const StatusAnnouncement: React.FC<{ message: string }> = ({ message }) => (
+export const StatusAnnouncement: React.FC<{ message: string }> = ({
+  message,
+}) => (
   <LiveRegion
     message={message}
     priority="polite"
@@ -69,7 +73,9 @@ export const StatusAnnouncement: React.FC<{ message: string }> = ({ message }) =
   />
 );
 
-export const ErrorAnnouncement: React.FC<{ message: string }> = ({ message }) => (
+export const ErrorAnnouncement: React.FC<{ message: string }> = ({
+  message,
+}) => (
   <LiveRegion
     message={message}
     priority="assertive"
@@ -114,7 +120,11 @@ class LiveRegionManager {
     this.regions.set('assertive', assertiveRegion);
   }
 
-  announce(message: string, priority: 'polite' | 'assertive' = 'polite', clearAfter = 1000) {
+  announce(
+    message: string,
+    priority: 'polite' | 'assertive' = 'polite',
+    clearAfter = 1000
+  ) {
     const region = this.regions.get(priority);
     if (region) {
       region.textContent = message;
@@ -144,7 +154,10 @@ export const liveRegionManager = LiveRegionManager.getInstance();
 
 // React Hook for live announcements
 export const useLiveAnnouncement = () => {
-  const announce = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
+  const announce = (
+    message: string,
+    priority: 'polite' | 'assertive' = 'polite'
+  ) => {
     liveRegionManager.announce(message, priority);
   };
 

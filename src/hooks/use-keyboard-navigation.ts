@@ -189,7 +189,7 @@ export const useKeyboardNavigation = (
     const currentIndex = focusableElements.indexOf(
       document.activeElement as HTMLElement
     );
-    
+
     if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
       focusableElements[currentIndex + 1].focus();
     } else {
@@ -202,7 +202,7 @@ export const useKeyboardNavigation = (
     const currentIndex = focusableElements.indexOf(
       document.activeElement as HTMLElement
     );
-    
+
     if (currentIndex > 0) {
       focusableElements[currentIndex - 1].focus();
     } else {
@@ -222,7 +222,9 @@ export const useKeyboardNavigation = (
 // スキップリンク用のフック
 export const useSkipLinks = () => {
   const skipToContent = useCallback(() => {
-    const mainContent = document.querySelector('main, [role="main"], #main-content');
+    const mainContent = document.querySelector(
+      'main, [role="main"], #main-content'
+    );
     if (mainContent instanceof HTMLElement) {
       mainContent.focus();
       mainContent.scrollIntoView({ behavior: 'smooth' });
@@ -230,7 +232,9 @@ export const useSkipLinks = () => {
   }, []);
 
   const skipToNavigation = useCallback(() => {
-    const navigation = document.querySelector('nav, [role="navigation"], #navigation');
+    const navigation = document.querySelector(
+      'nav, [role="navigation"], #navigation'
+    );
     if (navigation instanceof HTMLElement) {
       navigation.focus();
       navigation.scrollIntoView({ behavior: 'smooth' });

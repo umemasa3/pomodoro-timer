@@ -55,7 +55,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
-    
+
     // タブ変更時に対応するモーダルを開く
     if (tab === 'feedback') {
       setShowFeedbackForm(true);
@@ -86,7 +86,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
+          onClick={e => e.stopPropagation()}
         >
           {/* サイドバー */}
           <div className="w-80 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col">
@@ -118,7 +118,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
             {/* タブナビゲーション */}
             <div className="flex-1 p-4">
               <nav className="space-y-2">
-                {tabs.map((tab) => {
+                {tabs.map(tab => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
 
@@ -128,47 +128,60 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
                       onClick={() => handleTabChange(tab.id)}
                       className={`
                         w-full p-4 rounded-xl text-left transition-all
-                        ${isActive
-                          ? `bg-${tab.color}-100 dark:bg-${tab.color}-900/30 border-2 border-${tab.color}-200 dark:border-${tab.color}-800`
-                          : 'bg-white dark:bg-gray-800 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
+                        ${
+                          isActive
+                            ? `bg-${tab.color}-100 dark:bg-${tab.color}-900/30 border-2 border-${tab.color}-200 dark:border-${tab.color}-800`
+                            : 'bg-white dark:bg-gray-800 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
                         }
                       `}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <div className="flex items-start space-x-3">
-                        <div className={`
+                        <div
+                          className={`
                           p-2 rounded-lg
-                          ${isActive
-                            ? `bg-${tab.color}-200 dark:bg-${tab.color}-800`
-                            : 'bg-gray-100 dark:bg-gray-700'
+                          ${
+                            isActive
+                              ? `bg-${tab.color}-200 dark:bg-${tab.color}-800`
+                              : 'bg-gray-100 dark:bg-gray-700'
                           }
-                        `}>
-                          <Icon className={`
+                        `}
+                        >
+                          <Icon
+                            className={`
                             w-5 h-5
-                            ${isActive
-                              ? `text-${tab.color}-700 dark:text-${tab.color}-300`
-                              : 'text-gray-600 dark:text-gray-400'
+                            ${
+                              isActive
+                                ? `text-${tab.color}-700 dark:text-${tab.color}-300`
+                                : 'text-gray-600 dark:text-gray-400'
                             }
-                          `} />
+                          `}
+                          />
                         </div>
                         <div className="flex-1">
-                          <h3 className={`
+                          <h3
+                            className={`
                             font-medium mb-1
-                            ${isActive
-                              ? `text-${tab.color}-900 dark:text-${tab.color}-100`
-                              : 'text-gray-900 dark:text-white'
+                            ${
+                              isActive
+                                ? `text-${tab.color}-900 dark:text-${tab.color}-100`
+                                : 'text-gray-900 dark:text-white'
                             }
-                          `}>
+                          `}
+                          >
                             {tab.label}
                           </h3>
-                          <p className={`
+                          <p
+                            className={`
                             text-sm
-                            ${isActive
-                              ? `text-${tab.color}-700 dark:text-${tab.color}-300`
-                              : 'text-gray-500 dark:text-gray-400'
+                            ${
+                              isActive
+                                ? `text-${tab.color}-700 dark:text-${tab.color}-300`
+                                : 'text-gray-500 dark:text-gray-400'
                             }
-                          `}>
+                          `}
+                          >
                             {tab.description}
                           </p>
                         </div>
@@ -288,7 +301,7 @@ export const HelpCenter: React.FC<HelpCenterProps> = ({
       <FeedbackForm
         isOpen={showFeedbackForm}
         onClose={() => setShowFeedbackForm(false)}
-        onSubmit={async (feedback) => {
+        onSubmit={async feedback => {
           console.log('フィードバック送信:', feedback);
           // 実際の実装では、APIに送信する処理を追加
         }}

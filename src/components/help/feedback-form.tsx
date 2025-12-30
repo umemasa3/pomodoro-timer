@@ -69,7 +69,9 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
   onSubmit,
 }) => {
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
-  const [feedbackType, setFeedbackType] = useState<FeedbackData['type'] | null>(null);
+  const [feedbackType, setFeedbackType] = useState<FeedbackData['type'] | null>(
+    null
+  );
   const [rating, setRating] = useState<number>(0);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -113,11 +115,13 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
         description: description.trim(),
         email: email.trim() || undefined,
         includeSystemInfo,
-        systemInfo: includeSystemInfo ? {
-          userAgent: navigator.userAgent,
-          url: window.location.href,
-          timestamp: new Date().toISOString(),
-        } : undefined,
+        systemInfo: includeSystemInfo
+          ? {
+              userAgent: navigator.userAgent,
+              url: window.location.href,
+              timestamp: new Date().toISOString(),
+            }
+          : undefined,
       };
 
       if (onSubmit) {
@@ -161,7 +165,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         {/* ヘッダー */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -172,7 +176,9 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 {step === 'type' && 'フィードバックの種類を選択してください'}
-                {step === 'details' && selectedType && `${selectedType.label}の詳細`}
+                {step === 'details' &&
+                  selectedType &&
+                  `${selectedType.label}の詳細`}
                 {step === 'success' && 'フィードバックを送信しました'}
               </p>
             </div>
@@ -196,7 +202,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
               >
-                {feedbackTypes.map((type) => {
+                {feedbackTypes.map(type => {
                   const Icon = type.icon;
                   return (
                     <motion.button
@@ -211,8 +217,12 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                       whileTap={{ scale: 0.98 }}
                     >
                       <div className="flex items-start space-x-4">
-                        <div className={`p-3 bg-${type.color}-100 dark:bg-${type.color}-900/30 rounded-lg`}>
-                          <Icon className={`w-6 h-6 text-${type.color}-600 dark:text-${type.color}-400`} />
+                        <div
+                          className={`p-3 bg-${type.color}-100 dark:bg-${type.color}-900/30 rounded-lg`}
+                        >
+                          <Icon
+                            className={`w-6 h-6 text-${type.color}-600 dark:text-${type.color}-400`}
+                          />
                         </div>
                         <div>
                           <h3 className="font-medium text-gray-900 dark:text-white mb-1">
@@ -238,10 +248,16 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                 className="space-y-6"
               >
                 {/* 選択されたタイプの表示 */}
-                <div className={`p-4 bg-${selectedType.color}-50 dark:bg-${selectedType.color}-900/20 rounded-lg border border-${selectedType.color}-200 dark:border-${selectedType.color}-800`}>
+                <div
+                  className={`p-4 bg-${selectedType.color}-50 dark:bg-${selectedType.color}-900/20 rounded-lg border border-${selectedType.color}-200 dark:border-${selectedType.color}-800`}
+                >
                   <div className="flex items-center space-x-3">
-                    <selectedType.icon className={`w-5 h-5 text-${selectedType.color}-600 dark:text-${selectedType.color}-400`} />
-                    <span className={`font-medium text-${selectedType.color}-900 dark:text-${selectedType.color}-100`}>
+                    <selectedType.icon
+                      className={`w-5 h-5 text-${selectedType.color}-600 dark:text-${selectedType.color}-400`}
+                    />
+                    <span
+                      className={`font-medium text-${selectedType.color}-900 dark:text-${selectedType.color}-100`}
+                    >
                       {selectedType.label}
                     </span>
                   </div>
@@ -254,7 +270,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                       アプリの評価をお聞かせください
                     </label>
                     <div className="flex items-center space-x-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
+                      {[1, 2, 3, 4, 5].map(star => (
                         <button
                           key={star}
                           onClick={() => setRating(star)}
@@ -284,12 +300,15 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                   <input
                     type="text"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={e => setTitle(e.target.value)}
                     placeholder={
-                      feedbackType === 'bug' ? '例: タイマーが開始されない' :
-                      feedbackType === 'feature' ? '例: タスクの並び替え機能' :
-                      feedbackType === 'improvement' ? '例: 統計画面の改善' :
-                      '例: 使いやすいアプリです'
+                      feedbackType === 'bug'
+                        ? '例: タイマーが開始されない'
+                        : feedbackType === 'feature'
+                          ? '例: タスクの並び替え機能'
+                          : feedbackType === 'improvement'
+                            ? '例: 統計画面の改善'
+                            : '例: 使いやすいアプリです'
                     }
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
@@ -302,13 +321,16 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                   </label>
                   <textarea
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={e => setDescription(e.target.value)}
                     rows={4}
                     placeholder={
-                      feedbackType === 'bug' ? '問題の詳細、再現手順、期待される動作などを記載してください' :
-                      feedbackType === 'feature' ? '機能の詳細、使用場面、期待される効果などを記載してください' :
-                      feedbackType === 'improvement' ? '現在の問題点、改善案、期待される効果などを記載してください' :
-                      'アプリに対する感想、気づいた点などを自由に記載してください'
+                      feedbackType === 'bug'
+                        ? '問題の詳細、再現手順、期待される動作などを記載してください'
+                        : feedbackType === 'feature'
+                          ? '機能の詳細、使用場面、期待される効果などを記載してください'
+                          : feedbackType === 'improvement'
+                            ? '現在の問題点、改善案、期待される効果などを記載してください'
+                            : 'アプリに対する感想、気づいた点などを自由に記載してください'
                     }
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
                   />
@@ -322,7 +344,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={e => setEmail(e.target.value)}
                     placeholder="返信が必要な場合はご入力ください"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
@@ -334,11 +356,14 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                     type="checkbox"
                     id="includeSystemInfo"
                     checked={includeSystemInfo}
-                    onChange={(e) => setIncludeSystemInfo(e.target.checked)}
+                    onChange={e => setIncludeSystemInfo(e.target.checked)}
                     className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                   />
                   <div>
-                    <label htmlFor="includeSystemInfo" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="includeSystemInfo"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       システム情報を含める
                     </label>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -357,16 +382,27 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                   </button>
                   <motion.button
                     onClick={handleSubmit}
-                    disabled={!title.trim() || !description.trim() || isSubmitting}
+                    disabled={
+                      !title.trim() || !description.trim() || isSubmitting
+                    }
                     className={`
                       flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all
-                      ${!title.trim() || !description.trim() || isSubmitting
-                        ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg'
+                      ${
+                        !title.trim() || !description.trim() || isSubmitting
+                          ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg'
                       }
                     `}
-                    whileHover={!title.trim() || !description.trim() || isSubmitting ? {} : { scale: 1.02 }}
-                    whileTap={!title.trim() || !description.trim() || isSubmitting ? {} : { scale: 0.98 }}
+                    whileHover={
+                      !title.trim() || !description.trim() || isSubmitting
+                        ? {}
+                        : { scale: 1.02 }
+                    }
+                    whileTap={
+                      !title.trim() || !description.trim() || isSubmitting
+                        ? {}
+                        : { scale: 0.98 }
+                    }
                   >
                     {isSubmitting ? (
                       <>
@@ -399,7 +435,8 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({
                   フィードバックを送信しました
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  貴重なご意見をありがとうございます。<br />
+                  貴重なご意見をありがとうございます。
+                  <br />
                   今後のアプリ改善に活用させていただきます。
                 </p>
                 <motion.button

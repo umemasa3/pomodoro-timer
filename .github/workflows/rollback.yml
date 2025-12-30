@@ -1,0 +1,157 @@
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      commit_sha:
+        description: 'Commit SHA to rollback to (optional)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Validate rollback request
+        run: |
+          echo "🔍 Rollback Request Details:"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Commit SHA: ${{ github.event.inputs.commit_sha || 'Latest stable' }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+          echo "Requested by: ${{ github.actor }}"
+          echo "Timestamp: $(date -u)"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit_sha || github.sha }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd pomodoro-timer
+          pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: |
+          cd pomodoro-timer
+          pnpm build
+
+      - name: Deploy rollback to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: pomodoro-timer
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-args: ${{ github.event.inputs.environment == 'production' && '--prod' || '' }}
+
+      - name: Verify rollback
+        run: |
+          echo "✅ Rollback completed successfully"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Commit: ${{ github.event.inputs.commit_sha || github.sha }}"
+          echo "Reason: ${{ github.event.inputs.reason }}"
+
+      - name: Create rollback issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔄 Rollback Executed - ${{ github.event.inputs.environment }}`,
+              body: `
+              ## Rollback Details
+              
+              - **Environment**: ${{ github.event.inputs.environment }}
+              - **Commit SHA**: ${{ github.event.inputs.commit_sha || github.sha }}
+              - **Reason**: ${{ github.event.inputs.reason }}
+              - **Executed by**: ${{ github.actor }}
+              - **Timestamp**: ${new Date().toISOString()}
+              
+              ## Next Steps
+              
+              - [ ] Verify application functionality
+              - [ ] Monitor error rates and performance
+              - [ ] Investigate root cause of the issue
+              - [ ] Plan fix and re-deployment
+              
+              ## Monitoring Links
+              
+              - [Vercel Dashboard](https://vercel.com/dashboard)
+              - [Sentry Error Monitoring](https://sentry.io)
+              - [Application URL](https://${{ github.event.inputs.environment == 'production' && 'pomodoro-timer' || 'pomodoro-timer-staging' }}.vercel.app)
+              `,
+              labels: ['rollback', 'incident', '${{ github.event.inputs.environment }}']
+            });
+            
+            console.log(`Created rollback tracking issue: #${issue.number}`);
+
+  # ロールバック後のヘルスチェック
+  health-check:
+    runs-on: ubuntu-latest
+    needs: rollback
+    steps:
+      - name: Wait for deployment
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          URL="https://${{ github.event.inputs.environment == 'production' && 'pomodoro-timer' || 'pomodoro-timer-staging' }}.vercel.app"
+          echo "🔍 Checking health of: $URL"
+          
+          # ヘルスチェック実行
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
+          
+          if [ "$response" = "200" ]; then
+            echo "✅ Health check passed (HTTP $response)"
+          else
+            echo "❌ Health check failed (HTTP $response)"
+            exit 1
+          fi
+
+      - name: Performance check
+        run: |
+          URL="https://${{ github.event.inputs.environment == 'production' && 'pomodoro-timer' || 'pomodoro-timer-staging' }}.vercel.app"
+          
+          # 簡単なパフォーマンスチェック
+          start_time=$(date +%s%N)
+          curl -s "$URL" > /dev/null
+          end_time=$(date +%s%N)
+          
+          duration=$(( (end_time - start_time) / 1000000 ))
+          echo "⏱️ Response time: ${duration}ms"
+          
+          if [ "$duration" -lt 3000 ]; then
+            echo "✅ Performance check passed"
+          else
+            echo "⚠️ Performance check warning: Response time > 3s"
+          fi

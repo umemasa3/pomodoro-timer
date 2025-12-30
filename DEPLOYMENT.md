@@ -1,222 +1,348 @@
-# Vercelデプロイガイド
+# 本番環境デプロイガイド
 
-このドキュメントでは、ポモドーロタイマーアプリケーションをVercelにデプロイする手順を説明します。
+このドキュメントでは、ポモドーロタイマーアプリケーションを本番環境にデプロイする手順を説明します。
 
 ## 前提条件
 
 - [Vercel CLI](https://vercel.com/cli)がインストールされていること
 - [Supabase](https://supabase.com)プロジェクトが作成されていること
 - GitHubリポジトリが準備されていること
+- Vercel Proプラン（推奨）
 
-## 1. 環境変数の設定
+## 1. 環境設定
 
-### 1.1 Supabaseプロジェクトの情報取得
-
-1. [Supabase Dashboard](https://app.supabase.com)にログイン
-2. プロジェクトを選択
-3. Settings > API から以下の情報を取得：
-   - `Project URL`
-   - `anon public` key
-
-### 1.2 Vercelでの環境変数設定
-
-#### 方法1: Vercel Dashboard（推奨）
-
-1. [Vercel Dashboard](https://vercel.com/dashboard)にログイン
-2. プロジェクトを選択
-3. Settings > Environment Variables に移動
-4. 以下の環境変数を追加：
+### 1.1 環境変数の準備
 
 ```bash
-# 必須環境変数
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+# 環境変数セットアップスクリプトを実行
+./scripts/setup-env.sh production
 
-# アプリケーション設定
-VITE_APP_ENV=production
-VITE_APP_NAME=ポモドーロタイマー
-VITE_APP_VERSION=1.0.0
-
-# 機能フラグ
-VITE_ENABLE_ANALYTICS=true
-VITE_ENABLE_ERROR_REPORTING=true
-VITE_ENABLE_DEVTOOLS=false
-VITE_FEATURE_OFFLINE_MODE=true
-VITE_FEATURE_PUSH_NOTIFICATIONS=true
-VITE_FEATURE_EXPORT_DATA=true
-
-# キャッシュ設定
-VITE_CACHE_VERSION=1
+# 生成された .env.production ファイルを編集
+# 実際のSupabase URL、API キー等を設定
 ```
 
-#### 方法2: Vercel CLI
+### 1.2 Vercelプロジェクトの設定
 
 ```bash
-# プロジェクトディレクトリで実行
-vercel env add VITE_SUPABASE_URL
-vercel env add VITE_SUPABASE_ANON_KEY
-# ... 他の環境変数も同様に追加
-```
-
-## 2. デプロイ手順
-
-### 2.1 初回デプロイ
-
-```bash
-# プロジェクトディレクトリに移動
-cd pomodoro-timer
-
 # Vercelにログイン
 vercel login
 
-# プロジェクトをデプロイ
+# プロジェクトの初期化
 vercel
 
-# プロンプトに従って設定：
-# ? Set up and deploy "~/pomodoro-timer"? [Y/n] y
-# ? Which scope do you want to deploy to? [your-team]
-# ? Link to existing project? [y/N] n
-# ? What's your project's name? pomodoro-timer
-# ? In which directory is your code located? ./
+# 環境変数をVercelにデプロイ
+./scripts/deploy-env.sh production
 ```
 
-### 2.2 本番環境へのデプロイ
+## 2. CI/CDパイプライン
+
+### 2.1 GitHub Actions設定
+
+CI/CDパイプラインは自動的に以下を実行します：
+
+- **コード品質チェック**: ESLint、TypeScript型チェック
+- **テスト実行**: 単体テスト、プロパティベーステスト、E2Eテスト
+- **セキュリティスキャン**: 依存関係の脆弱性チェック
+- **ビルド**: 本番環境向け最適化ビルド
+- **デプロイ**: ステージング・本番環境への自動デプロイ
+
+### 2.2 品質ゲート
+
+以下の条件をすべて満たした場合のみデプロイが実行されます：
+
+- ✅ ESLint・TypeScriptエラー 0件
+- ✅ 単体テスト 100%通過
+- ✅ プロパティベーステスト 100%通過
+- ✅ ビルド成功
+- ✅ セキュリティスキャン通過
+
+### 2.3 デプロイフロー
+
+```mermaid
+graph LR
+    A[Push to develop] --> B[ステージング環境]
+    C[Push to main] --> D[本番環境]
+    E[Manual Trigger] --> F[ロールバック]
+```
+
+## 3. 本番環境最適化
+
+### 3.1 Vercel Pro設定
+
+#### パフォーマンス最適化
+- **Edge Network**: 世界中のエッジロケーションでの配信
+- **Image Optimization**: 自動画像最適化
+- **Analytics**: リアルタイムパフォーマンス監視
+
+#### セキュリティ強化
+- **DDoS Protection**: 自動DDoS攻撃防御
+- **Web Application Firewall**: アプリケーションレベルの保護
+- **SSL/TLS**: 自動SSL証明書管理
+
+### 3.2 CDN最適化
+
+```javascript
+// vercel.json - キャッシュ戦略
+{
+  "headers": [
+    {
+      "source": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot))",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 3.3 セキュリティヘッダー
+
+本番環境では以下のセキュリティヘッダーが自動設定されます：
+
+- **HSTS**: `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+- **CSP**: Content Security Policy による XSS 攻撃防御
+- **X-Frame-Options**: クリックジャッキング攻撃防御
+- **X-Content-Type-Options**: MIME タイプスニッフィング防御
+
+## 4. 環境変数管理
+
+### 4.1 本番環境必須変数
 
 ```bash
-# 本番環境にデプロイ
-vercel --prod
+# アプリケーション設定
+VITE_APP_ENV=production
+VITE_APP_VERSION=1.0.0
+VITE_APP_NAME="Pomodoro Timer"
+
+# Supabase設定
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# 監視・分析
+VITE_SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+VITE_VERCEL_ANALYTICS_ID=your-analytics-id
+
+# セキュリティ設定
+VITE_ENABLE_CSP=true
+VITE_ENABLE_SOURCE_MAPS=false
 ```
 
-### 2.3 GitHub連携による自動デプロイ
+### 4.2 環境変数の暗号化
 
-1. Vercel Dashboardでプロジェクトを選択
-2. Settings > Git に移動
-3. GitHubリポジトリを連携
-4. 以降、`main`ブランチへのプッシュで自動デプロイ
-
-## 3. ドメイン設定
-
-### 3.1 カスタムドメインの追加
-
-1. Vercel Dashboard > Settings > Domains
-2. カスタムドメインを入力
-3. DNS設定を更新（CNAMEレコードを追加）
-
-### 3.2 SSL証明書
-
-Vercelは自動的にSSL証明書を発行・更新します。
-
-## 4. パフォーマンス最適化
-
-### 4.1 ビルド設定の確認
-
-`vercel.json`で以下が設定されています：
-
-- 静的アセットの長期キャッシュ
-- セキュリティヘッダーの追加
-- Service Workerの適切なキャッシュ設定
-
-### 4.2 分析とモニタリング
-
-```bash
-# Lighthouseでパフォーマンス測定
-pnpm run lighthouse
-
-# バンドルサイズの確認
-pnpm run size-check
-```
-
-## 5. トラブルシューティング
-
-### 5.1 ビルドエラー
-
-```bash
-# ローカルでビルドテスト
-pnpm run build:production
-
-# 型チェック
-pnpm run type-check
-
-# リンティング
-pnpm run lint
-```
-
-### 5.2 環境変数エラー
+Vercelでは環境変数が自動的に暗号化されて保存されます：
 
 ```bash
 # 環境変数の確認
 vercel env ls
 
-# 特定の環境変数の値確認
-vercel env pull .env.vercel
+# 特定環境の環境変数取得
+vercel env pull .env.production --environment=production
 ```
 
-### 5.3 Supabase接続エラー
+## 5. カスタムドメイン設定
 
-1. Supabase Dashboard > Settings > API でURL/Keyを確認
-2. Row Level Security (RLS) の設定を確認
-3. ネットワークの制限設定を確認
-
-## 6. 監視とメンテナンス
-
-### 6.1 ログの確認
+### 5.1 ドメイン追加
 
 ```bash
-# デプロイログの確認
-vercel logs
+# Vercel CLIでドメイン追加
+vercel domains add your-domain.com
 
-# 関数ログの確認（該当する場合）
-vercel logs --follow
+# DNS設定確認
+vercel domains inspect your-domain.com
 ```
 
-### 6.2 パフォーマンス監視
+### 5.2 DNS設定
 
-- Vercel Analytics（有料プランで利用可能）
-- Google Analytics（設定済み）
-- Core Web Vitalsの監視
+```dns
+# CNAMEレコード設定例
+Type: CNAME
+Name: @
+Value: cname.vercel-dns.com
 
-### 6.3 定期メンテナンス
+# Aレコード設定例（ルートドメイン）
+Type: A
+Name: @
+Value: 76.76.19.61
+```
 
-- 依存関係の更新
-- セキュリティパッチの適用
-- パフォーマンスメトリクスの確認
+## 6. 監視とアラート
 
-## 7. セキュリティ設定
+### 6.1 パフォーマンス監視
 
-### 7.1 セキュリティヘッダー
+```bash
+# Core Web Vitals監視
+# - LCP (Largest Contentful Paint) < 2.5s
+# - FID (First Input Delay) < 100ms
+# - CLS (Cumulative Layout Shift) < 0.1
+```
 
-`vercel.json`で以下のセキュリティヘッダーが設定されています：
+### 6.2 エラー監視
 
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `X-XSS-Protection: 1; mode=block`
-- `Referrer-Policy: strict-origin-when-cross-origin`
+Sentryによるリアルタイムエラー監視：
 
-### 7.2 環境変数の管理
+- JavaScript例外の自動キャッチ
+- パフォーマンス問題の検出
+- ユーザーセッションの記録
+- アラート通知の設定
 
-- 本番環境の環境変数は暗号化されて保存
-- 開発環境とは分離して管理
-- 定期的なキーローテーション
+### 6.3 稼働率監視
 
-## 8. スケーリング
+```bash
+# ヘルスチェックエンドポイント
+GET /api/health-check
 
-### 8.1 トラフィック増加への対応
+# 期待レスポンス
+{
+  "status": "healthy",
+  "timestamp": "2024-12-30T10:00:00Z",
+  "version": "1.0.0"
+}
+```
 
-Vercelは自動スケーリングに対応していますが、以下の点に注意：
+## 7. ロールバック手順
 
-- 関数の実行時間制限（Hobby: 10秒、Pro: 60秒）
-- 帯域幅制限（プランに依存）
-- 同時実行数の制限
+### 7.1 自動ロールバック
 
-### 8.2 コスト最適化
+品質ゲートに失敗した場合、自動的に前のバージョンにロールバックされます。
 
-- 不要な関数の削除
-- 静的アセットの最適化
-- キャッシュ戦略の見直し
+### 7.2 手動ロールバック
+
+```bash
+# GitHub Actionsから手動実行
+# 1. GitHub > Actions > Manual Rollback
+# 2. 環境選択（production/staging）
+# 3. ロールバック理由入力
+# 4. 実行
+
+# または Vercel CLIから
+vercel rollback [deployment-url] --prod
+```
+
+### 7.3 ロールバック後の確認
+
+```bash
+# ヘルスチェック実行
+curl -f https://your-domain.com/api/health-check
+
+# パフォーマンステスト
+pnpm run lighthouse https://your-domain.com
+```
+
+## 8. セキュリティ設定
+
+### 8.1 Content Security Policy
+
+```http
+Content-Security-Policy: 
+  default-src 'self'; 
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel.app https://*.supabase.co https://*.sentry.io; 
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+  font-src 'self' https://fonts.gstatic.com; 
+  img-src 'self' data: https:; 
+  connect-src 'self' https://*.supabase.co https://*.sentry.io wss://*.supabase.co;
+```
+
+### 8.2 API セキュリティ
+
+- **Rate Limiting**: API呼び出し頻度制限
+- **CORS設定**: 適切なオリジン制限
+- **認証トークン**: JWT トークンの適切な管理
+
+## 9. パフォーマンス最適化
+
+### 9.1 ビルド最適化
+
+```javascript
+// vite.config.ts - 本番環境設定
+export default defineConfig({
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'supabase-vendor': ['@supabase/supabase-js'],
+          'ui-vendor': ['@headlessui/react', '@heroicons/react'],
+        },
+      },
+    },
+  },
+});
+```
+
+### 9.2 キャッシュ戦略
+
+- **静的アセット**: 1年間キャッシュ（immutable）
+- **HTML**: キャッシュなし（常に最新）
+- **API レスポンス**: 5分間キャッシュ
+- **Service Worker**: キャッシュなし（即座更新）
+
+## 10. 災害復旧
+
+### 10.1 バックアップ戦略
+
+- **コード**: GitHubリポジトリ
+- **データベース**: Supabase自動バックアップ
+- **設定**: 環境変数のバックアップ
+- **デプロイ履歴**: Vercelデプロイ履歴
+
+### 10.2 復旧手順
+
+```bash
+# 1. 問題の特定
+vercel logs --follow
+
+# 2. ロールバック実行
+vercel rollback [previous-deployment] --prod
+
+# 3. ヘルスチェック
+curl -f https://your-domain.com/api/health-check
+
+# 4. 監視ダッシュボード確認
+# - Vercel Analytics
+# - Sentry Error Monitoring
+# - Supabase Dashboard
+```
+
+## 11. 運用チェックリスト
+
+### 11.1 デプロイ前チェック
+
+- [ ] 全テスト通過確認
+- [ ] セキュリティスキャン実行
+- [ ] パフォーマンステスト実行
+- [ ] 環境変数設定確認
+- [ ] バックアップ確認
+
+### 11.2 デプロイ後チェック
+
+- [ ] ヘルスチェック実行
+- [ ] 主要機能動作確認
+- [ ] パフォーマンス指標確認
+- [ ] エラー監視設定確認
+- [ ] SSL証明書確認
+
+### 11.3 定期メンテナンス
+
+- [ ] 依存関係更新（月次）
+- [ ] セキュリティパッチ適用（即座）
+- [ ] パフォーマンス分析（週次）
+- [ ] ログ分析（日次）
+- [ ] バックアップ確認（日次）
 
 ## 参考リンク
 
-- [Vercel Documentation](https://vercel.com/docs)
-- [Supabase Documentation](https://supabase.com/docs)
-- [Vite Deployment Guide](https://vitejs.dev/guide/static-deploy.html)
-- [PWA Best Practices](https://web.dev/pwa-checklist/)
+- [Vercel Pro Documentation](https://vercel.com/docs/concepts/limits/overview)
+- [Supabase Production Checklist](https://supabase.com/docs/guides/platform/going-into-prod)
+- [Web.dev Performance](https://web.dev/performance/)
+- [OWASP Security Guidelines](https://owasp.org/www-project-web-security-testing-guide/)
+- [Core Web Vitals](https://web.dev/vitals/)

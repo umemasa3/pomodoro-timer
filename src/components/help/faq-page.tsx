@@ -16,7 +16,13 @@ interface FAQItem {
   id: string;
   question: string;
   answer: React.ReactNode;
-  category: 'basic' | 'timer' | 'tasks' | 'statistics' | 'settings' | 'troubleshooting';
+  category:
+    | 'basic'
+    | 'timer'
+    | 'tasks'
+    | 'statistics'
+    | 'settings'
+    | 'troubleshooting';
   tags: string[];
   popularity: number;
 }
@@ -36,7 +42,9 @@ const faqItems: FAQItem[] = [
           1980年代後半にフランチェスコ・シリロによって開発されました。
         </p>
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-          <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">基本的な流れ</h5>
+          <h5 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+            基本的な流れ
+          </h5>
           <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
             <li>25分間集中して作業する（1ポモドーロ）</li>
             <li>5分間の短い休憩を取る</li>
@@ -275,7 +283,11 @@ const categories = {
   tasks: { label: 'タスク', icon: ListBulletIcon, color: 'purple' },
   statistics: { label: '統計', icon: ChartBarIcon, color: 'indigo' },
   settings: { label: '設定', icon: CogIcon, color: 'gray' },
-  troubleshooting: { label: 'トラブル', icon: ExclamationTriangleIcon, color: 'red' },
+  troubleshooting: {
+    label: 'トラブル',
+    icon: ExclamationTriangleIcon,
+    color: 'red',
+  },
 };
 
 export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
@@ -286,13 +298,15 @@ export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
   // 検索とフィルタリング
   const filteredItems = faqItems
     .filter(item => {
-      const matchesSearch = 
+      const matchesSearch =
         item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      const matchesCategory = 
+        item.tags.some(tag =>
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+      const matchesCategory =
         selectedCategory === 'all' || item.category === selectedCategory;
-      
+
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => b.popularity - a.popularity);
@@ -334,7 +348,7 @@ export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
             type="text"
             placeholder="質問やキーワードで検索..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           />
         </div>
@@ -347,9 +361,10 @@ export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
             onClick={() => setSelectedCategory('all')}
             className={`
               px-4 py-2 rounded-lg text-sm font-medium transition-all
-              ${selectedCategory === 'all'
-                ? 'bg-blue-500 text-white shadow-lg'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              ${
+                selectedCategory === 'all'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }
             `}
           >
@@ -363,9 +378,10 @@ export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
                 onClick={() => setSelectedCategory(key)}
                 className={`
                   flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                  ${selectedCategory === key
-                    ? `bg-${category.color}-500 text-white shadow-lg`
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ${
+                    selectedCategory === key
+                      ? `bg-${category.color}-500 text-white shadow-lg`
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }
                 `}
               >
@@ -390,7 +406,7 @@ export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
             </p>
           </div>
         ) : (
-          filteredItems.map((item) => {
+          filteredItems.map(item => {
             const isExpanded = expandedItems.has(item.id);
             const category = categories[item.category];
             const CategoryIcon = category.icon;
@@ -409,15 +425,21 @@ export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-start space-x-4 flex-1">
-                      <div className={`p-2 bg-${category.color}-100 dark:bg-${category.color}-900/30 rounded-lg flex-shrink-0`}>
-                        <CategoryIcon className={`w-5 h-5 text-${category.color}-600 dark:text-${category.color}-400`} />
+                      <div
+                        className={`p-2 bg-${category.color}-100 dark:bg-${category.color}-900/30 rounded-lg flex-shrink-0`}
+                      >
+                        <CategoryIcon
+                          className={`w-5 h-5 text-${category.color}-600 dark:text-${category.color}-400`}
+                        />
                       </div>
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900 dark:text-white mb-1">
                           {item.question}
                         </h3>
                         <div className="flex items-center space-x-2">
-                          <span className={`text-xs px-2 py-1 bg-${category.color}-100 dark:bg-${category.color}-900/30 text-${category.color}-700 dark:text-${category.color}-300 rounded-full`}>
+                          <span
+                            className={`text-xs px-2 py-1 bg-${category.color}-100 dark:bg-${category.color}-900/30 text-${category.color}-700 dark:text-${category.color}-300 rounded-full`}
+                          >
                             {category.label}
                           </span>
                           <div className="flex space-x-1">
@@ -453,9 +475,7 @@ export const FAQPage: React.FC<FAQPageProps> = ({ className = '' }) => {
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                        <div className="pt-4">
-                          {item.answer}
-                        </div>
+                        <div className="pt-4">{item.answer}</div>
                       </div>
                     </motion.div>
                   )}

@@ -9,12 +9,16 @@ interface HighContrastContextType {
   toggleReducedMotion: () => void;
 }
 
-const HighContrastContext = createContext<HighContrastContextType | undefined>(undefined);
+const HighContrastContext = createContext<HighContrastContextType | undefined>(
+  undefined
+);
 
 export const useHighContrast = () => {
   const context = useContext(HighContrastContext);
   if (!context) {
-    throw new Error('useHighContrast must be used within a HighContrastProvider');
+    throw new Error(
+      'useHighContrast must be used within a HighContrastProvider'
+    );
   }
   return context;
 };
@@ -23,7 +27,9 @@ interface HighContrastProviderProps {
   children: React.ReactNode;
 }
 
-export const HighContrastProvider: React.FC<HighContrastProviderProps> = ({ children }) => {
+export const HighContrastProvider: React.FC<HighContrastProviderProps> = ({
+  children,
+}) => {
   const [isHighContrast, setIsHighContrast] = useState(false);
   const [isColorBlindFriendly, setIsColorBlindFriendly] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -31,12 +37,18 @@ export const HighContrastProvider: React.FC<HighContrastProviderProps> = ({ chil
   // 初期設定の読み込み
   useEffect(() => {
     const savedHighContrast = localStorage.getItem('high-contrast') === 'true';
-    const savedColorBlindFriendly = localStorage.getItem('color-blind-friendly') === 'true';
-    const savedReducedMotion = localStorage.getItem('reduced-motion') === 'true';
+    const savedColorBlindFriendly =
+      localStorage.getItem('color-blind-friendly') === 'true';
+    const savedReducedMotion =
+      localStorage.getItem('reduced-motion') === 'true';
 
     // システム設定の確認
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const prefersHighContrast = window.matchMedia('(prefers-contrast: high)').matches;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const prefersHighContrast = window.matchMedia(
+      '(prefers-contrast: high)'
+    ).matches;
 
     setIsHighContrast(savedHighContrast || prefersHighContrast);
     setIsColorBlindFriendly(savedColorBlindFriendly);
@@ -46,7 +58,7 @@ export const HighContrastProvider: React.FC<HighContrastProviderProps> = ({ chil
   // CSS変数とクラスの適用
   useEffect(() => {
     const root = document.documentElement;
-    
+
     if (isHighContrast) {
       root.classList.add('high-contrast');
     } else {
@@ -96,7 +108,7 @@ export const HighContrastProvider: React.FC<HighContrastProviderProps> = ({ chil
       }}
     >
       {children}
-      
+
       {/* 高コントラストテーマのCSS */}
       <style jsx global>{`
         /* 高コントラストモード */
@@ -136,8 +148,8 @@ export const HighContrastProvider: React.FC<HighContrastProviderProps> = ({ chil
         .color-blind-friendly {
           --color-success: #0173b2; /* 青系 */
           --color-warning: #de8f05; /* オレンジ系 */
-          --color-error: #cc78bc;   /* マゼンタ系 */
-          --color-info: #029e73;    /* 緑系 */
+          --color-error: #cc78bc; /* マゼンタ系 */
+          --color-info: #029e73; /* 緑系 */
         }
 
         /* アニメーション削減 */
@@ -227,7 +239,9 @@ export const HighContrastProvider: React.FC<HighContrastProviderProps> = ({ chil
 };
 
 // アクセシビリティ設定コンポーネント
-export const AccessibilitySettings: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const AccessibilitySettings: React.FC<{ className?: string }> = ({
+  className = '',
+}) => {
   const {
     isHighContrast,
     toggleHighContrast,
@@ -242,7 +256,7 @@ export const AccessibilitySettings: React.FC<{ className?: string }> = ({ classN
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
         アクセシビリティ設定
       </h3>
-      
+
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div>

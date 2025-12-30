@@ -1,5 +1,11 @@
 export { OnboardingTour } from './onboarding-tour';
-export { FeatureTooltip, TimerTooltip, TaskTooltip, StatisticsTooltip, TooltipManager } from './feature-tooltip';
+export {
+  FeatureTooltip,
+  TimerTooltip,
+  TaskTooltip,
+  StatisticsTooltip,
+  TooltipManager,
+} from './feature-tooltip';
 export { SetupWizard } from './setup-wizard';
 export { ProgressiveDisclosure } from './progressive-disclosure';
 

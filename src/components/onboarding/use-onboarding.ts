@@ -60,11 +60,12 @@ export const useOnboarding = (): OnboardingState & OnboardingActions => {
   // 新規ユーザーかどうかの判定
   const isNewUser = useCallback(() => {
     if (!user?.created_at) return true;
-    
+
     const createdAt = new Date(user.created_at);
     const now = new Date();
-    const daysSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-    
+    const daysSinceCreation =
+      (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+
     return daysSinceCreation < 1; // 1日以内なら新規ユーザー
   }, [user]);
 
@@ -72,7 +73,7 @@ export const useOnboarding = (): OnboardingState & OnboardingActions => {
   useEffect(() => {
     if (isAuthenticated && user && isNewUser()) {
       const currentState = getInitialState();
-      
+
       // 新規ユーザーで未完了の場合、セットアップウィザードを表示
       if (!currentState.hasCompletedSetup) {
         saveState({
@@ -125,14 +126,17 @@ export const useOnboarding = (): OnboardingState & OnboardingActions => {
     });
   }, [state, saveState]);
 
-  const dismissTooltip = useCallback((tooltipId: string) => {
-    if (!state.dismissedTooltips.includes(tooltipId)) {
-      saveState({
-        ...state,
-        dismissedTooltips: [...state.dismissedTooltips, tooltipId],
-      });
-    }
-  }, [state, saveState]);
+  const dismissTooltip = useCallback(
+    (tooltipId: string) => {
+      if (!state.dismissedTooltips.includes(tooltipId)) {
+        saveState({
+          ...state,
+          dismissedTooltips: [...state.dismissedTooltips, tooltipId],
+        });
+      }
+    },
+    [state, saveState]
+  );
 
   const resetOnboarding = useCallback(() => {
     const resetState: OnboardingState = {

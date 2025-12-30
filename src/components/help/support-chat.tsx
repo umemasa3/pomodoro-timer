@@ -35,11 +35,16 @@ const quickReplies = [
 ];
 
 const botResponses: Record<string, string> = {
-  'タイマーが動かない': 'タイマーの問題ですね。以下をお試しください：\n\n1. ページを再読み込みしてください\n2. ブラウザのキャッシュをクリアしてください\n3. 他のブラウザで試してみてください\n\nそれでも解決しない場合は、詳細をお聞かせください。',
-  '通知が来ない': '通知の問題について説明します：\n\n1. ブラウザの通知許可を確認してください\n2. 設定ページで通知が有効になっているか確認してください\n3. OSの通知設定も確認してください\n\n詳しい設定方法をご案内しますか？',
-  'データが保存されない': 'データ保存の問題ですね：\n\n1. ネットワーク接続を確認してください\n2. ログイン状態を確認してください\n3. ブラウザのローカルストレージ制限を確認してください\n\n作業中のデータは失われていませんか？',
-  'アカウントについて': 'アカウントに関するお問い合わせですね。以下のどちらでしょうか？\n\n• ログインできない\n• パスワードを忘れた\n• アカウントを削除したい\n• その他のアカウント問題\n\n該当するものを教えてください。',
-  'その他の問題': 'その他の問題について詳しく教えてください。どのような問題が発生していますか？\n\n可能であれば以下の情報も教えてください：\n• いつから発生しているか\n• どの機能で問題が起きるか\n• エラーメッセージがあるか',
+  タイマーが動かない:
+    'タイマーの問題ですね。以下をお試しください：\n\n1. ページを再読み込みしてください\n2. ブラウザのキャッシュをクリアしてください\n3. 他のブラウザで試してみてください\n\nそれでも解決しない場合は、詳細をお聞かせください。',
+  通知が来ない:
+    '通知の問題について説明します：\n\n1. ブラウザの通知許可を確認してください\n2. 設定ページで通知が有効になっているか確認してください\n3. OSの通知設定も確認してください\n\n詳しい設定方法をご案内しますか？',
+  データが保存されない:
+    'データ保存の問題ですね：\n\n1. ネットワーク接続を確認してください\n2. ログイン状態を確認してください\n3. ブラウザのローカルストレージ制限を確認してください\n\n作業中のデータは失われていませんか？',
+  アカウントについて:
+    'アカウントに関するお問い合わせですね。以下のどちらでしょうか？\n\n• ログインできない\n• パスワードを忘れた\n• アカウントを削除したい\n• その他のアカウント問題\n\n該当するものを教えてください。',
+  その他の問題:
+    'その他の問題について詳しく教えてください。どのような問題が発生していますか？\n\n可能であれば以下の情報も教えてください：\n• いつから発生しているか\n• どの機能で問題が起きるか\n• エラーメッセージがあるか',
 };
 
 export const SupportChat: React.FC<SupportChatProps> = ({
@@ -59,7 +64,8 @@ export const SupportChat: React.FC<SupportChatProps> = ({
       const welcomeMessage: Message = {
         id: 'welcome',
         type: 'bot',
-        content: 'こんにちは！ポモドーロタイマーのサポートです。\n\nどのようなことでお困りでしょうか？よくある質問から選択するか、直接メッセージを入力してください。',
+        content:
+          'こんにちは！ポモドーロタイマーのサポートです。\n\nどのようなことでお困りでしょうか？よくある質問から選択するか、直接メッセージを入力してください。',
         timestamp: new Date(),
       };
       setMessages([welcomeMessage]);
@@ -94,41 +100,60 @@ export const SupportChat: React.FC<SupportChatProps> = ({
     setIsTyping(true);
 
     // ボットの応答をシミュレート
-    setTimeout(() => {
-      const response = getBotResponse(content.trim());
-      addMessage({
-        type: 'bot',
-        content: response,
-        actions: response.includes('詳しい設定方法') ? [
-          {
-            label: '設定方法を見る',
-            action: () => {
-              addMessage({
-                type: 'bot',
-                content: '通知設定の詳しい手順：\n\n【ブラウザ設定】\n1. アドレスバーの鍵アイコンをクリック\n2. 「通知」を「許可」に変更\n3. ページを再読み込み\n\n【アプリ設定】\n1. 右上の設定ボタンをクリック\n2. 「通知設定」セクションを開く\n3. 必要な通知を有効にする',
-              });
-            },
-          },
-        ] : undefined,
-      });
-      setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    setTimeout(
+      () => {
+        const response = getBotResponse(content.trim());
+        addMessage({
+          type: 'bot',
+          content: response,
+          actions: response.includes('詳しい設定方法')
+            ? [
+                {
+                  label: '設定方法を見る',
+                  action: () => {
+                    addMessage({
+                      type: 'bot',
+                      content:
+                        '通知設定の詳しい手順：\n\n【ブラウザ設定】\n1. アドレスバーの鍵アイコンをクリック\n2. 「通知」を「許可」に変更\n3. ページを再読み込み\n\n【アプリ設定】\n1. 右上の設定ボタンをクリック\n2. 「通知設定」セクションを開く\n3. 必要な通知を有効にする',
+                    });
+                  },
+                },
+              ]
+            : undefined,
+        });
+        setIsTyping(false);
+      },
+      1000 + Math.random() * 1000
+    );
   };
 
   const getBotResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase();
-    
+
     // キーワードベースの簡単な応答
-    if (lowerMessage.includes('タイマー') && (lowerMessage.includes('動かない') || lowerMessage.includes('開始'))) {
+    if (
+      lowerMessage.includes('タイマー') &&
+      (lowerMessage.includes('動かない') || lowerMessage.includes('開始'))
+    ) {
       return botResponses['タイマーが動かない'];
     }
-    if (lowerMessage.includes('通知') && (lowerMessage.includes('来ない') || lowerMessage.includes('表示'))) {
+    if (
+      lowerMessage.includes('通知') &&
+      (lowerMessage.includes('来ない') || lowerMessage.includes('表示'))
+    ) {
       return botResponses['通知が来ない'];
     }
-    if (lowerMessage.includes('データ') && (lowerMessage.includes('保存') || lowerMessage.includes('消え'))) {
+    if (
+      lowerMessage.includes('データ') &&
+      (lowerMessage.includes('保存') || lowerMessage.includes('消え'))
+    ) {
       return botResponses['データが保存されない'];
     }
-    if (lowerMessage.includes('アカウント') || lowerMessage.includes('ログイン') || lowerMessage.includes('パスワード')) {
+    if (
+      lowerMessage.includes('アカウント') ||
+      lowerMessage.includes('ログイン') ||
+      lowerMessage.includes('パスワード')
+    ) {
       return botResponses['アカウントについて'];
     }
 
@@ -145,11 +170,12 @@ export const SupportChat: React.FC<SupportChatProps> = ({
       type: 'system',
       content: '人間のサポートスタッフに接続しています...',
     });
-    
+
     setTimeout(() => {
       addMessage({
         type: 'bot',
-        content: '申し訳ございませんが、現在サポートスタッフは対応中です。\n\nお急ぎの場合は、フィードバックフォームから詳細をお送りください。24時間以内にメールでご返信いたします。',
+        content:
+          '申し訳ございませんが、現在サポートスタッフは対応中です。\n\nお急ぎの場合は、フィードバックフォームから詳細をお送りください。24時間以内にメールでご返信いたします。',
       });
       onEscalateToHuman?.();
     }, 2000);
@@ -170,7 +196,7 @@ export const SupportChat: React.FC<SupportChatProps> = ({
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={e => e.stopPropagation()}
       >
         {/* ヘッダー */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
@@ -200,7 +226,7 @@ export const SupportChat: React.FC<SupportChatProps> = ({
 
         {/* メッセージエリア */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message) => (
+          {messages.map(message => (
             <div
               key={message.id}
               className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -208,11 +234,12 @@ export const SupportChat: React.FC<SupportChatProps> = ({
               <div
                 className={`
                   max-w-[80%] rounded-2xl px-4 py-3 text-sm
-                  ${message.type === 'user'
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                    : message.type === 'system'
-                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                  ${
+                    message.type === 'user'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                      : message.type === 'system'
+                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                   }
                 `}
               >
@@ -261,8 +288,14 @@ export const SupportChat: React.FC<SupportChatProps> = ({
                   <ComputerDesktopIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   <div className="flex space-x-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.1s' }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                      style={{ animationDelay: '0.2s' }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -285,7 +318,7 @@ export const SupportChat: React.FC<SupportChatProps> = ({
                 よくある質問:
               </div>
               <div className="flex flex-wrap gap-2">
-                {quickReplies.map((reply) => (
+                {quickReplies.map(reply => (
                   <button
                     key={reply}
                     onClick={() => handleQuickReply(reply)}
@@ -306,8 +339,8 @@ export const SupportChat: React.FC<SupportChatProps> = ({
               <input
                 type="text"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => {
+                onChange={e => setInputValue(e.target.value)}
+                onKeyPress={e => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage(inputValue);
@@ -321,9 +354,10 @@ export const SupportChat: React.FC<SupportChatProps> = ({
                 disabled={!inputValue.trim()}
                 className={`
                   absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-all
-                  ${inputValue.trim()
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700'
-                    : 'bg-gray-200 dark:bg-gray-600 text-gray-400 cursor-not-allowed'
+                  ${
+                    inputValue.trim()
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700'
+                      : 'bg-gray-200 dark:bg-gray-600 text-gray-400 cursor-not-allowed'
                   }
                 `}
               >

@@ -38,7 +38,9 @@ const defaultItems: DisclosureItem[] = [
           ポモドーロテクニックは、1980年代後半にフランチェスコ・シリロによって開発された時間管理手法です。
         </p>
         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">基本的な流れ</h4>
+          <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+            基本的な流れ
+          </h4>
           <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-decimal list-inside">
             <li>25分間集中して作業する</li>
             <li>5分間の短い休憩を取る</li>
@@ -61,19 +63,25 @@ const defaultItems: DisclosureItem[] = [
       <div className="space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
-            <h5 className="font-medium text-green-900 dark:text-green-100 mb-1">開始</h5>
+            <h5 className="font-medium text-green-900 dark:text-green-100 mb-1">
+              開始
+            </h5>
             <p className="text-xs text-green-800 dark:text-green-200">
               プレイボタンをクリックしてタイマーを開始します
             </p>
           </div>
           <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3">
-            <h5 className="font-medium text-yellow-900 dark:text-yellow-100 mb-1">一時停止</h5>
+            <h5 className="font-medium text-yellow-900 dark:text-yellow-100 mb-1">
+              一時停止
+            </h5>
             <p className="text-xs text-yellow-800 dark:text-yellow-200">
               ポーズボタンで一時停止、再度クリックで再開
             </p>
           </div>
           <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
-            <h5 className="font-medium text-red-900 dark:text-red-100 mb-1">リセット</h5>
+            <h5 className="font-medium text-red-900 dark:text-red-100 mb-1">
+              リセット
+            </h5>
             <p className="text-xs text-red-800 dark:text-red-200">
               ストップボタンでタイマーをリセット
             </p>
@@ -96,16 +104,28 @@ const defaultItems: DisclosureItem[] = [
         </p>
         <div className="space-y-2">
           <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-pomodoro-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">タスク管理ページでタスクを作成</p>
+            <div className="w-6 h-6 bg-pomodoro-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+              1
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              タスク管理ページでタスクを作成
+            </p>
           </div>
           <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-pomodoro-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">タイマー開始時にタスクを選択</p>
+            <div className="w-6 h-6 bg-pomodoro-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+              2
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              タイマー開始時にタスクを選択
+            </p>
           </div>
           <div className="flex items-start space-x-3">
-            <div className="w-6 h-6 bg-pomodoro-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">セッション完了後に進捗が自動記録</p>
+            <div className="w-6 h-6 bg-pomodoro-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+              3
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              セッション完了後に進捗が自動記録
+            </p>
           </div>
         </div>
       </div>
@@ -125,13 +145,17 @@ const defaultItems: DisclosureItem[] = [
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3">
-            <h5 className="font-medium text-purple-900 dark:text-purple-100 mb-1">日別統計</h5>
+            <h5 className="font-medium text-purple-900 dark:text-purple-100 mb-1">
+              日別統計
+            </h5>
             <p className="text-xs text-purple-800 dark:text-purple-200">
               日ごとの作業時間と完了セッション数
             </p>
           </div>
           <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3">
-            <h5 className="font-medium text-indigo-900 dark:text-indigo-100 mb-1">タスク分析</h5>
+            <h5 className="font-medium text-indigo-900 dark:text-indigo-100 mb-1">
+              タスク分析
+            </h5>
             <p className="text-xs text-indigo-800 dark:text-indigo-200">
               タスクごとの時間配分と完了率
             </p>
@@ -192,13 +216,17 @@ const defaultItems: DisclosureItem[] = [
         </p>
         <div className="space-y-2">
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">タイマー時間の調整</h5>
+            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+              タイマー時間の調整
+            </h5>
             <p className="text-xs text-gray-600 dark:text-gray-300">
               集中時間、休憩時間、長い休憩までのセッション数を自由に設定できます。
             </p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3">
-            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">通知設定</h5>
+            <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-1">
+              通知設定
+            </h5>
             <p className="text-xs text-gray-600 dark:text-gray-300">
               音声通知、デスクトップ通知、バイブレーションの有効/無効を設定できます。
             </p>
@@ -218,7 +246,9 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
   className = '',
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [visibilityLevel, setVisibilityLevel] = useState<'beginner' | 'intermediate' | 'advanced'>(userLevel);
+  const [visibilityLevel, setVisibilityLevel] = useState<
+    'beginner' | 'intermediate' | 'advanced'
+  >(userLevel);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // 初期表示項目の設定
@@ -249,7 +279,7 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
   const getVisibleItems = () => {
     const levelOrder = ['beginner', 'intermediate', 'advanced'];
     const maxLevelIndex = levelOrder.indexOf(visibilityLevel);
-    
+
     return items.filter(item => {
       const itemLevelIndex = levelOrder.indexOf(item.level);
       return itemLevelIndex <= maxLevelIndex;
@@ -257,14 +287,17 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
   };
 
   // カテゴリ別のアイテムグループ化
-  const groupedItems = getVisibleItems().reduce((groups, item) => {
-    const category = item.category;
-    if (!groups[category]) {
-      groups[category] = [];
-    }
-    groups[category].push(item);
-    return groups;
-  }, {} as Record<string, DisclosureItem[]>);
+  const groupedItems = getVisibleItems().reduce(
+    (groups, item) => {
+      const category = item.category;
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(item);
+      return groups;
+    },
+    {} as Record<string, DisclosureItem[]>
+  );
 
   const categoryLabels = {
     basic: '基本操作',
@@ -289,10 +322,12 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
             ヘルプ・ガイド
           </h3>
           <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600 dark:text-gray-300">表示レベル:</label>
+            <label className="text-sm text-gray-600 dark:text-gray-300">
+              表示レベル:
+            </label>
             <select
               value={visibilityLevel}
-              onChange={(e) => setVisibilityLevel(e.target.value as any)}
+              onChange={e => setVisibilityLevel(e.target.value as any)}
               className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="beginner">初心者</option>
@@ -323,8 +358,9 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
       {/* カテゴリ別表示 */}
       <div className="space-y-6">
         {Object.entries(groupedItems).map(([category, categoryItems]) => {
-          const CategoryIcon = categoryIcons[category as keyof typeof categoryIcons];
-          
+          const CategoryIcon =
+            categoryIcons[category as keyof typeof categoryIcons];
+
           return (
             <div key={category} className="space-y-3">
               <div className="flex items-center space-x-2">
@@ -335,7 +371,7 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
               </div>
 
               <div className="space-y-2">
-                {categoryItems.map((item) => {
+                {categoryItems.map(item => {
                   const isExpanded = expandedItems.has(item.id);
                   const ItemIcon = item.icon || InformationCircleIcon;
 
@@ -381,9 +417,7 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
                             className="overflow-hidden"
                           >
                             <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                              <div className="pt-4">
-                                {item.details}
-                              </div>
+                              <div className="pt-4">{item.details}</div>
                             </div>
                           </motion.div>
                         )}
@@ -411,9 +445,15 @@ export const ProgressiveDisclosure: React.FC<ProgressiveDisclosureProps> = ({
                 さらなる学習リソース
               </h4>
               <div className="space-y-2 text-sm text-purple-800 dark:text-purple-200">
-                <p>• キーボードショートカット: スペースキーでタイマー開始/停止</p>
-                <p>• データエクスポート: 統計データをCSV形式でダウンロード可能</p>
-                <p>• カスタムテーマ: 設定でダークモード/ライトモードを切り替え</p>
+                <p>
+                  • キーボードショートカット: スペースキーでタイマー開始/停止
+                </p>
+                <p>
+                  • データエクスポート: 統計データをCSV形式でダウンロード可能
+                </p>
+                <p>
+                  • カスタムテーマ: 設定でダークモード/ライトモードを切り替え
+                </p>
                 <p>• PWA対応: ホーム画面に追加してアプリのように使用可能</p>
               </div>
             </div>

@@ -33,7 +33,21 @@
     "vercel:build": "pnpm install --frozen-lockfile && pnpm run build:production",
     "vercel:dev": "vercel dev",
     "size-check": "npx bundlesize",
-    "lighthouse": "npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json"
+    "lighthouse": "npx lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json",
+    "type-check": "tsc --noEmit",
+    "ci:lint": "pnpm run lint && pnpm run format:check",
+    "ci:test": "pnpm run test:unit --run --reporter=verbose",
+    "ci:test:property": "pnpm run test:property --run --reporter=verbose",
+    "ci:test:e2e": "pnpm run test:e2e",
+    "ci:build": "pnpm run type-check && pnpm run build",
+    "ci:security": "pnpm audit --audit-level moderate",
+    "ci:all": "pnpm run ci:lint && pnpm run ci:test && pnpm run ci:test:property && pnpm run ci:build",
+    "lighthouse:local": "lhci autorun",
+    "lighthouse:production": "lhci collect --url=https://pomodoro-timer.vercel.app --numberOfRuns=3 && lhci assert",
+    "monitoring:start": "pnpm run dev & pnpm run lighthouse:local",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject ./dist && sentry-cli sourcemaps upload ./dist",
+    "analytics:setup": "vercel env add VITE_VERCEL_ANALYTICS_ID",
+    "health-check": "curl -f http://localhost:3000/api/health-check || exit 1"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

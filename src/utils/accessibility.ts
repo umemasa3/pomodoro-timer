@@ -99,34 +99,37 @@ export const accessibleColors = {
   // 高コントラスト対応
   primary: {
     light: '#1f2937', // gray-800
-    dark: '#f9fafb',  // gray-50
+    dark: '#f9fafb', // gray-50
   },
   secondary: {
     light: '#374151', // gray-700
-    dark: '#e5e7eb',  // gray-200
+    dark: '#e5e7eb', // gray-200
   },
   success: {
     light: '#065f46', // emerald-800
-    dark: '#10b981',  // emerald-500
+    dark: '#10b981', // emerald-500
   },
   warning: {
     light: '#92400e', // amber-800
-    dark: '#f59e0b',  // amber-500
+    dark: '#f59e0b', // amber-500
   },
   error: {
     light: '#991b1b', // red-800
-    dark: '#ef4444',  // red-500
+    dark: '#ef4444', // red-500
   },
   info: {
     light: '#1e40af', // blue-800
-    dark: '#3b82f6',  // blue-500
+    dark: '#3b82f6', // blue-500
   },
 };
 
 /**
  * コントラスト比を計算
  */
-export const calculateContrastRatio = (color1: string, color2: string): number => {
+export const calculateContrastRatio = (
+  color1: string,
+  color2: string
+): number => {
   const getLuminance = (color: string): number => {
     // 簡易的な輝度計算（実際の実装ではより正確な計算が必要）
     const hex = color.replace('#', '');
@@ -159,7 +162,7 @@ export const checkContrastCompliance = (
   size: 'normal' | 'large' = 'normal'
 ): boolean => {
   const ratio = calculateContrastRatio(foreground, background);
-  
+
   if (level === 'AAA') {
     return size === 'large' ? ratio >= 4.5 : ratio >= 7;
   } else {
@@ -187,7 +190,11 @@ export const FOCUSABLE_SELECTORS = [
  * 要素がフォーカス可能かチェック
  */
 export const isFocusable = (element: HTMLElement): boolean => {
-  if (!element || element.hidden || element.getAttribute('aria-hidden') === 'true') {
+  if (
+    !element ||
+    element.hidden ||
+    element.getAttribute('aria-hidden') === 'true'
+  ) {
     return false;
   }
 
@@ -257,7 +264,9 @@ export const ARIA_ATTRIBUTES = {
   owns: (id: string) => ({ 'aria-owns': id }),
 
   // ライブリージョン
-  live: (politeness: 'off' | 'polite' | 'assertive') => ({ 'aria-live': politeness }),
+  live: (politeness: 'off' | 'polite' | 'assertive') => ({
+    'aria-live': politeness,
+  }),
   atomic: (atomic: boolean) => ({ 'aria-atomic': atomic.toString() }),
   relevant: (relevant: string) => ({ 'aria-relevant': relevant }),
 

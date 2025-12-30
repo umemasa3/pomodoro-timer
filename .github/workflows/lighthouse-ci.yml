@@ -1,0 +1,226 @@
+name: Lighthouse CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 毎日午前2時（UTC）に実行
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  lighthouse-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd pomodoro-timer
+          pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: |
+          cd pomodoro-timer
+          pnpm build
+        env:
+          # Lighthouse CI用の環境変数
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Run Lighthouse CI
+        run: |
+          cd pomodoro-timer
+          lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: pomodoro-timer/lighthouse-reports/
+
+      - name: Comment PR with Lighthouse results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Lighthouse結果ファイルを読み込み
+            const reportsDir = 'pomodoro-timer/lighthouse-reports';
+            if (!fs.existsSync(reportsDir)) {
+              console.log('Lighthouse reports directory not found');
+              return;
+            }
+            
+            const files = fs.readdirSync(reportsDir);
+            const jsonFiles = files.filter(file => file.endsWith('.json'));
+            
+            if (jsonFiles.length === 0) {
+              console.log('No Lighthouse JSON reports found');
+              return;
+            }
+            
+            // 最新のレポートを取得
+            const latestReport = jsonFiles.sort().pop();
+            const reportPath = path.join(reportsDir, latestReport);
+            const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            
+            // スコアを取得
+            const categories = report.categories;
+            const scores = {
+              performance: Math.round(categories.performance.score * 100),
+              accessibility: Math.round(categories.accessibility.score * 100),
+              'best-practices': Math.round(categories['best-practices'].score * 100),
+              seo: Math.round(categories.seo.score * 100),
+              pwa: Math.round(categories.pwa.score * 100),
+            };
+            
+            // Core Web Vitalsを取得
+            const audits = report.audits;
+            const lcp = audits['largest-contentful-paint'].displayValue;
+            const fid = audits['max-potential-fid'].displayValue;
+            const cls = audits['cumulative-layout-shift'].displayValue;
+            
+            // コメント作成
+            const comment = `
+            ## 🚦 Lighthouse CI Results
+            
+            ### Scores
+            | Category | Score |
+            |----------|-------|
+            | 🚀 Performance | ${scores.performance}/100 |
+            | ♿ Accessibility | ${scores.accessibility}/100 |
+            | 🛡️ Best Practices | ${scores['best-practices']}/100 |
+            | 🔍 SEO | ${scores.seo}/100 |
+            | 📱 PWA | ${scores.pwa}/100 |
+            
+            ### Core Web Vitals
+            | Metric | Value |
+            |--------|-------|
+            | LCP (Largest Contentful Paint) | ${lcp} |
+            | FID (First Input Delay) | ${fid} |
+            | CLS (Cumulative Layout Shift) | ${cls} |
+            
+            ### Recommendations
+            ${scores.performance < 90 ? '⚠️ Performance score is below 90. Consider optimizing images, reducing bundle size, or improving server response times.' : '✅ Great performance score!'}
+            ${scores.accessibility < 90 ? '⚠️ Accessibility score is below 90. Review color contrast, alt text, and keyboard navigation.' : '✅ Excellent accessibility!'}
+            ${scores['best-practices'] < 90 ? '⚠️ Best practices score is below 90. Check for security issues and modern web standards compliance.' : '✅ Following best practices!'}
+            
+            ---
+            *Report generated on ${new Date().toISOString()}*
+            `;
+            
+            // PRにコメント投稿
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Check Lighthouse thresholds
+        run: |
+          cd pomodoro-timer
+          # Lighthouse CIの結果をチェック
+          if [ -f "lighthouse-reports/manifest.json" ]; then
+            echo "✅ Lighthouse CI completed successfully"
+            
+            # 結果ファイルから最低スコアをチェック
+            node -e "
+              const fs = require('fs');
+              const manifest = JSON.parse(fs.readFileSync('lighthouse-reports/manifest.json', 'utf8'));
+              const reports = manifest.map(item => JSON.parse(fs.readFileSync(item.jsonPath, 'utf8')));
+              
+              let failed = false;
+              reports.forEach((report, index) => {
+                const scores = {
+                  performance: report.categories.performance.score * 100,
+                  accessibility: report.categories.accessibility.score * 100,
+                  'best-practices': report.categories['best-practices'].score * 100,
+                  seo: report.categories.seo.score * 100
+                };
+                
+                console.log(\`Report \${index + 1} scores:\`, scores);
+                
+                // 閾値チェック
+                if (scores.performance < 80) {
+                  console.error('❌ Performance score below threshold (80)');
+                  failed = true;
+                }
+                if (scores.accessibility < 90) {
+                  console.error('❌ Accessibility score below threshold (90)');
+                  failed = true;
+                }
+                if (scores['best-practices'] < 90) {
+                  console.error('❌ Best practices score below threshold (90)');
+                  failed = true;
+                }
+              });
+              
+              if (failed) {
+                process.exit(1);
+              } else {
+                console.log('✅ All Lighthouse thresholds passed');
+              }
+            "
+          else
+            echo "❌ Lighthouse reports not found"
+            exit 1
+          fi
+
+  # 本番環境のパフォーマンス監視（本番URLに対して実行）
+  production-lighthouse:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: lighthouse-ci
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.12.x
+
+      - name: Run Lighthouse on production
+        run: |
+          # 本番URLに対してLighthouse実行
+          lhci collect --url=https://pomodoro-timer.vercel.app --numberOfRuns=3
+          lhci assert --preset=lighthouse:recommended
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload production Lighthouse reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: production-lighthouse-reports
+          path: .lighthouseci/
+
+      - name: Notify on performance regression
+        if: failure()
+        run: |
+          echo "🚨 Performance regression detected on production!"
+          echo "Please review the Lighthouse reports and consider rolling back if necessary."
