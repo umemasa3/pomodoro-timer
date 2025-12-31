@@ -106,6 +106,33 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
 
         try {
+          // テスト環境の場合はモック認証を使用
+          if (import.meta.env.VITE_APP_ENV === 'test') {
+            const { mockAuth } = await import('../services/supabase-mock');
+            const { data, error } = await mockAuth.signUp(
+              email,
+              password,
+              userData
+            );
+
+            if (error) {
+              set({ isLoading: false });
+              return {
+                success: false,
+                error: error.message || 'ユーザー登録に失敗しました',
+              };
+            }
+
+            if (data.user) {
+              set({
+                user: data.user as User,
+                isAuthenticated: true,
+                isLoading: false,
+              });
+              return { success: true };
+            }
+          }
+
           const { data, error } = await auth.signUp(email, password, userData);
 
           if (error) {
@@ -198,13 +225,59 @@ export const useAuthStore = create<AuthState>()(
             : 0;
           return {
             success: false,
-            error: `アカウントがロックされています。${remainingTime}分後に再試行してください。`,
+            error: `アカウントがロックされています。あと${remainingTime}分後に再試行してください。`,
           };
         }
 
         set({ isLoading: true });
 
         try {
+          // テスト環境の場合はモック認証を使用
+          if (import.meta.env.VITE_APP_ENV === 'test') {
+            const { mockAuth } = await import('../services/supabase-mock');
+            const { data, error } = await mockAuth.signInWithPassword({
+              email,
+              password,
+            });
+
+            if (error) {
+              incrementLoginAttempts();
+              const { loginAttempts } = get();
+
+              if (loginAttempts >= 5) {
+                lockAccount();
+                set({ isLoading: false });
+                return {
+                  success: false,
+                  error:
+                    'ログイン試行回数が上限に達しました。アカウントがロックされました。',
+                };
+              }
+
+              set({ isLoading: false });
+              return {
+                success: false,
+                error: error.message || 'ログインに失敗しました',
+              };
+            }
+
+            if (data.user) {
+              resetLoginAttempts();
+              set({
+                user: data.user as User,
+                isAuthenticated: true,
+                isLoading: false,
+                rememberMe,
+                sessionExpiry: rememberMe
+                  ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30日
+                  : new Date(Date.now() + 24 * 60 * 60 * 1000), // 24時間
+              });
+
+              return { success: true };
+            }
+          }
+
+          // 本番環境での認証処理
           const { data, error } = await auth.signIn(email, password);
 
           if (error) {
@@ -622,6 +695,16 @@ export const useAuthStore = create<AuthState>()(
               await import('../services/session-manager');
             sessionManager.startSessionMonitoring();
 
+            return;
+          }
+
+          // テスト環境の場合は認証なしで開始
+          if (import.meta.env.VITE_APP_ENV === 'test') {
+            set({
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+            });
             return;
           }
 

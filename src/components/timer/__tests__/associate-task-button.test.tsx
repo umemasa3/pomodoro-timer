@@ -22,7 +22,7 @@ describe('AssociateTaskButton', () => {
 
   it('スタンドアロンモードで実行中、タスクなしの場合にボタンが表示される', () => {
     mockUseTimerStore.mockReturnValue({
-      mode: 'standalone',
+      sessionType: 'pomodoro',
       isRunning: true,
       currentTask: null,
       setShowTaskSelection: mockSetShowTaskSelection,
@@ -34,9 +34,9 @@ describe('AssociateTaskButton', () => {
     expect(screen.getByText('タスクを関連付ける')).toBeInTheDocument();
   });
 
-  it('タスクベースモードの場合はボタンが表示されない', () => {
+  it('休憩セッションの場合はボタンが表示されない', () => {
     mockUseTimerStore.mockReturnValue({
-      mode: 'task-based',
+      sessionType: 'short_break',
       isRunning: true,
       currentTask: null,
       setShowTaskSelection: mockSetShowTaskSelection,
@@ -49,11 +49,11 @@ describe('AssociateTaskButton', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('停止中の場合はボタンが表示されない', () => {
+  it('タスクが既に関連付けられている場合はボタンが表示されない', () => {
     mockUseTimerStore.mockReturnValue({
-      mode: 'standalone',
-      isRunning: false,
-      currentTask: null,
+      sessionType: 'pomodoro',
+      isRunning: true,
+      currentTask: { id: '1', title: 'テストタスク' },
       setShowTaskSelection: mockSetShowTaskSelection,
     } as any);
 
@@ -81,7 +81,7 @@ describe('AssociateTaskButton', () => {
 
   it('ボタンクリックでタスク選択ダイアログが開く', () => {
     mockUseTimerStore.mockReturnValue({
-      mode: 'standalone',
+      sessionType: 'pomodoro',
       isRunning: true,
       currentTask: null,
       setShowTaskSelection: mockSetShowTaskSelection,

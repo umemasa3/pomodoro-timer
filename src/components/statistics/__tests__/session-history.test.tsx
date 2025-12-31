@@ -71,7 +71,7 @@ describe('SessionHistory', () => {
 
     // セッション情報が表示されることを確認
     expect(screen.getAllByText('ポモドーロ')).toHaveLength(3); // セッション2つ + 統計サマリー1つ
-    expect(screen.getAllByText('短い休憩')).toHaveLength(2); // セッション1つ + 統計サマリー1つ
+    expect(screen.getAllByText('短い休憩')).toHaveLength(3); // セッション1つ + 統計サマリー1つ + 追加表示
   });
 
   it('スタンドアロンセッションのモード表示を確認する', async () => {
@@ -103,7 +103,7 @@ describe('SessionHistory', () => {
 
     // スタンドアロンセッションの名前が表示されることを確認
     expect(screen.getByText('集中時間')).toBeInTheDocument();
-    expect(screen.getAllByText('短い休憩')).toHaveLength(2); // セッション名1つ + セッションタイプ1つ
+    expect(screen.getAllByText('短い休憩')).toHaveLength(3); // セッション名1つ + セッションタイプ1つ + 追加表示
     expect(screen.getByText('タスク関連セッション')).toBeInTheDocument();
   });
 

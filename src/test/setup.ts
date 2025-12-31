@@ -92,3 +92,92 @@ document.createElement = vi.fn().mockImplementation((tagName: string) => {
   }
   return originalCreateElement.call(document, tagName);
 });
+
+// Heroiconsのモック設定
+vi.mock('@heroicons/react/24/outline', async () => {
+  const { createElement } = await import('react');
+  return {
+    XMarkIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'x-mark-icon',
+      })
+    ),
+    LinkIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', { className, ...props, 'data-testid': 'link-icon' })
+    ),
+    ArrowPathIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'arrow-path-icon',
+      })
+    ),
+    ExclamationTriangleIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'exclamation-triangle-icon',
+      })
+    ),
+    CheckCircleIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'check-circle-icon',
+      })
+    ),
+    InformationCircleIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'information-circle-icon',
+      })
+    ),
+    PlusIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', { className, ...props, 'data-testid': 'plus-icon' })
+    ),
+    PencilIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'pencil-icon',
+      })
+    ),
+    TrashIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', { className, ...props, 'data-testid': 'trash-icon' })
+    ),
+    WifiIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', { className, ...props, 'data-testid': 'wifi-icon' })
+    ),
+    Cog6ToothIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'cog-6-tooth-icon',
+      })
+    ),
+    ChartBarIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'chart-bar-icon',
+      })
+    ),
+    ClockIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'clock-icon',
+      })
+    ),
+    BellIcon: vi.fn(({ className, ...props }) =>
+      createElement('svg', {
+        className,
+        ...props,
+        'data-testid': 'bell-icon',
+      })
+    ),
+  };
+});

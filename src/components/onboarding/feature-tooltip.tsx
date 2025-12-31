@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   InformationCircleIcon,
@@ -36,8 +42,11 @@ export const FeatureTooltip: React.FC<FeatureTooltipProps> = ({
   const timeoutRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ユニークIDの生成
-  const tooltipId = `tooltip-${featureId || Math.random().toString(36).substr(2, 9)}`;
+  // ユニークIDの生成（useMemoで安定化）
+  const tooltipId = useMemo(() => {
+    // featureIdがある場合はそれを使用、ない場合は固定値を使用
+    return `tooltip-${featureId || 'default'}`;
+  }, [featureId]);
   const descriptionId = `${tooltipId}-description`;
 
   // 初回訪問時の表示制御
@@ -147,10 +156,6 @@ export const FeatureTooltip: React.FC<FeatureTooltipProps> = ({
   };
 
   const IconComponent = getIcon();
-
-  // ユニークIDの生成
-  const tooltipId = `tooltip-${featureId || Math.random().toString(36).substr(2, 9)}`;
-  const descriptionId = `${tooltipId}-description`;
 
   return (
     <div

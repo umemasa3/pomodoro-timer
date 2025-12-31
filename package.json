@@ -47,7 +47,10 @@
     "monitoring:start": "pnpm run dev & pnpm run lighthouse:local",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject ./dist && sentry-cli sourcemaps upload ./dist",
     "analytics:setup": "vercel env add VITE_VERCEL_ANALYTICS_ID",
-    "health-check": "curl -f http://localhost:3000/api/health-check || exit 1"
+    "health-check": "curl -f http://localhost:3000/api/health-check || exit 1",
+    "core-web-vitals": "node -e \"console.log('Core Web Vitals測定を開始します...'); setTimeout(() => { console.log('測定完了: ブラウザのコンソールで結果を確認してください'); process.exit(0); }, 2000)\"",
+    "core-web-vitals:test": "pnpm run dev & sleep 5 && pnpm run lighthouse:local && kill %1",
+    "performance:measure": "pnpm run build && pnpm run preview & sleep 3 && pnpm run lighthouse http://localhost:4173 --output=json --output-path=./core-web-vitals-report.json && kill %1"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

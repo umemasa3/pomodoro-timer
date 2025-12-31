@@ -1,5 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from '@testing-library/react';
 import { CSVExport } from '../csv-export';
 import { DatabaseService } from '../../../services/database-service';
 
@@ -10,42 +16,23 @@ vi.mock('../../../services/database-service', () => ({
   },
 }));
 
-// document.createElementのモック（無限再帰を防ぐ）
-const mockCreateElement = vi.fn();
-Object.defineProperty(document, 'createElement', {
-  value: mockCreateElement,
-  writable: true,
-});
-
 describe('CSVExport', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // DOM環境の設定
-    document.body.innerHTML = '<div id="root"></div>';
+    // DOM環境をクリーンアップ
+    document.body.innerHTML = '';
 
-    // document.createElementのモック設定（無限再帰を防ぐ）
-    mockCreateElement.mockImplementation((tagName: string) => {
-      // 実際のDOM要素を作成せず、モックオブジェクトを返す
-      const mockElement = {
-        tagName: tagName.toUpperCase(),
-        setAttribute: vi.fn(),
-        click: vi.fn(),
-        style: { visibility: '' },
-        download: undefined,
-      };
-      return mockElement as any;
-    });
+    // テスト用のルート要素を作成
+    const root = document.createElement('div');
+    root.id = 'test-root';
+    document.body.appendChild(root);
+  });
 
-    // document.bodyのモック
-    document.body.appendChild = vi.fn();
-    document.body.removeChild = vi.fn();
-
-    // URL.createObjectURLとrevokeObjectURLのモック
-    (globalThis as any).URL = {
-      createObjectURL: vi.fn(() => 'mock-url'),
-      revokeObjectURL: vi.fn(),
-    };
+  afterEach(() => {
+    cleanup();
+    // DOM環境をクリーンアップ
+    document.body.innerHTML = '';
   });
 
   it('CSVエクスポートボタンを正しく表示する', () => {

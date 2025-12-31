@@ -51,12 +51,12 @@ describe('ComparisonAnalysis', () => {
       expect(screen.getByText('週間比較')).toBeInTheDocument();
     });
 
-    // 週間比較データの表示確認
+    // 週間比較データの表示確認（数値と単位を別々に確認）
     expect(screen.getByText('15')).toBeInTheDocument();
     expect(screen.getByText('12')).toBeInTheDocument();
     expect(screen.getAllByText('+25%')).toHaveLength(3); // 週間の3項目すべて
 
-    // 月間比較データの表示確認
+    // 月間比較データの表示確認（数値と単位を別々に確認）
     expect(screen.getByText('月間比較')).toBeInTheDocument();
     expect(screen.getByText('60')).toBeInTheDocument();
     expect(screen.getByText('45')).toBeInTheDocument();

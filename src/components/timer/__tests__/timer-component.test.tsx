@@ -156,6 +156,41 @@ vi.mock('@heroicons/react/24/outline', () => ({
       <title>Settings</title>
     </svg>
   ),
+  XMarkIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="x-mark-icon">
+      <title>Close</title>
+    </svg>
+  ),
+  LinkIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="link-icon">
+      <title>Link</title>
+    </svg>
+  ),
+  PlusIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="plus-icon">
+      <title>Plus</title>
+    </svg>
+  ),
+  PencilIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="pencil-icon">
+      <title>Edit</title>
+    </svg>
+  ),
+  TrashIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="trash-icon">
+      <title>Delete</title>
+    </svg>
+  ),
+  ListBulletIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="list-bullet-icon">
+      <title>List</title>
+    </svg>
+  ),
+  ClockIcon: ({ className }: { className?: string }) => (
+    <svg className={className} data-testid="clock-icon">
+      <title>Clock</title>
+    </svg>
+  ),
 }));
 
 describe('TimerComponent', () => {

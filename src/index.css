@@ -3,13 +3,54 @@
 @tailwind utilities;
 
 @layer base {
+  /* Core Web Vitals最適化: フォントの事前読み込み */
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    font-display: swap; /* フォント読み込み最適化 */
   }
 
   body {
     @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
     @apply transition-colors duration-300;
+    /* CLS防止: 最小高さを設定 */
+    min-height: 100vh;
+    /* LCP最適化: 重要なスタイルを最初に適用 */
+    contain: layout style paint;
+  }
+
+  /* Core Web Vitals最適化: 重要な要素のサイズ固定 */
+  .critical-content {
+    min-height: 400px;
+    contain: layout;
+  }
+
+  /* CLS防止: 画像のアスペクト比固定 */
+  .aspect-ratio-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+  }
+
+  .aspect-ratio-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* FID最適化: インタラクティブ要素の応答性向上 */
+  button,
+  [role='button'] {
+    touch-action: manipulation;
+    user-select: none;
+  }
+
+  /* LCP最適化: 重要なテキストの可視性確保 */
+  .text-critical {
+    font-display: block;
+    text-rendering: optimizeSpeed;
   }
 
   /* フォントサイズ設定 */
@@ -44,6 +85,14 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  /* Core Web Vitals最適化: アニメーションの最適化 */
+  @media (prefers-reduced-motion: no-preference) {
+    .optimized-animation {
+      will-change: transform, opacity;
+      transform: translateZ(0); /* ハードウェアアクセラレーション */
+    }
   }
 
   /* カラーモード別のCSS変数 */

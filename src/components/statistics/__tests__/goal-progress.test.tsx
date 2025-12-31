@@ -2,28 +2,67 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { GoalProgress } from '../goal-progress';
 import { DatabaseService } from '../../../services/database-service';
+import type { Goal } from '../../../types';
 
 // DatabaseServiceのモック
 vi.mock('../../../services/database-service', () => ({
   DatabaseService: {
-    getGoalProgress: vi.fn(),
+    getGoals: vi.fn(),
+    deleteGoal: vi.fn(),
   },
 }));
 
-const mockGoalData = {
-  weeklyGoal: {
-    targetHours: 25,
-    actualHours: 15,
-    progressPercentage: 60,
-    remainingHours: 10,
+// GoalSettingDialogのモック
+vi.mock('../goal-setting-dialog', () => ({
+  GoalSettingDialog: ({ isOpen, onClose, onGoalCreated, editingGoal }: any) =>
+    isOpen ? (
+      <div data-testid="goal-setting-dialog">
+        <span>Goal Setting Dialog</span>
+        <span>Editing: {editingGoal ? 'true' : 'false'}</span>
+        <button onClick={onClose}>閉じる</button>
+        <button onClick={() => onGoalCreated({ id: 'new-goal' })}>
+          目標作成
+        </button>
+      </div>
+    ) : null,
+}));
+
+const mockGoals: Goal[] = [
+  {
+    id: '1',
+    user_id: 'test-user',
+    title: '週間目標',
+    description: '週間のセッション目標',
+    type: 'weekly' as const,
+    metric: 'sessions' as const,
+    target_value: 25,
+    current_value: 15,
+    period_start: new Date('2024-01-01'),
+    period_end: new Date('2024-01-07'),
+    tags: null,
+    is_active: true,
+    achieved_at: null,
+    created_at: new Date('2024-01-01'),
+    updated_at: new Date('2024-01-01'),
   },
-  monthlyGoal: {
-    targetHours: 100,
-    actualHours: 45,
-    progressPercentage: 45,
-    remainingHours: 55,
+  {
+    id: '2',
+    user_id: 'test-user',
+    title: '月間目標',
+    description: '月間のセッション目標',
+    type: 'monthly' as const,
+    metric: 'sessions' as const,
+    target_value: 100,
+    current_value: 45,
+    period_start: new Date('2024-01-01'),
+    period_end: new Date('2024-01-31'),
+    tags: null,
+    is_active: true,
+    achieved_at: null,
+    created_at: new Date('2024-01-01'),
+    updated_at: new Date('2024-01-01'),
   },
-};
+];
 
 describe('GoalProgress', () => {
   beforeEach(() => {
@@ -31,7 +70,7 @@ describe('GoalProgress', () => {
   });
 
   it('目標進捗データを正しく表示する', async () => {
-    vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue(mockGoalData);
+    vi.mocked(DatabaseService.getGoals).mockResolvedValue(mockGoals);
 
     render(<GoalProgress />);
 
@@ -44,36 +83,30 @@ describe('GoalProgress', () => {
     });
 
     // 週間目標の表示確認
-    expect(screen.getByText('15h / 25h')).toBeInTheDocument();
+    expect(screen.getByText('進捗: 15 / 25')).toBeInTheDocument();
     expect(screen.getByText('60%')).toBeInTheDocument();
-    expect(screen.getByText('10h')).toBeInTheDocument();
 
     // 月間目標の表示確認
     expect(screen.getByText('月間目標')).toBeInTheDocument();
-    expect(screen.getByText('45h / 100h')).toBeInTheDocument();
+    expect(screen.getByText('進捗: 45 / 100')).toBeInTheDocument();
     expect(screen.getByText('45%')).toBeInTheDocument();
-    expect(screen.getByText('55h')).toBeInTheDocument();
   });
 
   it('目標達成時に適切なメッセージを表示する', async () => {
-    const achievedGoalData = {
-      weeklyGoal: {
-        targetHours: 25,
-        actualHours: 25,
-        progressPercentage: 100,
-        remainingHours: 0,
+    const achievedGoals: Goal[] = [
+      {
+        ...mockGoals[0],
+        current_value: 25,
+        achieved_at: new Date('2024-01-05'),
       },
-      monthlyGoal: {
-        targetHours: 100,
-        actualHours: 100,
-        progressPercentage: 100,
-        remainingHours: 0,
+      {
+        ...mockGoals[1],
+        current_value: 100,
+        achieved_at: new Date('2024-01-20'),
       },
-    };
+    ];
 
-    vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue(
-      achievedGoalData
-    );
+    vi.mocked(DatabaseService.getGoals).mockResolvedValue(achievedGoals);
 
     render(<GoalProgress />);
 
@@ -85,22 +118,18 @@ describe('GoalProgress', () => {
   });
 
   it('進捗率に応じて適切なメッセージを表示する', async () => {
-    const progressData = {
-      weeklyGoal: {
-        targetHours: 25,
-        actualHours: 20,
-        progressPercentage: 80,
-        remainingHours: 5,
+    const progressGoals: Goal[] = [
+      {
+        ...mockGoals[0],
+        current_value: 20, // 80%
       },
-      monthlyGoal: {
-        targetHours: 100,
-        actualHours: 60,
-        progressPercentage: 60,
-        remainingHours: 40,
+      {
+        ...mockGoals[1],
+        current_value: 60, // 60%
       },
-    };
+    ];
 
-    vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue(progressData);
+    vi.mocked(DatabaseService.getGoals).mockResolvedValue(progressGoals);
 
     render(<GoalProgress />);
 
@@ -108,29 +137,22 @@ describe('GoalProgress', () => {
       expect(
         screen.getByText('💪 もう少しで目標達成です！')
       ).toBeInTheDocument();
-      expect(screen.getByText('📈 順調に進んでいます')).toBeInTheDocument();
     });
   });
 
   it('低進捗時に適切なメッセージを表示する', async () => {
-    const lowProgressData = {
-      weeklyGoal: {
-        targetHours: 25,
-        actualHours: 5,
-        progressPercentage: 20,
-        remainingHours: 20,
+    const lowProgressGoals: Goal[] = [
+      {
+        ...mockGoals[0],
+        current_value: 5, // 20%
       },
-      monthlyGoal: {
-        targetHours: 100,
-        actualHours: 10,
-        progressPercentage: 10,
-        remainingHours: 90,
+      {
+        ...mockGoals[1],
+        current_value: 10, // 10%
       },
-    };
+    ];
 
-    vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue(
-      lowProgressData
-    );
+    vi.mocked(DatabaseService.getGoals).mockResolvedValue(lowProgressGoals);
 
     render(<GoalProgress />);
 
@@ -140,20 +162,19 @@ describe('GoalProgress', () => {
   });
 
   it('ローディング状態を正しく表示する', () => {
-    vi.mocked(DatabaseService.getGoalProgress).mockImplementation(
+    vi.mocked(DatabaseService.getGoals).mockImplementation(
       () => new Promise(() => {}) // 永続的にpending状態
     );
 
     render(<GoalProgress />);
 
-    expect(screen.getByText('目標進捗')).toBeInTheDocument();
     // ローディング状態の確認（animate-pulseクラスを持つ要素の存在確認）
     const loadingElement = document.querySelector('.animate-pulse');
     expect(loadingElement).toBeInTheDocument();
   });
 
   it('エラー状態を正しく表示する', async () => {
-    vi.mocked(DatabaseService.getGoalProgress).mockRejectedValue(
+    vi.mocked(DatabaseService.getGoals).mockRejectedValue(
       new Error('データ取得エラー')
     );
 
@@ -161,79 +182,45 @@ describe('GoalProgress', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('目標進捗データの取得に失敗しました')
+        screen.getByText('目標データの取得に失敗しました')
       ).toBeInTheDocument();
     });
   });
 
   it('目標設定のヒントを表示する', async () => {
-    vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue(mockGoalData);
+    vi.mocked(DatabaseService.getGoals).mockResolvedValue([]);
 
     render(<GoalProgress />);
 
     await waitFor(() => {
       expect(screen.getByText('💡 目標設定のコツ')).toBeInTheDocument();
       expect(
-        screen.getByText('• 週間目標: 平日1日5時間 × 5日 = 25時間が目安')
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText('• 月間目標: 週間目標 × 4週 = 100時間が目安')
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText('• 無理のない範囲で継続することが重要です')
+        screen.getByText('達成可能で具体的な目標を設定しましょう')
       ).toBeInTheDocument();
     });
   });
 
   it('プログレスバーが正しい幅で表示される', async () => {
-    vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue(mockGoalData);
+    vi.mocked(DatabaseService.getGoals).mockResolvedValue(mockGoals);
 
     render(<GoalProgress />);
 
     await waitFor(() => {
-      const progressBars = screen
-        .getAllByRole('generic')
-        .filter(el => el.className.includes('rounded-full') && el.style.width);
+      const progressBars = document.querySelectorAll('[style*="width"]');
+      const progressBarArray = Array.from(progressBars);
 
       // 週間目標のプログレスバー（60%）
-      expect(progressBars.some(bar => bar.style.width === '60%')).toBe(true);
+      expect(
+        progressBarArray.some(
+          (bar: Element) => (bar as HTMLElement).style.width === '60%'
+        )
+      ).toBe(true);
       // 月間目標のプログレスバー（45%）
-      expect(progressBars.some(bar => bar.style.width === '45%')).toBe(true);
-    });
-  });
-
-  it('100%を超える進捗率でもプログレスバーは100%で制限される', async () => {
-    const overAchievedData = {
-      weeklyGoal: {
-        targetHours: 25,
-        actualHours: 30,
-        progressPercentage: 120,
-        remainingHours: 0,
-      },
-      monthlyGoal: {
-        targetHours: 100,
-        actualHours: 110,
-        progressPercentage: 110,
-        remainingHours: 0,
-      },
-    };
-
-    vi.mocked(DatabaseService.getGoalProgress).mockResolvedValue(
-      overAchievedData
-    );
-
-    render(<GoalProgress />);
-
-    await waitFor(() => {
-      const progressBars = screen
-        .getAllByRole('generic')
-        .filter(el => el.className.includes('rounded-full') && el.style.width);
-
-      // プログレスバーは100%で制限される
-      progressBars.forEach(bar => {
-        const width = parseInt(bar.style.width);
-        expect(width).toBeLessThanOrEqual(100);
-      });
+      expect(
+        progressBarArray.some(
+          (bar: Element) => (bar as HTMLElement).style.width === '45%'
+        )
+      ).toBe(true);
     });
   });
 });

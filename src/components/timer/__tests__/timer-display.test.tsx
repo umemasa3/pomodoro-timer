@@ -55,7 +55,7 @@ describe('TimerDisplay', () => {
     it('ポモドーロセッションのラベルが表示される', () => {
       render(<TimerDisplay {...defaultProps} />);
 
-      expect(screen.getByText('ポモドーロ')).toBeInTheDocument();
+      expect(screen.getByText('集中時間')).toBeInTheDocument();
     });
 
     it('短い休憩セッションのラベルが表示される', () => {
@@ -331,7 +331,7 @@ describe('TimerDisplay', () => {
     it('セッションラベルが適切に表示される', () => {
       render(<TimerDisplay {...defaultProps} />);
 
-      const sessionLabel = screen.getByText('ポモドーロ');
+      const sessionLabel = screen.getByText('集中時間');
       expect(sessionLabel).toBeInTheDocument();
     });
 

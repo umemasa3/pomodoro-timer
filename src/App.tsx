@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { AuthGuard } from './components/auth';
 import { AuthPage } from './pages/auth-page';
-import { StatisticsPage } from './pages/statistics-page';
-import { TasksPage } from './pages/tasks-page';
 import { TimerComponent } from './components/timer';
 import { SyncStatusIndicator } from './components/sync-status-indicator';
 import { ThemeToggle } from './components/ui/theme-toggle';
 import { ErrorBoundary } from './components/error-boundary';
 import { ProductionErrorBoundary } from './components/error-boundary-production';
-import { MonitoringDashboard } from './components/monitoring-dashboard';
-import { OperationsDashboard } from './components/operations-dashboard';
+import {
+  LazyComponents,
+  LayoutStabilizer,
+  TaskScheduler,
+  initializePerformanceOptimizations,
+} from './utils/performance-optimization';
+import { CoreWebVitalsMonitor } from './components/core-web-vitals-monitor';
 import {
   PWAUpdatePrompt,
   PWAInstallPrompt,
@@ -17,8 +20,6 @@ import {
   OfflineNotification,
 } from './components/pwa';
 import {
-  OnboardingTour,
-  SetupWizard,
   TimerTooltip,
   TaskTooltip,
   StatisticsTooltip,
@@ -33,6 +34,7 @@ import { useAuthStore } from './stores/auth-store';
 import { useTimerStore } from './stores/timer-store';
 import { useThemeStore } from './stores/theme-store';
 import { useKeyboardNavigation } from './hooks/use-keyboard-navigation';
+import { useResponseTimeMonitor } from './hooks/use-response-time-monitor';
 import { errorHandler } from './services/error-handler';
 import { monitoringService } from './services/monitoring-service';
 import { ErrorMonitoringService } from './services/error-monitoring';
@@ -45,10 +47,33 @@ import {
   ArrowRightOnRectangleIcon,
   SparklesIcon,
   CogIcon,
+  BoltIcon,
 } from '@heroicons/react/24/outline';
 import './index.css';
 
 type PageType = 'timer' | 'tasks' | 'statistics';
+
+// ローディングコンポーネント（CLS最適化）
+const PageLoadingFallback = ({ page }: { page: string }) => (
+  <div
+    className="min-h-screen flex items-center justify-center"
+    style={{ minHeight: '600px' }} // CLS防止のための固定高さ
+  >
+    <motion.div
+      className="text-center"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div
+        className="w-12 h-12 border-4 border-pomodoro-200 border-t-pomodoro-500 rounded-full mx-auto mb-4"
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+      />
+      <p className="text-gray-600 dark:text-gray-400">{page}を読み込み中...</p>
+    </motion.div>
+  </div>
+);
 
 function App() {
   const { isAuthenticated, user, signOut, isLoading, initializeAuth } =
@@ -58,6 +83,16 @@ function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('timer');
   const [showMonitoringDashboard, setShowMonitoringDashboard] = useState(false);
   const [showOperationsDashboard, setShowOperationsDashboard] = useState(false);
+  const [showResponseTimeDashboard, setShowResponseTimeDashboard] =
+    useState(false);
+
+  // 応答時間監視Hook
+  useResponseTimeMonitor({
+    enabled: true,
+    componentName: 'App',
+    trackPageTransitions: true,
+    trackComponentRender: true,
+  });
 
   // オンボーディング状態管理
   const { showSetupWizard, showTour, completeSetup, completeTour } =
@@ -74,16 +109,22 @@ function App() {
 
   // アプリ起動時に認証状態とテーマを初期化
   useEffect(() => {
+    // パフォーマンス最適化の初期化（最優先）
+    initializePerformanceOptimizations();
+
     initializeAuth();
     initializeTheme();
 
-    // エラーハンドリングと監視サービスを初期化
-    void errorHandler; // シングルトンを初期化
-    monitoringService.startMonitoring();
+    // エラーハンドリングと監視サービスを初期化（非同期）
+    TaskScheduler.scheduleTask(() => {
+      void errorHandler; // シングルトンを初期化
+      monitoringService.startMonitoring();
+    }, 'low');
 
     // クリーンアップ
     return () => {
       monitoringService.stopMonitoring();
+      LayoutStabilizer.disconnect();
     };
   }, [initializeAuth, initializeTheme]);
 
@@ -191,36 +232,40 @@ function App() {
     const pageTransition = {
       type: 'tween' as const,
       ease: 'anticipate' as const,
-      duration: 0.4,
+      duration: 0.3, // 短縮してFID改善
     };
 
     switch (currentPage) {
       case 'tasks':
         return (
-          <motion.div
-            key="tasks"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-          >
-            <TasksPage />
-          </motion.div>
+          <Suspense fallback={<PageLoadingFallback page="タスク管理" />}>
+            <motion.div
+              key="tasks"
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+            >
+              <LazyComponents.TasksPage />
+            </motion.div>
+          </Suspense>
         );
       case 'statistics':
         return (
-          <motion.div
-            key="statistics"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-            data-testid="statistics-page"
-          >
-            <StatisticsPage />
-          </motion.div>
+          <Suspense fallback={<PageLoadingFallback page="統計・分析" />}>
+            <motion.div
+              key="statistics"
+              initial="initial"
+              animate="in"
+              exit="out"
+              variants={pageVariants}
+              transition={pageTransition}
+              data-testid="statistics-page"
+            >
+              <LazyComponents.StatisticsPage />
+            </motion.div>
+          </Suspense>
         );
       case 'timer':
       default:
@@ -233,6 +278,7 @@ function App() {
             variants={pageVariants}
             transition={pageTransition}
             className="min-h-screen"
+            style={{ minHeight: '600px' }} // CLS防止
           >
             <div className="container mx-auto px-4 py-6 md:py-12">
               <main
@@ -245,7 +291,7 @@ function App() {
                   className="text-center mb-8 md:mb-12"
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
+                  transition={{ duration: 0.4 }}
                 >
                   <h1 className="text-2xl md:text-4xl font-bold gradient-text mb-2 md:mb-4">
                     ポモドーロタイマー
@@ -267,9 +313,10 @@ function App() {
                   className="mt-8 md:mt-12 card-glass p-4 md:p-6 rounded-2xl"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
+                  transition={{ delay: 0.2, duration: 0.4 }}
                   role="region"
                   aria-label="認証システム情報"
+                  style={{ minHeight: '200px' }} // CLS防止
                 >
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
@@ -471,6 +518,16 @@ function App() {
                             <CogIcon className="w-4 h-4" />
                             <span className="hidden sm:block">運用</span>
                           </motion.button>
+                          <motion.button
+                            onClick={() => setShowResponseTimeDashboard(true)}
+                            className="flex items-center space-x-1 text-xs md:text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            title="応答時間監視 (2秒以内目標)"
+                          >
+                            <BoltIcon className="w-4 h-4" />
+                            <span className="hidden sm:block">応答時間</span>
+                          </motion.button>
                         </>
                       )}
 
@@ -517,30 +574,49 @@ function App() {
                 </AnimatePresence>
               </main>
 
+              {/* 応答時間ダッシュボード */}
+              <Suspense fallback={<div>Loading...</div>}>
+                <LazyComponents.ResponseTimeDashboard
+                  isOpen={showResponseTimeDashboard}
+                  onClose={() => setShowResponseTimeDashboard(false)}
+                />
+              </Suspense>
+
               {/* 監視ダッシュボード */}
-              <MonitoringDashboard
-                isOpen={showMonitoringDashboard}
-                onClose={() => setShowMonitoringDashboard(false)}
-              />
+              <Suspense fallback={<div>Loading...</div>}>
+                <LazyComponents.MonitoringDashboard
+                  isOpen={showMonitoringDashboard}
+                  onClose={() => setShowMonitoringDashboard(false)}
+                />
+              </Suspense>
 
               {/* 運用ダッシュボード */}
-              <OperationsDashboard
-                isOpen={showOperationsDashboard}
-                onClose={() => setShowOperationsDashboard(false)}
-              />
+              <Suspense fallback={<div>Loading...</div>}>
+                <LazyComponents.OperationsDashboard
+                  isOpen={showOperationsDashboard}
+                  onClose={() => setShowOperationsDashboard(false)}
+                />
+              </Suspense>
 
               {/* オンボーディング関連 */}
-              <SetupWizard
-                isOpen={showSetupWizard}
-                onClose={() => completeSetup()}
-                onComplete={handleSetupComplete}
-              />
+              <Suspense fallback={<div>Loading...</div>}>
+                <LazyComponents.SetupWizard
+                  isOpen={showSetupWizard}
+                  onClose={() => completeSetup()}
+                  onComplete={handleSetupComplete}
+                />
+              </Suspense>
 
-              <OnboardingTour
-                isOpen={showTour}
-                onClose={() => completeTour()}
-                onComplete={handleTourComplete}
-              />
+              <Suspense fallback={<div>Loading...</div>}>
+                <LazyComponents.OnboardingTour
+                  isOpen={showTour}
+                  onClose={() => completeTour()}
+                  onComplete={handleTourComplete}
+                />
+              </Suspense>
+
+              {/* Core Web Vitals監視（開発環境のみ） */}
+              <CoreWebVitalsMonitor />
 
               {/* 装飾的な背景要素 */}
               <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">

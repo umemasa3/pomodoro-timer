@@ -5,6 +5,26 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
+    <!-- Core Web Vitals最適化: 重要なリソースのプリロード -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preload" href="/src/index.css" as="style" />
+    
+    <!-- Core Web Vitals最適化: フォントのプリロード -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Core Web Vitals最適化: 重要な画像のプリロード -->
+    <link rel="preload" href="/pwa-192x192.png" as="image" type="image/png" />
+    <link rel="preload" href="/apple-touch-icon.png" as="image" type="image/png" />
+    
+    <!-- Core Web Vitals最適化: DNS プリフェッチ -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    
+    <!-- Core Web Vitals最適化: モジュールプリロード -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+    <link rel="modulepreload" href="/src/App.tsx" />
+    
     <!-- PWA メタタグ -->
     <meta name="theme-color" content="#ef4444" />
     <meta name="description" content="効率的な時間管理のためのポモドーロテクニックタイマー" />
@@ -19,10 +39,163 @@
     <meta name="msapplication-TileColor" content="#ef4444" />
     <meta name="msapplication-tap-highlight" content="no" />
     
+    <!-- Core Web Vitals最適化: レンダリングブロッキング回避 -->
+    <style>
+      /* Critical CSS: 初期表示に必要な最小限のスタイル */
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background-color: #f9fafb;
+        color: #111827;
+        min-height: 100vh;
+        /* Core Web Vitals最適化: フォント表示の最適化 */
+        font-display: swap;
+      }
+      
+      #root {
+        min-height: 100vh;
+        /* Core Web Vitals最適化: CLS防止のための固定サイズ */
+        contain: layout style paint;
+      }
+      
+      /* ローディング画面のスタイル（CLS防止） */
+      .loading-screen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 50%, #f0f9ff 100%);
+        /* Core Web Vitals最適化: レイアウト安定性 */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 9999;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #e5e7eb;
+        border-top: 4px solid #ef4444;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        /* Core Web Vitals最適化: GPU加速 */
+        transform: translateZ(0);
+        will-change: transform;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg) translateZ(0); }
+        100% { transform: rotate(360deg) translateZ(0); }
+      }
+      
+      /* Core Web Vitals最適化: 画像の事前サイズ確保 */
+      img {
+        max-width: 100%;
+        height: auto;
+        /* CLS防止のためのアスペクト比維持 */
+        aspect-ratio: attr(width) / attr(height);
+      }
+      
+      /* Core Web Vitals最適化: 動的コンテンツの事前領域確保 */
+      [data-dynamic="true"] {
+        min-height: 100px;
+        contain: layout;
+      }
+      
+      /* ダークモード対応 */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #111827;
+          color: #f9fafb;
+        }
+        
+        .loading-screen {
+          background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #0f172a 100%);
+        }
+        
+        .loading-spinner {
+          border-color: #374151;
+          border-top-color: #ef4444;
+        }
+      }
+      
+      /* Core Web Vitals最適化: 高DPIディスプレイ対応 */
+      @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+        .loading-spinner {
+          border-width: 2px;
+        }
+      }
+      
+      /* Core Web Vitals最適化: プリファードモーション設定 */
+      @media (prefers-reduced-motion: reduce) {
+        .loading-spinner {
+          animation: none;
+        }
+        
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+    
     <title>ポモドーロタイマー</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Core Web Vitals最適化: 初期ローディング画面でCLSを防ぐ -->
+      <div class="loading-screen" data-cls-critical="true">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    
+    <!-- Core Web Vitals最適化: スクリプトの最適化 -->
+    <script>
+      // Core Web Vitals最適化: 早期のパフォーマンス測定開始
+      if ('PerformanceObserver' in window) {
+        // LCP測定の早期開始
+        const lcpObserver = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          if (lastEntry) {
+            console.log('🎯 Early LCP:', lastEntry.startTime.toFixed(2) + 'ms');
+          }
+        });
+        lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+        
+        // CLS測定の早期開始
+        let clsValue = 0;
+        const clsObserver = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          entries.forEach((entry) => {
+            if (!entry.hadRecentInput) {
+              clsValue += entry.value;
+              console.log('📐 Early CLS:', clsValue.toFixed(3));
+            }
+          });
+        });
+        clsObserver.observe({ entryTypes: ['layout-shift'] });
+      }
+      
+      // Core Web Vitals最適化: ローディング画面の自動削除
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const loadingScreen = document.querySelector('.loading-screen');
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(() => {
+              loadingScreen.remove();
+            }, 300);
+          }
+        }, 100);
+      });
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

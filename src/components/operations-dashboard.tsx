@@ -11,10 +11,17 @@ import {
   HealthStats,
 } from '../services/health-monitor';
 import {
+  getErrorRateMonitor,
+  type ErrorRateStats,
+  type ErrorRateAlert,
+} from '../services/error-rate-monitor';
+import { ErrorRateDashboard } from './monitoring/error-rate-dashboard';
+import {
   XMarkIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,7 +31,10 @@ interface DashboardState {
   currentHealth: Record<string, HealthCheck>;
   healthStats: Record<string, HealthStats>;
   recentAlerts: HealthAlert[];
+  errorRateStats: ErrorRateStats | null;
+  errorRateAlerts: ErrorRateAlert[];
   lastUpdate: Date;
+  activeTab: 'health' | 'error-rate';
 }
 
 // プロパティの型定義
@@ -45,10 +55,14 @@ export function OperationsDashboard({
     currentHealth: {},
     healthStats: {},
     recentAlerts: [],
+    errorRateStats: null,
+    errorRateAlerts: [],
     lastUpdate: new Date(),
+    activeTab: 'health',
   });
 
   const healthMonitor = getHealthMonitor();
+  const errorRateMonitor = getErrorRateMonitor();
 
   // 監視状態の更新
   useEffect(() => {
@@ -58,12 +72,14 @@ export function OperationsDashboard({
       const currentHealth = healthMonitor.getCurrentHealth();
       const healthStats = healthMonitor.getHealthStats();
       const recentAlerts = healthMonitor.getAlertHistory(10);
+      const errorRateStats = errorRateMonitor.getCurrentStats();
 
       setState(prev => ({
         ...prev,
         currentHealth,
         healthStats,
         recentAlerts,
+        errorRateStats,
         lastUpdate: new Date(),
       }));
     };
@@ -75,14 +91,16 @@ export function OperationsDashboard({
     const updateInterval = setInterval(updateDashboard, 10000); // 10秒ごと
 
     return () => clearInterval(updateInterval);
-  }, [isOpen, healthMonitor]);
+  }, [isOpen, healthMonitor, errorRateMonitor]);
 
   // 監視の開始/停止
   const toggleMonitoring = () => {
     if (state.isMonitoring) {
       healthMonitor.stopMonitoring();
+      errorRateMonitor.stopMonitoring();
     } else {
       healthMonitor.startMonitoring();
+      errorRateMonitor.startMonitoring();
     }
     setState(prev => ({ ...prev, isMonitoring: !prev.isMonitoring }));
   };
@@ -158,8 +176,21 @@ export function OperationsDashboard({
   // 全体的なシステム状態を判定
   const getOverallStatus = (): 'healthy' | 'degraded' | 'unhealthy' => {
     const healthChecks = Object.values(state.currentHealth);
-    if (healthChecks.length === 0) return 'healthy';
+    const errorRateStats = state.errorRateStats;
 
+    if (healthChecks.length === 0 && !errorRateStats) return 'healthy';
+
+    // エラー率チェック
+    if (errorRateStats) {
+      const threshold = errorRateMonitor.getConfig().threshold;
+      if (errorRateStats.errorRate > threshold * 1.5) {
+        return 'unhealthy';
+      } else if (errorRateStats.errorRate > threshold) {
+        return 'degraded';
+      }
+    }
+
+    // ヘルスチェック結果
     const unhealthyCount = healthChecks.filter(
       check => check.status === 'unhealthy'
     ).length;
@@ -245,228 +276,296 @@ export function OperationsDashboard({
                 </div>
               </div>
 
+              {/* タブナビゲーション */}
+              <div className="border-b border-gray-200 dark:border-gray-700">
+                <nav className="flex space-x-8 px-6">
+                  <button
+                    onClick={() =>
+                      setState(prev => ({ ...prev, activeTab: 'health' }))
+                    }
+                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                      state.activeTab === 'health'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <CheckCircleIcon className="w-4 h-4" />
+                      <span>ヘルスチェック</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() =>
+                      setState(prev => ({ ...prev, activeTab: 'error-rate' }))
+                    }
+                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                      state.activeTab === 'error-rate'
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <ChartBarIcon className="w-4 h-4" />
+                      <span>エラー率監視</span>
+                      {state.errorRateStats &&
+                        state.errorRateStats.errorRate >
+                          errorRateMonitor.getConfig().threshold && (
+                          <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                        )}
+                    </div>
+                  </button>
+                </nav>
+              </div>
+
               {/* スクロール可能なコンテンツ */}
               <div className="flex-1 overflow-y-auto p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* ヘルスチェック結果 */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      ヘルスチェック結果
-                    </h3>
-                    {healthCheckEntries.length > 0 ? (
-                      <div className="space-y-3">
-                        {healthCheckEntries.map(([name, check]) => (
-                          <div
-                            key={name}
-                            className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <div className="flex items-center space-x-2">
-                                {getStatusIcon(check.status)}
-                                <h4 className="font-medium text-gray-900 dark:text-white capitalize">
-                                  {name.replace(/-/g, ' ')}
-                                </h4>
-                              </div>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(check.status)}`}
-                              >
-                                {check.status === 'healthy'
-                                  ? '正常'
-                                  : check.status === 'degraded'
-                                    ? '低下'
-                                    : '異常'}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-600 dark:text-gray-300">
-                                  最終チェック:
-                                </span>
-                                <div className="font-medium text-gray-900 dark:text-white">
-                                  {formatRelativeTime(check.lastCheck)}
-                                </div>
-                              </div>
-                              {check.responseTime && (
-                                <div>
-                                  <span className="text-gray-600 dark:text-gray-300">
-                                    応答時間:
-                                  </span>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    {formatResponseTime(check.responseTime)}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            {check.error && (
-                              <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-sm text-red-700 dark:text-red-300">
-                                {check.error}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        ヘルスチェックデータがありません。監視を開始してください。
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 統計情報 */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      システム統計
-                    </h3>
-                    {Object.entries(state.healthStats).length > 0 ? (
-                      <div className="space-y-3">
-                        {Object.entries(state.healthStats).map(
-                          ([name, stats]) => (
+                {state.activeTab === 'health' ? (
+                  // ヘルスチェックタブ
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* ヘルスチェック結果 */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        ヘルスチェック結果
+                      </h3>
+                      {healthCheckEntries.length > 0 ? (
+                        <div className="space-y-3">
+                          {healthCheckEntries.map(([name, check]) => (
                             <div
                               key={name}
                               className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg"
                             >
-                              <h4 className="font-medium text-gray-900 dark:text-white mb-3 capitalize">
-                                {name.replace(/-/g, ' ')}
-                              </h4>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center space-x-2">
+                                  {getStatusIcon(check.status)}
+                                  <h4 className="font-medium text-gray-900 dark:text-white capitalize">
+                                    {name.replace(/-/g, ' ')}
+                                  </h4>
+                                </div>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(check.status)}`}
+                                >
+                                  {check.status === 'healthy'
+                                    ? '正常'
+                                    : check.status === 'degraded'
+                                      ? '低下'
+                                      : '異常'}
+                                </span>
+                              </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
                                   <span className="text-gray-600 dark:text-gray-300">
-                                    アップタイム:
+                                    最終チェック:
                                   </span>
                                   <div className="font-medium text-gray-900 dark:text-white">
-                                    {formatUptime(stats.uptime)}
+                                    {formatRelativeTime(check.lastCheck)}
                                   </div>
                                 </div>
-                                <div>
-                                  <span className="text-gray-600 dark:text-gray-300">
-                                    平均応答時間:
-                                  </span>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    {formatResponseTime(
-                                      stats.averageResponseTime
-                                    )}
+                                {check.responseTime && (
+                                  <div>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                      応答時間:
+                                    </span>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {formatResponseTime(check.responseTime)}
+                                    </div>
                                   </div>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600 dark:text-gray-300">
-                                    総チェック数:
-                                  </span>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    {stats.totalChecks}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600 dark:text-gray-300">
-                                    失敗数:
-                                  </span>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    {stats.failedChecks}
-                                  </div>
-                                </div>
+                                )}
                               </div>
-                              {stats.lastFailure && (
-                                <div className="mt-2 text-sm">
-                                  <span className="text-gray-600 dark:text-gray-300">
-                                    最終失敗:
-                                  </span>
-                                  <div className="font-medium text-gray-900 dark:text-white">
-                                    {formatRelativeTime(stats.lastFailure)}
-                                  </div>
+                              {check.error && (
+                                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded text-sm text-red-700 dark:text-red-300">
+                                  {check.error}
                                 </div>
                               )}
                             </div>
-                          )
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        統計データがありません。
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* アラート履歴 */}
-                {state.recentAlerts.length > 0 && (
-                  <div className="mt-8">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      最近のアラート
-                    </h3>
-                    <div className="space-y-3">
-                      {state.recentAlerts.map((alert, index) => (
-                        <div
-                          key={index}
-                          className={`p-4 rounded-lg border-l-4 ${
-                            alert.severity === 'critical'
-                              ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
-                              : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                              <ExclamationTriangleIcon
-                                className={`w-5 h-5 ${
-                                  alert.severity === 'critical'
-                                    ? 'text-red-500'
-                                    : 'text-yellow-500'
-                                }`}
-                              />
-                              <span className="font-medium text-gray-900 dark:text-white">
-                                {alert.checkName}
-                              </span>
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  alert.severity === 'critical'
-                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
-                                }`}
-                              >
-                                {alert.severity === 'critical'
-                                  ? '重大'
-                                  : '警告'}
-                              </span>
-                            </div>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {formatRelativeTime(alert.timestamp)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {alert.message}
-                          </p>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          ヘルスチェックデータがありません。監視を開始してください。
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 統計情報 */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        システム統計
+                      </h3>
+                      {Object.entries(state.healthStats).length > 0 ? (
+                        <div className="space-y-3">
+                          {Object.entries(state.healthStats).map(
+                            ([name, stats]) => (
+                              <div
+                                key={name}
+                                className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg"
+                              >
+                                <h4 className="font-medium text-gray-900 dark:text-white mb-3 capitalize">
+                                  {name.replace(/-/g, ' ')}
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                      アップタイム:
+                                    </span>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {formatUptime(stats.uptime)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                      平均応答時間:
+                                    </span>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {formatResponseTime(
+                                        stats.averageResponseTime
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                      総チェック数:
+                                    </span>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {stats.totalChecks}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                      失敗数:
+                                    </span>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {stats.failedChecks}
+                                    </div>
+                                  </div>
+                                </div>
+                                {stats.lastFailure && (
+                                  <div className="mt-2 text-sm">
+                                    <span className="text-gray-600 dark:text-gray-300">
+                                      最終失敗:
+                                    </span>
+                                    <div className="font-medium text-gray-900 dark:text-white">
+                                      {formatRelativeTime(stats.lastFailure)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          統計データがありません。
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // エラー率監視タブ
+                  <div>
+                    <ErrorRateDashboard
+                      className="mb-6"
+                      refreshInterval={30}
+                      showTrend={true}
+                      compact={false}
+                    />
+
+                    {/* エラー率レポート */}
+                    <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                        エラー率レポート
+                      </h4>
+                      <pre className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                        {errorRateMonitor.generateErrorRateReport()}
+                      </pre>
                     </div>
                   </div>
                 )}
 
-                {/* 監視設定の説明 */}
-                <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
-                    監視について
-                  </h4>
-                  <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                    <p>
-                      • <strong>Database:</strong>{' '}
-                      データベース接続とクエリ応答性
-                    </p>
-                    <p>
-                      • <strong>Auth:</strong> 認証サービスの可用性
-                    </p>
-                    <p>
-                      • <strong>Realtime:</strong> リアルタイム通信の接続状態
-                    </p>
-                    <p>
-                      • <strong>Storage:</strong> ファイルストレージサービス
-                    </p>
-                    <p>
-                      • <strong>External APIs:</strong> 外部API接続
-                    </p>
-                    <p>
-                      • <strong>Browser APIs:</strong> ブラウザAPI機能
-                    </p>
-                    <p>• ヘルスチェックは1分ごとに自動実行されます</p>
+                {/* 共通のアラート履歴（ヘルスチェックタブでのみ表示） */}
+                {state.activeTab === 'health' &&
+                  state.recentAlerts.length > 0 && (
+                    <div className="mt-8">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        最近のアラート
+                      </h3>
+                      <div className="space-y-3">
+                        {state.recentAlerts.map((alert, index) => (
+                          <div
+                            key={index}
+                            className={`p-4 rounded-lg border-l-4 ${
+                              alert.severity === 'critical'
+                                ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                                : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-2">
+                                <ExclamationTriangleIcon
+                                  className={`w-5 h-5 ${
+                                    alert.severity === 'critical'
+                                      ? 'text-red-500'
+                                      : 'text-yellow-500'
+                                  }`}
+                                />
+                                <span className="font-medium text-gray-900 dark:text-white">
+                                  {alert.checkName}
+                                </span>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    alert.severity === 'critical'
+                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                                      : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'
+                                  }`}
+                                >
+                                  {alert.severity === 'critical'
+                                    ? '重大'
+                                    : '警告'}
+                                </span>
+                              </div>
+                              <span className="text-sm text-gray-500 dark:text-gray-400">
+                                {formatRelativeTime(alert.timestamp)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {alert.message}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* 監視設定の説明（ヘルスチェックタブでのみ表示） */}
+                {state.activeTab === 'health' && (
+                  <div className="mt-8 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                      監視について
+                    </h4>
+                    <div className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                      <p>
+                        • <strong>Database:</strong>{' '}
+                        データベース接続とクエリ応答性
+                      </p>
+                      <p>
+                        • <strong>Auth:</strong> 認証サービスの可用性
+                      </p>
+                      <p>
+                        • <strong>Realtime:</strong> リアルタイム通信の接続状態
+                      </p>
+                      <p>
+                        • <strong>Storage:</strong> ファイルストレージサービス
+                      </p>
+                      <p>
+                        • <strong>External APIs:</strong> 外部API接続
+                      </p>
+                      <p>
+                        • <strong>Browser APIs:</strong> ブラウザAPI機能
+                      </p>
+                      <p>• ヘルスチェックは1分ごとに自動実行されます</p>
+                      <p>• エラー率監視は30秒ごとに自動チェックされます</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </motion.div>

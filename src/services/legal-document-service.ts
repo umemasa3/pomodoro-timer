@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+import { requireSupabaseClient, isSupabaseAvailable } from './supabase';
+import { demoStorage, isDemoMode } from './demo-legal-compliance';
 import type { LegalDocument } from '../types';
 
 /**
@@ -15,6 +16,13 @@ export class LegalDocumentService {
     document: Omit<LegalDocument, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<LegalDocument> {
     try {
+      // デモモードの場合はメモリストレージを使用
+      if (isDemoMode() || !isSupabaseAvailable()) {
+        return demoStorage.createLegalDocument(document);
+      }
+
+      const supabase = requireSupabaseClient();
+
       // 既存の同タイプの文書を非アクティブにする
       if (document.isActive) {
         await this.deactivateDocumentsByType(document.type);

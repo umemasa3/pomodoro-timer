@@ -67,6 +67,12 @@ describe('useOnlineStatus', () => {
   });
 
   it('offlineイベントでオフライン状態に更新される', () => {
+    // navigator.onLineをtrueに設定
+    Object.defineProperty(navigator, 'onLine', {
+      value: true,
+      writable: true,
+    });
+
     const { result } = renderHook(() => useOnlineStatus());
 
     expect(result.current).toBe(true);
@@ -110,6 +116,12 @@ describe('useOnlineStatus', () => {
   });
 
   it('複数回のオンライン/オフライン切り替えが正しく動作する', () => {
+    // navigator.onLineをtrueに設定
+    Object.defineProperty(navigator, 'onLine', {
+      value: true,
+      writable: true,
+    });
+
     const { result } = renderHook(() => useOnlineStatus());
 
     expect(result.current).toBe(true);

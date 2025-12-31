@@ -26,7 +26,7 @@ export default defineConfig({
   // 共通設定
   use: {
     // ベースURL（開発サーバー）
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3001',
 
     // トレース設定（失敗時のみ）
     trace: 'on-first-retry',
@@ -73,19 +73,19 @@ export default defineConfig({
 
   // 開発サーバー設定
   webServer: {
-    command: 'pnpm dev',
-    url: 'http://localhost:3000',
+    command: 'pnpm dev --mode e2e --port 3001',
+    url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2分
     stdout: 'pipe',
     stderr: 'pipe',
     env: {
-      // テスト環境用の環境変数を設定
+      // E2Eテスト環境用の環境変数を設定
       NODE_ENV: 'test',
       VITE_DEMO_MODE: 'false', // E2Eテストではデモモードを無効化
       VITE_ENABLE_ANALYTICS: 'false',
       VITE_ENABLE_ERROR_REPORTING: 'false',
-      // テスト用のSupabase設定（実際の値は.env.localから読み込まれる）
+      // テスト用のSupabase設定（実際の値は.env.e2eから読み込まれる）
       VITE_APP_ENV: 'test',
     },
   },

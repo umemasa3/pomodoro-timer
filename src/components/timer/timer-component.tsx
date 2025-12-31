@@ -106,17 +106,21 @@ export const TimerComponent: React.FC = () => {
           onClick={() => setIsSettingsOpen(true)}
           className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50"
           title="設定"
+          aria-label="設定を開く"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           data-testid="settings-button"
         >
-          <Cog6ToothIcon className="w-5 h-5" />
+          <Cog6ToothIcon className="w-5 h-5" aria-hidden="true" />
         </motion.button>
 
         {/* タイマー表示 */}
         <div
           className={`${isMobile ? 'mb-6' : 'mb-8'}`}
           data-testid="timer-animation"
+          role="timer"
+          aria-live="polite"
+          aria-label="ポモドーロタイマー"
         >
           <TimerDisplay
             currentTime={currentTime}
@@ -127,18 +131,30 @@ export const TimerComponent: React.FC = () => {
 
         {/* 現在のタスク表示 */}
         {sessionType === 'pomodoro' && (
-          <div className={`${isMobile ? 'mb-4' : 'mb-6'}`}>
+          <div
+            className={`${isMobile ? 'mb-4' : 'mb-6'}`}
+            role="region"
+            aria-label="現在のタスク"
+          >
             <CurrentTaskDisplay />
           </div>
         )}
 
         {/* タスク関連付けボタン（スタンドアロンモード時） */}
-        <div className="flex justify-center mb-4">
+        <div
+          className="flex justify-center mb-4"
+          role="region"
+          aria-label="タスク関連付け"
+        >
           <AssociateTaskButton />
         </div>
 
         {/* タイマー制御ボタン */}
-        <div className={`${isMobile ? 'mb-4' : 'mb-6'}`}>
+        <div
+          className={`${isMobile ? 'mb-4' : 'mb-6'}`}
+          role="group"
+          aria-label="タイマー制御"
+        >
           <TimerControls
             isRunning={isRunning}
             onStart={startTimer}

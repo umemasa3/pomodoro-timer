@@ -48,6 +48,45 @@ export const supabase =
  * 認証関連のヘルパー関数
  * Supabase Authとの連携を統一化
  */
+
+/**
+ * Supabaseクライアントが利用可能かチェック
+ */
+export function isSupabaseAvailable(): boolean {
+  return supabase !== null;
+}
+
+/**
+ * Supabaseクライアントを安全に取得
+ * nullの場合はエラーをスロー
+ */
+export function getSupabaseClient() {
+  if (!supabase) {
+    throw new Error(
+      'Supabaseクライアントが利用できません（デモモードまたはテスト環境）'
+    );
+  }
+  return supabase;
+}
+
+/**
+ * 型安全なSupabaseクライアント取得（非null保証）
+ */
+export function requireSupabaseClient(): NonNullable<typeof supabase> {
+  if (!supabase) {
+    throw new Error(
+      'Supabaseクライアントが利用できません（デモモードまたはテスト環境）'
+    );
+  }
+  return supabase;
+}
+
+/**
+ * Supabaseクライアントを安全に取得（nullを許可）
+ */
+export function getSupabaseClientSafe() {
+  return supabase;
+}
 export const auth = {
   // ユーザー登録
   signUp: async (
