@@ -1,192 +1,118 @@
-import { useState, useEffect, Suspense } from 'react';
-import { AuthGuard } from './components/auth';
-import { AuthPage } from './pages/auth-page';
-import { TimerComponent } from './components/timer';
-import { SyncStatusIndicator } from './components/sync-status-indicator';
-import { ThemeToggle } from './components/ui/theme-toggle';
-import { ErrorBoundary } from './components/error-boundary';
-import { ProductionErrorBoundary } from './components/error-boundary-production';
-import {
-  LazyComponents,
-  LayoutStabilizer,
-  TaskScheduler,
-  initializePerformanceOptimizations,
-} from './utils/performance-optimization';
-import { CoreWebVitalsMonitor } from './components/core-web-vitals-monitor';
-import {
-  PWAUpdatePrompt,
-  PWAInstallPrompt,
-  OfflineIndicator,
-  OfflineNotification,
-} from './components/pwa';
-import {
-  TimerTooltip,
-  TaskTooltip,
-  StatisticsTooltip,
-  useOnboarding,
-} from './components/onboarding';
-import {
-  SkipLinks,
-  LiveRegion,
-  HighContrastProvider,
-} from './components/accessibility';
+import { useState, useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { useAuthStore } from './stores/auth-store';
-import { useTimerStore } from './stores/timer-store';
-import { useThemeStore } from './stores/theme-store';
-import { useKeyboardNavigation } from './hooks/use-keyboard-navigation';
-import { useResponseTimeMonitor } from './hooks/use-response-time-monitor';
-import { errorHandler } from './services/error-handler';
-import { monitoringService } from './services/monitoring-service';
-import { ErrorMonitoringService } from './services/error-monitoring';
-import { motion, AnimatePresence } from 'framer-motion';
+import { TimerComponent } from './components/timer';
+import { TasksPage } from './pages/tasks-page';
+import { StatisticsPage } from './pages/statistics-page';
 import {
   ClockIcon,
   ListBulletIcon,
   ChartBarIcon,
-  UserCircleIcon,
   ArrowRightOnRectangleIcon,
-  SparklesIcon,
-  CogIcon,
-  BoltIcon,
 } from '@heroicons/react/24/outline';
 import './index.css';
 
 type PageType = 'timer' | 'tasks' | 'statistics';
 
-// ローディングコンポーネント（CLS最適化）
-const PageLoadingFallback = ({ page }: { page: string }) => (
-  <div
-    className="min-h-screen flex items-center justify-center"
-    style={{ minHeight: '600px' }} // CLS防止のための固定高さ
-  >
-    <motion.div
-      className="text-center"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-    >
-      <motion.div
-        className="w-12 h-12 border-4 border-pomodoro-200 border-t-pomodoro-500 rounded-full mx-auto mb-4"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-      />
-      <p className="text-gray-600 dark:text-gray-400">{page}を読み込み中...</p>
-    </motion.div>
-  </div>
-);
-
 function App() {
+  console.log('🔧 App component rendering...');
+
   const { isAuthenticated, user, signOut, isLoading, initializeAuth } =
     useAuthStore();
-  const { initializeRealtimeSync, cleanupRealtimeSync } = useTimerStore();
-  const { initializeTheme } = useThemeStore();
   const [currentPage, setCurrentPage] = useState<PageType>('timer');
-  const [showMonitoringDashboard, setShowMonitoringDashboard] = useState(false);
-  const [showOperationsDashboard, setShowOperationsDashboard] = useState(false);
-  const [showResponseTimeDashboard, setShowResponseTimeDashboard] =
-    useState(false);
 
-  // 応答時間監視Hook
-  useResponseTimeMonitor({
-    enabled: true,
-    componentName: 'App',
-    trackPageTransitions: true,
-    trackComponentRender: true,
+  console.log('📊 Auth state:', {
+    isAuthenticated,
+    user: user?.email,
+    isLoading,
   });
 
-  // オンボーディング状態管理
-  const { showSetupWizard, showTour, completeSetup, completeTour } =
-    useOnboarding();
-
-  // キーボードナビゲーション
-  useKeyboardNavigation({
-    onNavigateToTimer: () => setCurrentPage('timer'),
-    onNavigateToTasks: () => setCurrentPage('tasks'),
-    onNavigateToStatistics: () => setCurrentPage('statistics'),
-    onToggleTheme: () => {}, // ThemeToggleコンポーネントが処理
-    onLogout: signOut,
-  });
-
-  // アプリ起動時に認証状態とテーマを初期化
+  // アプリ起動時に認証状態を初期化
   useEffect(() => {
-    // パフォーマンス最適化の初期化（最優先）
-    initializePerformanceOptimizations();
-
+    console.log('🚀 Initializing auth...');
     initializeAuth();
-    initializeTheme();
-
-    // エラーハンドリングと監視サービスを初期化（非同期）
-    TaskScheduler.scheduleTask(() => {
-      void errorHandler; // シングルトンを初期化
-      monitoringService.startMonitoring();
-    }, 'low');
-
-    // クリーンアップ
-    return () => {
-      monitoringService.stopMonitoring();
-      LayoutStabilizer.disconnect();
-    };
-  }, [initializeAuth, initializeTheme]);
-
-  // 認証完了後にリアルタイム同期を初期化
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      console.log('リアルタイム同期を初期化中...');
-      initializeRealtimeSync();
-
-      // Sentryにユーザーコンテキストを設定
-      ErrorMonitoringService.setUserContext({
-        id: user.id,
-        email: user.email,
-        // Supabase Userから必要な情報のみを抽出
-      } as any);
-      ErrorMonitoringService.addBreadcrumb(
-        'User authenticated',
-        'auth',
-        'info'
-      );
-
-      // クリーンアップ関数
-      return () => {
-        console.log('リアルタイム同期をクリーンアップ中...');
-        cleanupRealtimeSync();
-      };
-    } else {
-      // ログアウト時はユーザーコンテキストをクリア
-      ErrorMonitoringService.setUserContext(null);
-    }
-  }, [isAuthenticated, user, initializeRealtimeSync, cleanupRealtimeSync]);
+  }, [initializeAuth]);
 
   // ローディング中の表示
   if (isLoading) {
+    console.log('⏳ Showing loading state...');
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pomodoro-50 via-white to-break-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <motion.div
-            className="w-16 h-16 border-4 border-pomodoro-200 border-t-pomodoro-500 rounded-full mx-auto mb-6"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background:
+            'linear-gradient(to bottom right, #fef3c7, #ffffff, #dbeafe)',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        <div style={{ textAlign: 'center' }}>
+          <div
+            style={{
+              width: '64px',
+              height: '64px',
+              border: '4px solid #fbbf24',
+              borderTop: '4px solid #f59e0b',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 24px',
+            }}
           />
-          <motion.p
-            className="text-gray-600 dark:text-gray-400 text-lg"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <p style={{ color: '#6b7280', fontSize: '18px' }}>
             認証状態を確認中...
-          </motion.p>
-        </motion.div>
+          </p>
+        </div>
       </div>
     );
   }
 
-  // 認証されていない場合は認証ページを表示
+  // 認証されていない場合
   if (!isAuthenticated && !isLoading) {
-    return <AuthPage onAuthSuccess={() => {}} />;
+    console.log('🔐 User not authenticated, showing auth page...');
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background:
+            'linear-gradient(to bottom right, #fef3c7, #ffffff, #dbeafe)',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <h1
+            style={{
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              marginBottom: '1rem',
+              color: '#374151',
+            }}
+          >
+            ポモドーロタイマー
+          </h1>
+          <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
+            デモモードで起動中...
+          </p>
+          <div
+            style={{
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '1rem',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+              maxWidth: '400px',
+            }}
+          >
+            <p style={{ color: '#374151' }}>
+              認証システムを初期化しています...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // ナビゲーションアイテム
@@ -211,446 +137,325 @@ function App() {
     },
   ];
 
-  // オンボーディング完了ハンドラー
-  const handleSetupComplete = (setupData: any) => {
-    console.log('セットアップ完了:', setupData);
-    completeSetup();
-  };
-
-  const handleTourComplete = () => {
-    console.log('ツアー完了');
-    completeTour();
-  };
-
+  // 現在のページをレンダリング
   const renderCurrentPage = () => {
-    const pageVariants = {
-      initial: { opacity: 0, x: 20 },
-      in: { opacity: 1, x: 0 },
-      out: { opacity: 0, x: -20 },
-    };
-
-    const pageTransition = {
-      type: 'tween' as const,
-      ease: 'anticipate' as const,
-      duration: 0.3, // 短縮してFID改善
-    };
-
     switch (currentPage) {
       case 'tasks':
-        return (
-          <Suspense fallback={<PageLoadingFallback page="タスク管理" />}>
-            <motion.div
-              key="tasks"
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-            >
-              <LazyComponents.TasksPage />
-            </motion.div>
-          </Suspense>
-        );
+        return <TasksPage />;
       case 'statistics':
-        return (
-          <Suspense fallback={<PageLoadingFallback page="統計・分析" />}>
-            <motion.div
-              key="statistics"
-              initial="initial"
-              animate="in"
-              exit="out"
-              variants={pageVariants}
-              transition={pageTransition}
-              data-testid="statistics-page"
-            >
-              <LazyComponents.StatisticsPage />
-            </motion.div>
-          </Suspense>
-        );
+        return <StatisticsPage />;
       case 'timer':
       default:
         return (
-          <motion.div
-            key="timer"
-            initial="initial"
-            animate="in"
-            exit="out"
-            variants={pageVariants}
-            transition={pageTransition}
-            className="min-h-screen"
-            style={{ minHeight: '600px' }} // CLS防止
+          <div
+            style={{
+              minHeight: '100vh',
+              background:
+                'linear-gradient(to bottom right, #fef3c7, #ffffff, #dbeafe)',
+              fontFamily: 'system-ui, sans-serif',
+            }}
           >
-            <div className="container mx-auto px-4 py-6 md:py-12">
-              <main
-                className="max-w-4xl mx-auto"
-                role="main"
-                aria-label="タイマーページ"
-              >
+            <div style={{ padding: '3rem 1rem' }}>
+              <div style={{ maxWidth: '1024px', margin: '0 auto' }}>
                 {/* ウェルカムメッセージ */}
-                <motion.div
-                  className="text-center mb-8 md:mb-12"
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <h1 className="text-2xl md:text-4xl font-bold gradient-text mb-2 md:mb-4">
+                <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+                  <h1
+                    style={{
+                      fontSize: '2.5rem',
+                      fontWeight: 'bold',
+                      color: '#374151',
+                      marginBottom: '1rem',
+                    }}
+                  >
                     ポモドーロタイマー
                   </h1>
-                  <p className="text-base md:text-lg text-gray-600 dark:text-gray-400">
+                  <p style={{ fontSize: '1.125rem', color: '#6b7280' }}>
                     集中力を高めて、生産性を向上させましょう
                   </p>
-                </motion.div>
+                </div>
 
                 {/* タイマーコンポーネント */}
-                <section aria-label="タイマー操作" id="timer-controls">
-                  <TimerTooltip>
-                    <TimerComponent />
-                  </TimerTooltip>
-                </section>
+                <TimerComponent />
 
-                {/* 開発用：認証システム統合完了表示 */}
-                <motion.div
-                  className="mt-8 md:mt-12 card-glass p-4 md:p-6 rounded-2xl"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                  role="region"
-                  aria-label="認証システム情報"
-                  style={{ minHeight: '200px' }} // CLS防止
+                {/* 認証システム統合完了表示 */}
+                <div
+                  style={{
+                    marginTop: '3rem',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    padding: '2rem',
+                    borderRadius: '1.5rem',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                    border: '1px solid rgba(229, 231, 235, 0.5)',
+                  }}
                 >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <SparklesIcon
-                        className="w-6 h-6 text-green-600 dark:text-green-400"
-                        aria-hidden="true"
-                      />
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      marginBottom: '1rem',
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '0.5rem',
+                        background: '#dcfce7',
+                        borderRadius: '0.5rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '1.5rem' }}>✨</span>
                     </div>
-                    <h2 className="text-lg font-semibold text-green-900 dark:text-green-100">
+                    <h2
+                      style={{
+                        fontSize: '1.125rem',
+                        fontWeight: '600',
+                        color: '#065f46',
+                        margin: 0,
+                      }}
+                    >
                       認証システム統合完了
                     </h2>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-700 dark:text-green-300">
-                    <div className="space-y-2">
-                      <p>
-                        <span className="font-medium">ユーザーID:</span>{' '}
-                        {user?.id}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns:
+                        'repeat(auto-fit, minmax(250px, 1fr))',
+                      gap: '1rem',
+                      fontSize: '0.875rem',
+                      color: '#047857',
+                    }}
+                  >
+                    <div>
+                      <p style={{ margin: '0 0 0.5rem 0' }}>
+                        <strong>ユーザーID:</strong>{' '}
+                        {user?.id || 'demo-user-id'}
                       </p>
-                      <p>
-                        <span className="font-medium">メールアドレス:</span>{' '}
-                        {user?.email}
+                      <p style={{ margin: 0 }}>
+                        <strong>メールアドレス:</strong>{' '}
+                        {user?.email || 'demo@example.com'}
                       </p>
                     </div>
-                    <div className="space-y-2">
-                      <p>
-                        <span className="font-medium">タイムゾーン:</span>{' '}
-                        {user?.timezone}
+                    <div>
+                      <p style={{ margin: '0 0 0.5rem 0' }}>
+                        <strong>タイムゾーン:</strong>{' '}
+                        {user?.timezone || 'Asia/Tokyo'}
                       </p>
-                      <p>
-                        <span className="font-medium">登録日時:</span>{' '}
+                      <p style={{ margin: 0 }}>
+                        <strong>登録日時:</strong>{' '}
                         {user?.created_at
                           ? new Date(user.created_at).toLocaleString('ja-JP')
-                          : 'N/A'}
+                          : new Date().toLocaleString('ja-JP')}
                       </p>
                     </div>
                   </div>
-                </motion.div>
-              </main>
+                </div>
+              </div>
             </div>
-          </motion.div>
+          </div>
         );
     }
   };
 
+  // メインアプリケーション
+  console.log('✅ Rendering main application...');
   return (
-    <ProductionErrorBoundary
-      onError={(error, errorInfo) => {
-        console.error('App Error Boundary:', error, errorInfo);
-        ErrorMonitoringService.addBreadcrumb(
-          'App error boundary triggered',
-          'error',
-          'error'
-        );
-      }}
-    >
-      <ErrorBoundary>
-        <AuthGuard fallback={<AuthPage onAuthSuccess={() => {}} />}>
-          {/* アクセシビリティ機能 */}
-          <HighContrastProvider>
-            <SkipLinks />
-            <LiveRegion />
-
-            <div className="min-h-screen bg-gradient-to-br from-pomodoro-50 via-white to-break-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-              {/* PWA関連コンポーネント */}
-              <PWAUpdatePrompt />
-              <PWAInstallPrompt />
-              <OfflineIndicator />
-              <OfflineNotification />
-
-              {/* 同期状態インジケーター */}
-              <SyncStatusIndicator />
-
-              {/* ナビゲーションヘッダー */}
-              <motion.header
-                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50"
-                initial={{ y: -100 }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.5 }}
+    <BrowserRouter>
+      <div
+        style={{
+          minHeight: '100vh',
+          background:
+            'linear-gradient(to bottom right, #fef3c7, #ffffff, #dbeafe)',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        {/* ヘッダー */}
+        <header
+          style={{
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            borderBottom: '1px solid rgba(229, 231, 235, 0.5)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 50,
+          }}
+        >
+          <div
+            style={{
+              maxWidth: '1200px',
+              margin: '0 auto',
+              padding: '0 1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              height: '80px',
+            }}
+          >
+            {/* ロゴとタイトル */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div
+                style={{
+                  padding: '0.5rem',
+                  background: 'linear-gradient(to right, #f59e0b, #d97706)',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                }}
               >
-                <div className="container mx-auto px-4">
-                  <div className="flex justify-between items-center h-16 md:h-20">
-                    {/* ロゴとタイトル */}
-                    <motion.div
-                      className="flex items-center space-x-2 md:space-x-4"
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className="p-1.5 md:p-2 bg-gradient-to-r from-pomodoro-500 to-pomodoro-600 rounded-lg md:rounded-xl shadow-lg">
-                        <ClockIcon
-                          className="w-6 h-6 md:w-8 md:h-8 text-white"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <div>
-                        <div className="text-lg md:text-2xl font-bold gradient-text">
-                          ポモドーロタイマー
-                        </div>
-                        <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                          生産性向上アプリ
-                        </p>
-                      </div>
-                    </motion.div>
-
-                    {/* ナビゲーションメニュー */}
-                    <nav
-                      id="navigation"
-                      className="flex items-center space-x-1 md:space-x-2"
-                      role="navigation"
-                      aria-label="メインナビゲーション"
-                    >
-                      {navigationItems.map(item => {
-                        const Icon = item.icon;
-                        const isActive = currentPage === item.id;
-
-                        const NavigationButton = (
-                          <motion.button
-                            key={item.id}
-                            onClick={() => setCurrentPage(item.id)}
-                            className={`
-                        relative px-2 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl font-medium transition-all duration-300
-                        flex items-center space-x-1 md:space-x-2 group
-                        ${
-                          isActive
-                            ? 'bg-gradient-to-r from-pomodoro-500 to-pomodoro-600 text-white shadow-lg shadow-pomodoro-500/25'
-                            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'
-                        }
-                      `}
-                            whileHover={{ scale: 1.05, y: -1 }}
-                            whileTap={{ scale: 0.95 }}
-                            transition={{
-                              type: 'spring',
-                              stiffness: 400,
-                              damping: 17,
-                            }}
-                            data-testid={`nav-${item.id}`}
-                            aria-current={isActive ? 'page' : undefined}
-                            aria-label={`${item.label}ページに移動`}
-                          >
-                            <Icon
-                              className="w-4 h-4 md:w-5 md:h-5"
-                              aria-hidden="true"
-                            />
-                            <span className="hidden lg:block text-sm md:text-base">
-                              {item.label}
-                            </span>
-
-                            {/* ツールチップ */}
-                            <div
-                              className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none lg:hidden"
-                              role="tooltip"
-                              aria-hidden="true"
-                            >
-                              {item.description}
-                            </div>
-                          </motion.button>
-                        );
-
-                        // ツールチップでラップ
-                        if (item.id === 'tasks') {
-                          return (
-                            <TaskTooltip key={item.id}>
-                              {NavigationButton}
-                            </TaskTooltip>
-                          );
-                        } else if (item.id === 'statistics') {
-                          return (
-                            <StatisticsTooltip key={item.id}>
-                              {NavigationButton}
-                            </StatisticsTooltip>
-                          );
-                        } else {
-                          return NavigationButton;
-                        }
-                      })}
-                    </nav>
-
-                    {/* ユーザーメニュー */}
-                    <div className="flex items-center space-x-2 md:space-x-4">
-                      {/* 監視ダッシュボードボタン（開発環境のみ） */}
-                      {import.meta.env.DEV && (
-                        <>
-                          <motion.button
-                            onClick={() => setShowMonitoringDashboard(true)}
-                            className="flex items-center space-x-1 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            title="パフォーマンス監視"
-                          >
-                            <CogIcon className="w-4 h-4" />
-                            <span className="hidden sm:block">監視</span>
-                          </motion.button>
-                          <motion.button
-                            onClick={() => setShowOperationsDashboard(true)}
-                            className="flex items-center space-x-1 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            title="運用ダッシュボード"
-                          >
-                            <CogIcon className="w-4 h-4" />
-                            <span className="hidden sm:block">運用</span>
-                          </motion.button>
-                          <motion.button
-                            onClick={() => setShowResponseTimeDashboard(true)}
-                            className="flex items-center space-x-1 text-xs md:text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            title="応答時間監視 (2秒以内目標)"
-                          >
-                            <BoltIcon className="w-4 h-4" />
-                            <span className="hidden sm:block">応答時間</span>
-                          </motion.button>
-                        </>
-                      )}
-
-                      {/* テーマ切り替えボタン */}
-                      <ThemeToggle size="md" />
-
-                      <div className="hidden lg:block text-right">
-                        <div className="flex items-center space-x-2">
-                          <UserCircleIcon
-                            className="w-5 h-5 text-gray-400"
-                            aria-hidden="true"
-                          />
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {user?.display_name || user?.email?.split('@')[0]}
-                          </p>
-                        </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          こんにちは！
-                        </p>
-                      </div>
-                      <motion.button
-                        onClick={signOut}
-                        className="flex items-center space-x-1 md:space-x-2 text-xs md:text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        data-testid="logout-button"
-                        aria-label="ログアウト"
-                      >
-                        <ArrowRightOnRectangleIcon
-                          className="w-4 h-4"
-                          aria-hidden="true"
-                        />
-                        <span className="hidden sm:block">ログアウト</span>
-                      </motion.button>
-                    </div>
-                  </div>
+                <div style={{ width: '32px', height: '32px', color: 'white' }}>
+                  ⏰
                 </div>
-              </motion.header>
-
-              {/* メインコンテンツ */}
-              <main role="main" aria-label="メインコンテンツ" id="main-content">
-                <AnimatePresence mode="wait">
-                  {renderCurrentPage()}
-                </AnimatePresence>
-              </main>
-
-              {/* 応答時間ダッシュボード */}
-              <Suspense fallback={<div>Loading...</div>}>
-                <LazyComponents.ResponseTimeDashboard
-                  isOpen={showResponseTimeDashboard}
-                  onClose={() => setShowResponseTimeDashboard(false)}
-                />
-              </Suspense>
-
-              {/* 監視ダッシュボード */}
-              <Suspense fallback={<div>Loading...</div>}>
-                <LazyComponents.MonitoringDashboard
-                  isOpen={showMonitoringDashboard}
-                  onClose={() => setShowMonitoringDashboard(false)}
-                />
-              </Suspense>
-
-              {/* 運用ダッシュボード */}
-              <Suspense fallback={<div>Loading...</div>}>
-                <LazyComponents.OperationsDashboard
-                  isOpen={showOperationsDashboard}
-                  onClose={() => setShowOperationsDashboard(false)}
-                />
-              </Suspense>
-
-              {/* オンボーディング関連 */}
-              <Suspense fallback={<div>Loading...</div>}>
-                <LazyComponents.SetupWizard
-                  isOpen={showSetupWizard}
-                  onClose={() => completeSetup()}
-                  onComplete={handleSetupComplete}
-                />
-              </Suspense>
-
-              <Suspense fallback={<div>Loading...</div>}>
-                <LazyComponents.OnboardingTour
-                  isOpen={showTour}
-                  onClose={() => completeTour()}
-                  onComplete={handleTourComplete}
-                />
-              </Suspense>
-
-              {/* Core Web Vitals監視（開発環境のみ） */}
-              <CoreWebVitalsMonitor />
-
-              {/* 装飾的な背景要素 */}
-              <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-                <motion.div
-                  className="absolute top-1/4 left-1/4 w-64 h-64 bg-pomodoro-200/10 dark:bg-pomodoro-800/5 rounded-full blur-3xl"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.3, 0.5, 0.3],
+              </div>
+              <div>
+                <h1
+                  style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold',
+                    color: '#374151',
+                    margin: 0,
                   }}
-                  transition={{
-                    duration: 8,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-                <motion.div
-                  className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-break-200/10 dark:bg-break-800/5 rounded-full blur-3xl"
-                  animate={{
-                    scale: [1.2, 1, 1.2],
-                    opacity: [0.2, 0.4, 0.2],
-                  }}
-                  transition={{
-                    duration: 10,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    delay: 2,
-                  }}
-                />
+                >
+                  ポモドーロタイマー
+                </h1>
+                <p
+                  style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}
+                >
+                  生産性向上アプリ
+                </p>
               </div>
             </div>
-          </HighContrastProvider>
-        </AuthGuard>
-      </ErrorBoundary>
-    </ProductionErrorBoundary>
+
+            {/* ナビゲーションメニュー */}
+            <nav
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+              role="navigation"
+              aria-label="メインナビゲーション"
+            >
+              {navigationItems.map(item => {
+                const Icon = item.icon;
+                const isActive = currentPage === item.id;
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setCurrentPage(item.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '0.5rem',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      transition: 'all 0.2s ease',
+                      background: isActive
+                        ? 'linear-gradient(to right, #f59e0b, #d97706)'
+                        : 'transparent',
+                      color: isActive ? 'white' : '#6b7280',
+                      boxShadow: isActive
+                        ? '0 4px 6px -1px rgba(245, 158, 11, 0.25)'
+                        : 'none',
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = '#f3f4f6';
+                        e.currentTarget.style.color = '#374151';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = '#6b7280';
+                      }
+                    }}
+                    data-testid={`nav-${item.id}`}
+                    aria-current={isActive ? 'page' : undefined}
+                    aria-label={`${item.label}ページに移動 - ${item.description}`}
+                    title={item.description}
+                  >
+                    <Icon
+                      style={{ width: '20px', height: '20px' }}
+                      aria-hidden="true"
+                    />
+                    <span
+                      style={{
+                        display: window.innerWidth > 768 ? 'block' : 'none',
+                      }}
+                    >
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* ユーザーメニュー */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ textAlign: 'right' }}>
+                <p
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: '#374151',
+                    margin: 0,
+                  }}
+                >
+                  {user?.display_name ||
+                    user?.email?.split('@')[0] ||
+                    'デモユーザー'}
+                </p>
+                <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>
+                  こんにちは！
+                </p>
+              </div>
+              <button
+                onClick={signOut}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: 'transparent',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  fontSize: '0.875rem',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = '#f3f4f6';
+                  e.currentTarget.style.color = '#374151';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#6b7280';
+                }}
+                data-testid="logout-button"
+                aria-label="アカウントからログアウト"
+                title="ログアウト"
+              >
+                <ArrowRightOnRectangleIcon
+                  style={{ width: '16px', height: '16px' }}
+                  aria-hidden="true"
+                />
+                <span
+                  style={{
+                    display: window.innerWidth > 640 ? 'block' : 'none',
+                  }}
+                >
+                  ログアウト
+                </span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* メインコンテンツ */}
+        <main>{renderCurrentPage()}</main>
+      </div>
+    </BrowserRouter>
   );
 }
 

@@ -3,7 +3,7 @@
  * ページ遷移、API呼び出し、コンポーネント描画時間を自動監視
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { getPerformanceMonitor } from '../services/performance-monitor';
 

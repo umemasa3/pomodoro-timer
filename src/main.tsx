@@ -5,10 +5,6 @@ import App from './App.tsx';
 import { validateEnvironment, logEnvironmentInfo } from './utils/env';
 import { initializePerformanceMonitoring } from './services/performance-monitor';
 import { initializeHealthMonitoring } from './services/health-monitor';
-import {
-  initializeErrorRateMonitoring,
-  setupGlobalErrorTracking,
-} from './services/error-rate-monitor';
 import { startCoreWebVitalsAutoTest } from './utils/core-web-vitals-test';
 import { initializePerformanceOptimizations } from './utils/performance-optimization';
 
@@ -46,19 +42,6 @@ if (typeof window !== 'undefined') {
       consecutiveFailures: 3,
     },
   });
-
-  // エラー率監視の初期化
-  initializeErrorRateMonitoring({
-    enabled: true,
-    threshold: 1.0, // 1%
-    timeWindow: 5, // 5分間
-    checkInterval: 30, // 30秒ごと
-    alertCooldown: 10, // 10分間
-    enableConsoleLogging: import.meta.env.DEV,
-  });
-
-  // グローバルエラー追跡の設定
-  setupGlobalErrorTracking();
 
   // Core Web Vitals自動測定の開始（開発環境のみ）
   if (import.meta.env.DEV) {
